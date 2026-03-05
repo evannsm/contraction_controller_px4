@@ -1,0 +1,435 @@
+"""ROS2 node for the contraction-metric neural-network quadrotor controller."""
+
+import os
+import time
+from pathlib import Path
+
+import jax
+import jax.numpy as jnp
+import numpy as np
+from scipy.spatial.transform import Rotation as R
+
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import (
+    DurabilityPolicy,
+    HistoryPolicy,
+    QoSProfile,
+    ReliabilityPolicy,
+)
+
+from px4_msgs.msg import (
+    BatteryStatus,
+    OffboardControlMode,
+    RcChannels,
+    TrajectorySetpoint,
+    VehicleCommand,
+    VehicleOdometry,
+    VehicleRatesSetpoint,
+    VehicleStatus,
+)
+
+from newton_raphson_px4_utils.px4_utils.core_funcs import (  # type: ignore[import]
+    arm,
+    disarm,
+    engage_offboard_mode,
+    land,
+    publish_offboard_control_heartbeat_signal_bodyrate,
+    publish_offboard_control_heartbeat_signal_position,
+)
+from newton_raphson_px4_utils.px4_utils.flight_phases import FlightPhase  # type: ignore[import]
+from newton_raphson_px4_utils.transformations.adjust_yaw import adjust_yaw  # type: ignore[import]
+
+from quad_platforms import PlatformConfig, PlatformType, PLATFORM_REGISTRY  # type: ignore[import]
+from quad_trajectories import (  # type: ignore[import]
+    TrajContext,
+    TrajectoryType,
+    TRAJ_REGISTRY,
+    generate_reference_trajectory,
+)
+
+from .controller import contraction_control, load_control_net, X_EQ
+
+GRAVITY: float = 9.81
+
+
+class ContractionOffboardControl(Node):
+    def __init__(
+        self,
+        platform_type: PlatformType,
+        trajectory: TrajectoryType = TrajectoryType.HOVER,
+        hover_mode: int | None = None,
+        controller_dir: str | None = None,
+        flight_period_: float | None = None,
+    ) -> None:
+        super().__init__("contraction_offboard_control_node")
+        self.get_logger().info("Initializing Contraction Controller ROS2 node.")
+
+        self.sim = platform_type == PlatformType.SIM
+        self.platform_type = platform_type
+        self.trajectory_type = trajectory
+        self.hover_mode = hover_mode
+        flight_period = flight_period_ if flight_period_ is not None else (30.0 if self.sim else 60.0)
+
+        # Platform config
+        platform_class = PLATFORM_REGISTRY[self.platform_type]
+        self.platform: PlatformConfig = platform_class()
+
+        # Trajectory enum
+        traj_map = {t.value: t for t in TrajectoryType}
+        if trajectory not in traj_map:
+            raise ValueError(f"Unknown trajectory: {trajectory}")
+        self.ref_type = traj_map[trajectory]
+
+        # ── QoS ──────────────────────────────────────────────────────────────
+        qos = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+        )
+
+        # ── Publishers ────────────────────────────────────────────────────────
+        self.offboard_control_mode_publisher = self.create_publisher(
+            OffboardControlMode, "/fmu/in/offboard_control_mode", qos
+        )
+        self.trajectory_setpoint_publisher = self.create_publisher(
+            TrajectorySetpoint, "/fmu/in/trajectory_setpoint", qos
+        )
+        self.rates_setpoint_publisher = self.create_publisher(
+            VehicleRatesSetpoint, "/fmu/in/vehicle_rates_setpoint", qos
+        )
+        self.vehicle_command_publisher = self.create_publisher(
+            VehicleCommand, "/fmu/in/vehicle_command", qos
+        )
+
+        # ── Subscribers ───────────────────────────────────────────────────────
+        self.mocap_initialized: bool = False
+        self.vehicle_odometry_subscriber = self.create_subscription(
+            VehicleOdometry, "/fmu/out/vehicle_odometry", self.vehicle_odometry_callback, qos
+        )
+
+        self.in_offboard_mode: bool = False
+        self.armed: bool = False
+        self.in_land_mode: bool = False
+        self.vehicle_status = None
+        self.vehicle_status_subscriber = self.create_subscription(
+            VehicleStatus, "/fmu/out/vehicle_status_v1", self.vehicle_status_callback, qos
+        )
+
+        self.offboard_mode_rc_switch_on = True if self.sim else False
+        self.mode_channel = 5
+        self.rc_channels_subscriber = self.create_subscription(
+            RcChannels, "/fmu/out/rc_channels", self.rc_channel_callback, qos
+        )
+
+        self.current_voltage: float = 16.0
+        self.battery_status_subscriber = self.create_subscription(
+            BatteryStatus, "/fmu/out/battery_status", self.battery_status_callback, qos
+        )
+
+        # ── Flight phases and timing ──────────────────────────────────────────
+        self.T0 = time.time()
+        self.program_time: float = 0.0
+        self.cushion_period = 10.0
+        self.flight_period = flight_period
+        self.land_time = self.flight_period + 2 * self.cushion_period
+
+        # ── Control state ─────────────────────────────────────────────────────
+        self.HOVER_HEIGHT = 3.0 if self.sim else 0.7
+        self.LAND_HEIGHT = 0.6 if self.sim else 0.45
+        self.trajectory_started: bool = False
+        self.trajectory_time: float = 0.0
+        self.reference_time: float = 0.0
+        self.T_LOOKAHEAD = 0.0  # contraction controller uses current reference (no lookahead)
+
+        first_thrust = self.platform.mass * GRAVITY
+        self.last_input = np.array([first_thrust, 0.0, 0.0, 0.0])
+        self.normalized_input = [self.platform.get_throttle_from_force(first_thrust), 0.0, 0.0, 0.0]
+
+        # ── Load neural-network controller ────────────────────────────────────
+        if controller_dir is None:
+            controller_dir = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "..", "..", "new_project", "Controller 1", "Controller",
+            )
+        self.controller_dir = Path(controller_dir).resolve()
+        self.get_logger().info(f"Loading neural network from: {self.controller_dir}")
+        self.control_net = load_control_net(self.controller_dir)
+        self.get_logger().info("Neural network loaded successfully.")
+
+        # ── JIT warm-up ───────────────────────────────────────────────────────
+        self._jit_warmup()
+
+        # ── Timers ────────────────────────────────────────────────────────────
+        self.offboard_setpoint_counter = 0
+        self.timer = self.create_timer(0.1, self.offboard_mode_timer_callback)
+        self.publish_control_timer = self.create_timer(0.01, self.publish_control_timer_callback)
+        self.compute_control_timer = self.create_timer(0.01, self.compute_control_timer_callback)
+
+        self.T0 = time.time()
+        self.get_logger().info("Contraction controller node ready.")
+        time.sleep(2)
+
+    # ── Warm-up ───────────────────────────────────────────────────────────────
+    def _jit_warmup(self) -> None:
+        dummy_x = jnp.array(X_EQ)
+        dummy_xff = jnp.array(X_EQ)
+        dummy_uff = jnp.array([self.platform.mass * GRAVITY, 0.0, 0.0, 0.0])
+
+        self.get_logger().info("[JIT] Pre-compiling contraction control function...")
+        t0 = time.perf_counter()
+        u = contraction_control(dummy_x, dummy_xff, dummy_uff, self.control_net)
+        jax.block_until_ready(u)
+        t1 = time.perf_counter()
+        self.get_logger().info(f"  No-JIT: {(t1-t0)*1e3:.1f} ms  output={u}")
+
+        t0 = time.perf_counter()
+        u = contraction_control(dummy_x, dummy_xff, dummy_uff, self.control_net)
+        jax.block_until_ready(u)
+        t1 = time.perf_counter()
+        self.get_logger().info(f"  JIT:    {(t1-t0)*1e3:.1f} ms  → {1.0/(t1-t0):.0f} Hz capable")
+
+    # ── Subscriber callbacks ──────────────────────────────────────────────────
+    def vehicle_odometry_callback(self, msg):
+        self.x = msg.position[0]
+        self.y = msg.position[1]
+        self.z = msg.position[2]
+        self.vx = msg.velocity[0]
+        self.vy = msg.velocity[1]
+        self.vz = msg.velocity[2]
+        self.wx = msg.angular_velocity[0]
+        self.wy = msg.angular_velocity[1]
+        self.wz = msg.angular_velocity[2]
+
+        orientation = R.from_quat(msg.q, scalar_first=True)
+        self.roll, self.pitch, self._yaw = orientation.as_euler("xyz", degrees=False)
+        self.yaw = adjust_yaw(self, self._yaw)
+
+        self.position = np.array([self.x, self.y, self.z])
+        self.velocity = np.array([self.vx, self.vy, self.vz])
+        self.euler_angle_total_yaw = np.array([self.roll, self.pitch, self.yaw])
+
+        # 10D contraction state: [px,py,pz, vx,vy,vz, az, roll,pitch,yaw]
+        # az is the current collective thrust per unit mass (N/kg ≈ 9.81 at hover)
+        current_thrust = float(self.last_input[0])
+        az = current_thrust / self.platform.mass
+        self.contraction_state = np.hstack((
+            self.position,
+            self.velocity,
+            [az],
+            self.euler_angle_total_yaw,
+        ))
+
+        self.mocap_initialized = True
+        self.get_logger().info(
+            f"State: pos={self.position}, yaw={self.yaw:.3f}",
+            throttle_duration_sec=0.3,
+        )
+
+    def vehicle_status_callback(self, vehicle_status):
+        self.vehicle_status = vehicle_status
+        self.in_offboard_mode = (
+            vehicle_status.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD
+        )
+        self.armed = vehicle_status.arming_state == VehicleStatus.ARMING_STATE_ARMED
+        self.in_land_mode = (
+            vehicle_status.nav_state == VehicleStatus.NAVIGATION_STATE_AUTO_LAND
+        )
+
+    def rc_channel_callback(self, rc_channels):
+        flight_mode = rc_channels.channels[self.mode_channel - 1]
+        self.offboard_mode_rc_switch_on = flight_mode >= 0.75
+
+    def battery_status_callback(self, battery_status):
+        self.current_voltage = battery_status.voltage_v
+
+    # ── Flight phase helpers ──────────────────────────────────────────────────
+    def get_phase(self) -> FlightPhase:
+        if self.program_time < self.cushion_period:
+            return FlightPhase.HOVER
+        elif self.program_time < self.cushion_period + self.flight_period:
+            return FlightPhase.CUSTOM
+        elif self.program_time < self.land_time:
+            return FlightPhase.RETURN
+        else:
+            return FlightPhase.LAND
+
+    def time_before_next_phase(self, phase: FlightPhase) -> float:
+        if phase == FlightPhase.HOVER:
+            return self.cushion_period - self.program_time
+        elif phase == FlightPhase.CUSTOM:
+            return (self.cushion_period + self.flight_period) - self.program_time
+        elif phase == FlightPhase.RETURN:
+            return self.land_time - self.program_time
+        return 0.0
+
+    def killswitch_and_flight_phase(self) -> bool:
+        if not self.offboard_mode_rc_switch_on:
+            self.get_logger().warning(
+                f"RC channel {self.mode_channel} not in offboard position.", throttle_duration_sec=1.0
+            )
+            self.offboard_setpoint_counter = 0
+            return False
+        self.program_time = time.time() - self.T0
+        self.flight_phase = self.get_phase()
+        self.get_logger().warn(
+            f"[{self.program_time:.1f}s] Phase: {self.flight_phase.name}, "
+            f"next in {self.time_before_next_phase(self.flight_phase):.1f}s",
+            throttle_duration_sec=0.5,
+        )
+        return True
+
+    def get_offboard_health(self) -> bool:
+        ok = True
+        if not self.in_offboard_mode:
+            self.get_logger().warning("NOT in OFFBOARD mode.")
+            ok = False
+        if not self.armed:
+            self.get_logger().warning("NOT ARMED.")
+            ok = False
+        if not self.mocap_initialized:
+            self.get_logger().warning("Odometry NOT received.")
+            ok = False
+        return ok
+
+    # ── Timer callbacks ───────────────────────────────────────────────────────
+    def offboard_mode_timer_callback(self) -> None:
+        if not self.killswitch_and_flight_phase():
+            return
+        if self.offboard_setpoint_counter == 10:
+            engage_offboard_mode(self)
+            arm(self)
+        if self.offboard_setpoint_counter < 11:
+            self.offboard_setpoint_counter += 1
+
+        phase = self.flight_phase
+        if phase is FlightPhase.HOVER:
+            publish_offboard_control_heartbeat_signal_position(self)
+        elif phase is FlightPhase.CUSTOM:
+            publish_offboard_control_heartbeat_signal_bodyrate(self)
+        elif phase in (FlightPhase.RETURN, FlightPhase.LAND):
+            publish_offboard_control_heartbeat_signal_position(self)
+
+    def publish_control_timer_callback(self) -> None:
+        if self.in_land_mode:
+            self.get_logger().info("In land mode...", throttle_duration_sec=1.0)
+            threshold = 0.71 if self.sim else 0.64
+            if abs(self.z) < threshold:
+                self.get_logger().info("Landed, disarming.")
+                disarm(self)
+                rclpy.shutdown()
+                return
+
+        if not self.killswitch_and_flight_phase():
+            return
+        if not self.get_offboard_health():
+            return
+
+        phase = self.flight_phase
+        if phase is FlightPhase.HOVER:
+            self._publish_position(0.0, 0.0, -self.HOVER_HEIGHT, 0.0)
+        elif phase is FlightPhase.CUSTOM:
+            self._publish_rates(*self.normalized_input)
+        elif phase is FlightPhase.RETURN:
+            self._publish_position(0.0, 0.0, -self.HOVER_HEIGHT, 0.0)
+        elif phase is FlightPhase.LAND:
+            self._publish_position(0.0, 0.0, -self.LAND_HEIGHT, 0.0)
+            if abs(self.z) < 0.64:
+                land(self)
+
+    def compute_control_timer_callback(self) -> None:
+        if not self.killswitch_and_flight_phase():
+            return
+        if not self.get_offboard_health():
+            return
+        if self.get_phase() is not FlightPhase.CUSTOM:
+            return
+
+        if not self.trajectory_started:
+            self.trajectory_T0 = time.time()
+            self.trajectory_time = 0.0
+            self.trajectory_started = True
+
+        self.trajectory_time = time.time() - self.trajectory_T0
+        self.reference_time = self.trajectory_time  # no lookahead for contraction
+
+        ref, ref_dot = self._generate_ref()
+        ref = ref.flatten()
+        ref_dot = ref_dot.flatten()
+
+        # Build feedforward state and control
+        # ref = [px_ff, py_ff, pz_ff, yaw_ff]
+        # ref_dot = [vx_ff, vy_ff, vz_ff, ...]
+        x_ff = jnp.array([
+            float(ref[0]), float(ref[1]), float(ref[2]),   # position
+            float(ref_dot[0]), float(ref_dot[1]), float(ref_dot[2]),  # velocity
+            GRAVITY,                                        # az (hover approx.)
+            0.0, 0.0, float(ref[3]),                       # roll=0, pitch=0, yaw_ff
+        ])
+        u_ff = jnp.array([self.platform.mass * GRAVITY, 0.0, 0.0, 0.0])
+
+        t0 = time.time()
+        u_raw = contraction_control(
+            jnp.array(self.contraction_state, dtype=jnp.float32),
+            x_ff,
+            u_ff,
+            self.control_net,
+        )
+        jax.block_until_ready(u_raw)
+        compute_time = time.time() - t0
+
+        self.last_input = np.array(u_raw)
+        self.get_logger().warning(
+            f"Compute: {compute_time*1e3:.2f} ms  u={np.array(u_raw)}",
+            throttle_duration_sec=0.5,
+        )
+
+        # Convert to PX4 normalized inputs
+        thrust = float(u_raw[0])
+        throttle_raw = float(self.platform.get_throttle_from_force(thrust))
+        battery_compensation = 1 - 0.0779 * (self.current_voltage - 16.0)
+        throttle = throttle_raw * battery_compensation
+
+        self.normalized_input = [
+            throttle,
+            float(u_raw[1]),
+            float(u_raw[2]),
+            float(u_raw[3]),
+        ]
+
+    # ── Setpoint helpers ──────────────────────────────────────────────────────
+    def _publish_position(self, x: float, y: float, z: float, yaw: float) -> None:
+        msg = TrajectorySetpoint()
+        msg.position = [x, y, z]
+        msg.yaw = yaw
+        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+        self.trajectory_setpoint_publisher.publish(msg)
+
+    def _publish_rates(self, thrust: float, roll: float, pitch: float, yaw: float) -> None:
+        msg = VehicleRatesSetpoint()
+        msg.roll = float(roll)
+        msg.pitch = float(pitch)
+        msg.yaw = float(yaw)
+        msg.thrust_body[0] = 0.0
+        msg.thrust_body[1] = 0.0
+        msg.thrust_body[2] = -float(thrust)
+        msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+        self.rates_setpoint_publisher.publish(msg)
+
+    def _generate_ref(self):
+        ctx = TrajContext(
+            sim=self.sim,
+            hover_mode=self.hover_mode,
+            spin=False,
+            double_speed=True,
+            short=False,
+        )
+        traj_func = TRAJ_REGISTRY[self.ref_type]
+        return generate_reference_trajectory(
+            traj_func=traj_func,
+            t_start=self.reference_time,
+            horizon=0.0,
+            num_steps=1,
+            ctx=ctx,
+        )
