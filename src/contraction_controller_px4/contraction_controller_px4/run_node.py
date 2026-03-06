@@ -7,7 +7,7 @@ import traceback
 import rclpy
 
 from quad_platforms import PlatformType  # type: ignore[import]
-from quad_trajectories import TrajectoryType  # type: ignore[import]
+from .trajectories import TrajectoryType
 
 from .ros2px4_node import ContractionOffboardControl
 
@@ -49,7 +49,7 @@ Examples:
         type=str,
         default=None,
         help="Path to the Controller directory containing arch.txt and model.eqx. "
-             "Defaults to new_project/Controller_1/Controller relative to install.",
+             "Defaults to src/controller_params relative to workspace root.",
     )
     parser.add_argument(
         "--flight-period",
@@ -82,7 +82,7 @@ def main():
     print(f"Trajectory:    {args.trajectory.value.upper()}")
     print(f"Hover Mode:    {args.hover_mode if args.hover_mode is not None else 'N/A'}")
     print(f"Flight Period: {args.flight_period or ('30s' if args.platform == PlatformType.SIM else '60s')}")
-    print(f"Controller:    {args.controller_dir or '(default: new_project/Controller_1/Controller)'}")
+    print(f"Controller:    {args.controller_dir or '(default: src/controller_params)'}")
     print("=" * 60 + "\n")
 
     rclpy.init(args=None)

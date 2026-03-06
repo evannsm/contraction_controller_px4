@@ -41,16 +41,37 @@ from contraction_controller_px4_utils.px4_utils.flight_phases import FlightPhase
 from contraction_controller_px4_utils.transformations.adjust_yaw import adjust_yaw
 
 from quad_platforms import PlatformConfig, PlatformType, PLATFORM_REGISTRY  # type: ignore[import]
-from quad_trajectories import (  # type: ignore[import]
-    TrajContext,
-    TrajectoryType,
-    TRAJ_REGISTRY,
-    generate_reference_trajectory,
-)
+from .trajectories import TrajContext, TrajectoryType, TRAJ_REGISTRY
 
 from .controller import contraction_control, load_control_net, X_EQ
 
 GRAVITY: float = 9.81
+
+
+def _flat_to_x_u(t, flat_output):
+    """Compute contraction state x_ff and feedforward control u_ff from flat outputs via autodiff.
+
+    The flat output is [px, py, pz, psi]. Derivatives are computed with jax.jacfwd.
+    State:   x = [px, py, pz, vx, vy, vz, f, phi, th, psi]
+               where f = specific thrust (N/kg), phi = roll, th = pitch
+    Control: u = [df, dphi, dth, dpsi]  (rates of f, roll, pitch, yaw)
+    """
+    g = GRAVITY
+    px, py, pz, psi = flat_output(t)
+    vx, vy, vz, dpsi = jax.jacfwd(flat_output)(t)
+
+    def f_th_phi(t):
+        ax, ay, az = jax.jacfwd(jax.jacfwd(flat_output))(t)[:3]
+        f = jnp.sqrt(ax**2 + ay**2 + (az - g) ** 2)
+        th = jnp.arcsin(-ax / f)
+        phi = jnp.arctan2(ay, g - az)
+        return jnp.array([f, th, phi])
+
+    f, th, phi = f_th_phi(t)
+    df, dth, dphi = jax.jacfwd(f_th_phi)(t)
+    x_ff = jnp.array([px, py, pz, vx, vy, vz, f, phi, th, psi])
+    u_ff = jnp.array([df, dphi, dth, dpsi])
+    return x_ff, u_ff
 
 
 class ContractionOffboardControl(Node):
@@ -152,13 +173,19 @@ class ContractionOffboardControl(Node):
         # ── Load neural-network controller ────────────────────────────────────
         if controller_dir is None:
             controller_dir = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "..", "new_project", "Controller_1", "Controller",
+                os.path.dirname(os.path.realpath(__file__)),
+                "..", "..", "controller_params",
             )
         self.controller_dir = Path(controller_dir).resolve()
         self.get_logger().info(f"Loading neural network from: {self.controller_dir}")
         self.control_net = load_control_net(self.controller_dir)
         self.get_logger().info("Neural network loaded successfully.")
+
+        # ── Build trajectory callable (created once; reused every tick) ───────
+        _ctx = TrajContext(sim=self.sim, hover_mode=self.hover_mode)
+        _traj_func = TRAJ_REGISTRY[self.ref_type]
+        self._flat_output = lambda t: _traj_func(t, _ctx)
+        self._flat_to_x_u_jit = jax.jit(lambda t: _flat_to_x_u(t, self._flat_output))
 
         # ── JIT warm-up ───────────────────────────────────────────────────────
         self._jit_warmup()
@@ -175,16 +202,29 @@ class ContractionOffboardControl(Node):
 
     # ── Warm-up ───────────────────────────────────────────────────────────────
     def _jit_warmup(self) -> None:
-        dummy_x = jnp.array(X_EQ)
+        dummy_x   = jnp.array(X_EQ)
         dummy_xff = jnp.array(X_EQ)
-        dummy_uff = jnp.array([self.platform.mass * GRAVITY, 0.0, 0.0, 0.0])
+        dummy_uff = jnp.array([0.0, 0.0, 0.0, 0.0])
+
+        self.get_logger().info("[JIT] Pre-compiling flat_to_x_u...")
+        t0 = time.perf_counter()
+        x_ff, u_ff = self._flat_to_x_u_jit(jnp.float32(0.0))
+        jax.block_until_ready(x_ff); jax.block_until_ready(u_ff)
+        t1 = time.perf_counter()
+        self.get_logger().info(f"  Trace:  {(t1-t0)*1e3:.1f} ms")
+
+        t0 = time.perf_counter()
+        x_ff, u_ff = self._flat_to_x_u_jit(jnp.float32(0.1))
+        jax.block_until_ready(x_ff); jax.block_until_ready(u_ff)
+        t1 = time.perf_counter()
+        self.get_logger().info(f"  JIT:    {(t1-t0)*1e3:.1f} ms  x_ff={x_ff}")
 
         self.get_logger().info("[JIT] Pre-compiling contraction control function...")
         t0 = time.perf_counter()
         u = contraction_control(dummy_x, dummy_xff, dummy_uff, self.control_net)
         jax.block_until_ready(u)
         t1 = time.perf_counter()
-        self.get_logger().info(f"  No-JIT: {(t1-t0)*1e3:.1f} ms  output={u}")
+        self.get_logger().info(f"  Trace:  {(t1-t0)*1e3:.1f} ms")
 
         t0 = time.perf_counter()
         u = contraction_control(dummy_x, dummy_xff, dummy_uff, self.control_net)
@@ -356,29 +396,10 @@ class ContractionOffboardControl(Node):
         self.trajectory_time = time.time() - self.trajectory_T0
         self.reference_time = self.trajectory_time  # no lookahead for contraction
 
-        ref, ref_dot = self._generate_ref()
-        ref = ref.flatten()
-        ref_dot = ref_dot.flatten()
-
-        # Build feedforward state and control
-        # ref = [px_ff, py_ff, pz_ff, yaw_ff]
-        # ref_dot = [vx_ff, vy_ff, vz_ff, ...]
-        x_ff = jnp.array([
-            float(ref[0]), float(ref[1]), float(ref[2]),   # position
-            float(ref_dot[0]), float(ref_dot[1]), float(ref_dot[2]),  # velocity
-            GRAVITY,                                        # az (hover approx.)
-            0.0, 0.0, float(ref[3]),                       # roll=0, pitch=0, yaw_ff
-        ])
-
-        # x_ff = jnp.array([
-        #     float(0.0), float(0.0), float(-3.0),   # position
-        #     float(0.0), float(0.0), float(0.0),  # velocity
-        #     GRAVITY,                                        # az (hover approx.)
-        #     0.0, 0.0, 0.0,                       # roll=0, pitch=0, yaw_ff
-        # ])
+        t = jnp.float32(self.reference_time)
+        x_ff, u_ff = self._flat_to_x_u_jit(t)
 
         print(f"{x_ff=}")
-        u_ff = jnp.array([self.platform.mass * GRAVITY, 0.0, 0.0, 0.0])
         print(f"{u_ff=}")
 
         t0 = time.time()
@@ -391,9 +412,9 @@ class ContractionOffboardControl(Node):
         jax.block_until_ready(u_raw)
         compute_time = time.time() - t0
 
-        # Integrate thrust_dot -> thrust (controller outputs thrust_dot)
-        thrust_dot = float(u_raw[0])
-        thrust = self.last_input[0] + 0.01 * thrust_dot
+        # u_raw[0] is df (specific force rate, N/kg/s); scale by mass to get thrust rate (N/s)
+        f_dot = float(u_raw[0])
+        thrust = self.last_input[0] + 0.01 * f_dot * self.platform.mass
         self.last_input = np.array([thrust, float(u_raw[1]), float(u_raw[2]), float(u_raw[3])])
         self.get_logger().warning(
             f"Compute: {compute_time*1e3:.2f} ms  u={np.array(u_raw)}  thrust={thrust:.3f}",
@@ -431,19 +452,4 @@ class ContractionOffboardControl(Node):
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
         self.rates_setpoint_publisher.publish(msg)
 
-    def _generate_ref(self):
-        ctx = TrajContext(
-            sim=self.sim,
-            hover_mode=self.hover_mode,
-            spin=False,
-            double_speed=True,
-            short=False,
-        )
-        traj_func = TRAJ_REGISTRY[self.ref_type]
-        return generate_reference_trajectory(
-            traj_func=traj_func,
-            t_start=self.reference_time,
-            horizon=0.0,
-            num_steps=1,
-            ctx=ctx,
-        )
+
