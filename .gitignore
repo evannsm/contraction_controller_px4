@@ -1,0 +1,11 @@
+# colcon build artifacts
+build/
+install/
+log/
+
+# controller weights (not tracked — place manually, see README)
+src/contraction_controller_px4/new_project/
+
+# Python
+__pycache__/
+*.py[cod]

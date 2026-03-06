@@ -1,0 +1,6 @@
+[submodule "src/quad_platforms"]
+	path = src/quad_platforms
+	url = https://github.com/evannsm/quad_platforms.git
+[submodule "src/quad_trajectories"]
+	path = src/quad_trajectories
+	url = https://github.com/evannsm/quad_trajectories.git

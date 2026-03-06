@@ -34,38 +34,32 @@ make -j$(nproc) && sudo make install && sudo ldconfig
 
 ### 4. Controller weights
 
-Must be present at:
+Must be placed at:
 
 ```
-ws_px4_work/src/new_project/Controller 1/Controller/
-├── arch.txt       # 10 128 softplus 128 softplus 4
+<repo_root>/src/contraction_controller_px4/new_project/Controller 1/Controller/
+├── arch.txt       # e.g. 10 128 softplus 128 softplus 4
 ├── model.eqx      # equinox-serialised weights
 └── ix_ut.npy
 ```
 
 ---
 
+## Quickstart
+
+```bash
+git clone --recurse-submodules https://github.com/evannsm/contraction_controller_px4.git
+cd contraction_controller_px4
+make build      # build Docker image (once, ~10 min)
+make run        # start container
+make build_ros  # build ROS 2 workspace inside container (once)
+```
+
+---
+
 ## Usage
 
-All make commands run from `ws_px4_work/src/`:
-
-```bash
-cd ~/ws_px4_work/src
-```
-
-### Step 1 — Build the Docker image (once)
-
-```bash
-make build
-```
-
-The image contains:
-- ROS 2 Jazzy
-- `px4_msgs` pre-built as an upstream overlay
-- immrax + linrax (jax-0.9-support)
-- JAX / equinox
-
-### Step 2 — On the host: start sim and bridge
+### Step 1 — On the host: start sim and bridge
 
 **Terminal 1:**
 ```bash
@@ -77,24 +71,23 @@ cd ~/PX4-Autopilot && make px4_sitl gz_x500
 MicroXRCEAgent udp4 -p 8888
 ```
 
-### Step 3 — Start the container
+### Step 2 — Start the container
 
 ```bash
 make run
 ```
 
-Mounts `ws_px4_work/` → `/workspace` so `build/install/log` persist on host.
+Mounts the repo root → `/workspace` so `build/install/log` persist on host.
 Uses `--net host` so the container sees all host ROS 2 topics.
 
-### Step 4 — Build the ROS 2 workspace (first time only)
+### Step 3 — Build the ROS 2 workspace (first time only)
 
 ```bash
 make build_ros
 ```
 
-### Step 5 — Run the controller
+### Step 4 — Run the controller
 
-Via make:
 ```bash
 make run_controller PLATFORM=sim TRAJECTORY=hover HOVER_MODE=1
 make run_controller PLATFORM=sim TRAJECTORY=circle_horz
@@ -130,9 +123,38 @@ make kill      # force-kill the container
 
 ---
 
+## Repository structure
+
+```
+contraction_controller_px4/       ← repo root = ROS 2 workspace root
+├── src/
+│   ├── contraction_controller_px4/   ← this package
+│   ├── quad_platforms/               ← submodule
+│   └── quad_trajectories/            ← submodule
+├── docker/
+│   ├── Dockerfile
+│   └── requirements.txt
+├── Makefile
+└── README.md
+```
+
+colcon `build/`, `install/`, and `log/` are created at the repo root and gitignored.
+
+---
+
+## Docker image contents
+
+| Component | Details |
+|---|---|
+| ROS 2 Jazzy | `osrf/ros:jazzy-desktop-full` |
+| px4_msgs | pre-built overlay at `/opt/ws_px4_msgs` (branch `v1.16_minimal_msgs`) |
+| Python venv | `/opt/px4-venv` — JAX, equinox, immrax, linrax (`jax-0.9-support`) |
+
+---
+
 ## Theory
 
-See `docs/contraction_controller.qmd` for the full derivation.
+See `src/contraction_controller_px4/docs/contraction_controller.qmd` for the full derivation.
 
 ```
 u(t) = control(x(t), π) - control(x_ff(t), π) + u_ff(t)
@@ -141,20 +163,5 @@ u(t) = control(x(t), π) - control(x_ff(t), π) + u_ff(t)
 Compile the PDF (requires Quarto ≥ 1.4):
 
 ```bash
-cd docs && quarto render contraction_controller.qmd
+cd src/contraction_controller_px4/docs && quarto render contraction_controller.qmd
 ```
-
----
-
-## Dependencies
-
-| Dependency | Where | Purpose |
-|---|---|---|
-| ROS 2 Jazzy | Docker image | middleware |
-| px4_msgs | pre-built in image (`/opt/ws_px4_msgs`) | PX4 message types |
-| quad_platforms / quad_trajectories | `ws_px4_work/src/` | platform config & trajectories |
-| newton_raphson_px4_utils | `ws_px4_work/src/` | PX4 utilities |
-| immrax (`jax-0.9-support`) | Docker image (pip) | `NeuralNetwork` loader |
-| linrax (`jax-0.9-support`) | Docker image (pip) | linear systems support |
-| JAX / equinox | Docker image (pip) | neural-network inference |
-| MicroXRCE-DDS-Agent | host | ROS 2 ↔ PX4 bridge |
