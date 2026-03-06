@@ -153,7 +153,7 @@ class ContractionOffboardControl(Node):
         if controller_dir is None:
             controller_dir = os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
-                "..", "..", "new_project", "Controller 1", "Controller",
+                "..", "new_project", "Controller_1", "Controller",
             )
         self.controller_dir = Path(controller_dir).resolve()
         self.get_logger().info(f"Loading neural network from: {self.controller_dir}")
@@ -390,14 +390,16 @@ class ContractionOffboardControl(Node):
         jax.block_until_ready(u_raw)
         compute_time = time.time() - t0
 
-        self.last_input = np.array(u_raw)
+        # Integrate thrust_dot -> thrust (controller outputs thrust_dot)
+        thrust_dot = float(u_raw[0])
+        thrust = self.last_input[0] + 0.01 * thrust_dot
+        self.last_input = np.array([thrust, float(u_raw[1]), float(u_raw[2]), float(u_raw[3])])
         self.get_logger().warning(
-            f"Compute: {compute_time*1e3:.2f} ms  u={np.array(u_raw)}",
+            f"Compute: {compute_time*1e3:.2f} ms  u={np.array(u_raw)}  thrust={thrust:.3f}",
             throttle_duration_sec=0.5,
         )
 
         # Convert to PX4 normalized inputs
-        thrust = float(u_raw[0])
         throttle_raw = float(self.platform.get_throttle_from_force(thrust))
         battery_compensation = 1 - 0.0779 * (self.current_voltage - 16.0)
         throttle = throttle_raw# * battery_compensation
