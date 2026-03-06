@@ -370,14 +370,15 @@ class ContractionOffboardControl(Node):
             0.0, 0.0, float(ref[3]),                       # roll=0, pitch=0, yaw_ff
         ])
 
-        x_ff = jnp.array([
-            float(0.0), float(0.0), float(-3.0),   # position
-            float(0.0), float(0.0), float(0.0),  # velocity
-            GRAVITY,                                        # az (hover approx.)
-            0.0, 0.0, 0.0,                       # roll=0, pitch=0, yaw_ff
-        ])
+        # x_ff = jnp.array([
+        #     float(0.0), float(0.0), float(-3.0),   # position
+        #     float(0.0), float(0.0), float(0.0),  # velocity
+        #     GRAVITY,                                        # az (hover approx.)
+        #     0.0, 0.0, 0.0,                       # roll=0, pitch=0, yaw_ff
+        # ])
+
         print(f"{x_ff=}")
-        u_ff = jnp.array([0 * self.platform.mass * GRAVITY, 0.0, 0.0, 0.0])
+        u_ff = jnp.array([self.platform.mass * GRAVITY, 0.0, 0.0, 0.0])
         print(f"{u_ff=}")
 
         t0 = time.time()
