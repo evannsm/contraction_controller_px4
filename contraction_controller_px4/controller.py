@@ -4,7 +4,6 @@ import jax.numpy as jnp
 from pathlib import Path
 
 
-# Equilibrium state and gain matrix (trained values)
 X_EQ = jnp.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.81, 0.0, 0.0, 0.0])
 
 K_EQ = jnp.array([
@@ -67,7 +66,8 @@ def contraction_control(
     jnp.ndarray, shape (4,)
         Control input [T (N), p_cmd (rad/s), q_cmd (rad/s), r_cmd (rad/s)].
     """
-    return control(x, control_net) - control(x_ff, control_net) + u_ff
+    u = control(x, control_net) - control(x_ff, control_net) + u_ff
+    return u
 
 
 def load_control_net(controller_dir: str | Path):
@@ -82,5 +82,7 @@ def load_control_net(controller_dir: str | Path):
     -------
     immrax.NeuralNetwork
     """
+    import jax
     import immrax as irx  # type: ignore[import]
+    jax.config.update("jax_enable_x64", False)  # model weights are float32
     return irx.NeuralNetwork(str(controller_dir))

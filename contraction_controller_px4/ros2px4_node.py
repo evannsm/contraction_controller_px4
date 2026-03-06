@@ -29,7 +29,7 @@ from px4_msgs.msg import (
     VehicleStatus,
 )
 
-from newton_raphson_px4_utils.px4_utils.core_funcs import (  # type: ignore[import]
+from contraction_controller_px4_utils.px4_utils.core_funcs import (
     arm,
     disarm,
     engage_offboard_mode,
@@ -37,8 +37,8 @@ from newton_raphson_px4_utils.px4_utils.core_funcs import (  # type: ignore[impo
     publish_offboard_control_heartbeat_signal_bodyrate,
     publish_offboard_control_heartbeat_signal_position,
 )
-from newton_raphson_px4_utils.px4_utils.flight_phases import FlightPhase  # type: ignore[import]
-from newton_raphson_px4_utils.transformations.adjust_yaw import adjust_yaw  # type: ignore[import]
+from contraction_controller_px4_utils.px4_utils.flight_phases import FlightPhase
+from contraction_controller_px4_utils.transformations.adjust_yaw import adjust_yaw
 
 from quad_platforms import PlatformConfig, PlatformType, PLATFORM_REGISTRY  # type: ignore[import]
 from quad_trajectories import (  # type: ignore[import]
@@ -105,6 +105,8 @@ class ContractionOffboardControl(Node):
 
         # ── Subscribers ───────────────────────────────────────────────────────
         self.mocap_initialized: bool = False
+        self.full_rotations: int = 0
+        self.prev_mocap_psi: float = 0.0
         self.vehicle_odometry_subscriber = self.create_subscription(
             VehicleOdometry, "/fmu/out/vehicle_odometry", self.vehicle_odometry_callback, qos
         )
@@ -367,7 +369,16 @@ class ContractionOffboardControl(Node):
             GRAVITY,                                        # az (hover approx.)
             0.0, 0.0, float(ref[3]),                       # roll=0, pitch=0, yaw_ff
         ])
-        u_ff = jnp.array([self.platform.mass * GRAVITY, 0.0, 0.0, 0.0])
+
+        x_ff = jnp.array([
+            float(0.0), float(0.0), float(-3.0),   # position
+            float(0.0), float(0.0), float(0.0),  # velocity
+            GRAVITY,                                        # az (hover approx.)
+            0.0, 0.0, 0.0,                       # roll=0, pitch=0, yaw_ff
+        ])
+        print(f"{x_ff=}")
+        u_ff = jnp.array([0 * self.platform.mass * GRAVITY, 0.0, 0.0, 0.0])
+        print(f"{u_ff=}")
 
         t0 = time.time()
         u_raw = contraction_control(
@@ -389,7 +400,7 @@ class ContractionOffboardControl(Node):
         thrust = float(u_raw[0])
         throttle_raw = float(self.platform.get_throttle_from_force(thrust))
         battery_compensation = 1 - 0.0779 * (self.current_voltage - 16.0)
-        throttle = throttle_raw * battery_compensation
+        throttle = throttle_raw# * battery_compensation
 
         self.normalized_input = [
             throttle,
