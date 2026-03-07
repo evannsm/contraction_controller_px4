@@ -84,6 +84,7 @@ class ContractionOffboardControl(Node):
         controller_dir: str | None = None,
         flight_period_: float | None = None,
         logging_enabled: bool = False,
+        use_feedforward: bool = True,
     ) -> None:
         super().__init__("contraction_offboard_control_node")
         self.get_logger().info("Initializing Contraction Controller ROS2 node.")
@@ -91,6 +92,7 @@ class ContractionOffboardControl(Node):
         self.sim = platform_type == PlatformType.SIM
         self.platform_type = platform_type
         self.trajectory_type = trajectory
+        self.use_feedforward = use_feedforward
         self.hover_mode = hover_mode
         flight_period = flight_period_ if flight_period_ is not None else (30.0 if self.sim else 60.0)
 
@@ -210,9 +212,12 @@ class ContractionOffboardControl(Node):
             self.platform_logtype      = LogType("platform",   0)
             self.trajectory_logtype    = LogType("trajectory",  1)
             self.controller_logtype    = LogType("controller",  2)
+            self.feedforward_logtype  = LogType("feedforward",  3)
+
             self.platform_logtype.append(platform_type.value.upper())
             self.trajectory_logtype.append(trajectory.value)
             self.controller_logtype.append("contraction")
+            self.feedforward_logtype.append(1 if use_feedforward else 0)
 
             # Timing
             self.time_logtype          = LogType("time",        10)
@@ -468,7 +473,7 @@ class ContractionOffboardControl(Node):
         u_raw = contraction_control(
             jnp.array(self.contraction_state, dtype=jnp.float32),
             x_ff,
-            u_ff,
+            u_ff if self.use_feedforward else jnp.zeros(4, dtype=jnp.float32),
             self.control_net,
         )
         jax.block_until_ready(u_raw)

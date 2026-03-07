@@ -71,6 +71,11 @@ Examples:
         default=None,
         help="Log filename stem (without .csv). Auto-generated from config if omitted.",
     )
+    parser.add_argument(
+        "--no-feedforward",
+        action="store_true",
+        help="Disable u_ff term: u = π(x) − π(x_ff)  (no feedforward). Default includes u_ff.",
+    )
 
     return parser
 
@@ -90,6 +95,7 @@ def _auto_log_filename(args) -> str:
     parts = [args.platform.value, "contraction", args.trajectory.value]
     if args.trajectory == TrajectoryType.HOVER and args.hover_mode is not None:
         parts.append(f"mode{args.hover_mode}")
+    parts.append("no_ff" if args.no_feedforward else "ff")
     return "_".join(parts) + ".csv"
 
 
@@ -114,6 +120,7 @@ def main():
     print(f"Hover Mode:    {args.hover_mode if args.hover_mode is not None else 'N/A'}")
     print(f"Flight Period: {args.flight_period or ('30s' if args.platform == PlatformType.SIM else '60s')}")
     print(f"Controller:    {args.controller_dir or '(default: src/controller_params)'}")
+    print(f"Feedforward:   {'DISABLED (u_ff = 0)' if args.no_feedforward else 'Enabled'}")
     print(f"Data Logging:  {'Enabled → ' + log_file if logging_enabled else 'Disabled'}")
     print("=" * 60 + "\n")
 
@@ -127,6 +134,7 @@ def main():
         controller_dir=args.controller_dir,
         flight_period_=args.flight_period,
         logging_enabled=logging_enabled,
+        use_feedforward=not args.no_feedforward,
     )
 
     logger = Logger(log_file, base_path) if logging_enabled else None
