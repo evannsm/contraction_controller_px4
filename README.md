@@ -112,7 +112,7 @@ make run_controller PLATFORM=sim TRAJECTORY=hover HOVER_MODE=1
 make run_controller PLATFORM=sim TRAJECTORY=hover HOVER_MODE=4 FLIGHT_PERIOD=45
 
 # Simulation — figure-eight
-make run_controller PLATFORM=sim TRAJECTORY=figure_eight
+make run_controller PLATFORM=sim TRAJECTORY=fig8
 
 # Simulation — trefoil knot
 make run_controller PLATFORM=sim TRAJECTORY=trefoil
@@ -127,14 +127,14 @@ make run_controller PLATFORM=sim TRAJECTORY=fig8_heading
 make run_controller PLATFORM=hw TRAJECTORY=hover HOVER_MODE=1
 
 # Hardware — figure-eight
-make run_controller PLATFORM=hw TRAJECTORY=figure_eight
+make run_controller PLATFORM=hw TRAJECTORY=fig8
 
 # Custom weights
 make run_controller PLATFORM=sim TRAJECTORY=hover HOVER_MODE=1 \
     CONTROLLER_DIR=/workspace/src/my_weights
 
 # With data logging (auto-generated filename)
-make run_controller PLATFORM=sim TRAJECTORY=figure_eight LOG=1
+make run_controller PLATFORM=sim TRAJECTORY=fig8 LOG=1
 
 # With data logging and custom filename
 make run_controller PLATFORM=sim TRAJECTORY=trefoil LOG=1 LOG_FILE=my_run
@@ -145,7 +145,7 @@ Or drop into the container and run the node directly:
 ```bash
 make attach
 ros2 run contraction_controller_px4 run_node \
-    --platform sim --trajectory figure_eight --flight-period 60
+    --platform sim --trajectory figure_eight --flight-period 60  # or fig8
 ```
 
 ---
@@ -155,7 +155,7 @@ ros2 run contraction_controller_px4 run_node \
 | `TRAJECTORY` | Shape | Period | Sim scale | HW scale |
 |---|---|---|---|---|
 | `hover` | Static point | — | — | — |
-| `figure_eight` | Horizontal figure-eight | 10 s | R = 2.0 m | R = 0.5 m |
+| `fig8` (or `figure_eight`) | Horizontal figure-eight | 10 s | R = 2.0 m | R = 0.5 m |
 | `trefoil` | 3-D trefoil knot | 15 s | R = 1.0 m | R = 0.3 m |
 | `spiral` | Horizontal circle | 7.5 s | R = 2.0 m | R = 0.5 m |
 | `fig8_heading` | Figure-eight + yaw tracking | 15 s | R = 1.5 m | R = 0.4 m |

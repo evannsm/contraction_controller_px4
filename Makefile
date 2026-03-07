@@ -96,11 +96,14 @@ LOG             ?=
 LOG_FILE        ?=
 NO_FEEDFORWARD  ?=
 
+# Allow TRAJECTORY=fig8 as shorthand for figure_eight
+_TRAJ := $(if $(filter fig8,$(TRAJECTORY)),figure_eight,$(TRAJECTORY))
+
 run_controller:
 	docker exec -it $(CONTAINER_NAME) bash -lc \
 		"ros2 run contraction_controller_px4 run_node \
-		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
-		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+		   --platform $(PLATFORM) --trajectory $(_TRAJ) \
+		   $(if $(filter hover,$(_TRAJ)),--hover-mode $(HOVER_MODE),) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
 		   $(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),) \
 		   $(if $(LOG),--log,) \
