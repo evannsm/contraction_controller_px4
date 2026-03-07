@@ -133,7 +133,16 @@ def contraction_control(
         Control input [T (N), p_cmd (rad/s), q_cmd (rad/s), r_cmd (rad/s)].
     """
     K_use = K_EQ if K is None else K
-    u = control_net(x) - control_net(x_ff) + K_use @ (x - x_ff) + u_ff
+
+    # Normalize actual yaw to be within π of reference yaw so that:
+    #   1. The yaw error fed to K is in [-π, π] (no 2π jumps)
+    #   2. The NN sees a yaw consistent with x_ff (not ±2π away from it)
+    yaw_diff = x[9] - x_ff[9]
+    n_wraps = jnp.round(yaw_diff / (2 * jnp.pi))
+    x_aligned = x.at[9].set(x[9] - n_wraps * 2 * jnp.pi)
+
+    e = x_aligned - x_ff
+    u = control_net(x_aligned) - control_net(x_ff) + K_use @ e + u_ff
     return u
 
 
