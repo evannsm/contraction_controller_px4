@@ -87,14 +87,18 @@ clean_build_ros:
 	$(MAKE) build_ros PACKAGES="$(PACKAGES)"
 
 # ── Run the contraction controller ───────────────────────────────────────────
-PLATFORM   ?= sim
-TRAJECTORY ?= hover
-HOVER_MODE ?= 1
+PLATFORM        ?= sim
+TRAJECTORY      ?= hover
+HOVER_MODE      ?= 1
+FLIGHT_PERIOD   ?=
+CONTROLLER_DIR  ?=
 
 run_controller:
 	docker exec -it $(CONTAINER_NAME) bash -lc \
 		"ros2 run contraction_controller_px4 run_node \
 		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
-		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),)"
+		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),)"
 
 .PHONY: build run stop kill attach build_ros clean_build_ros run_controller

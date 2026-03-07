@@ -19,8 +19,9 @@ def create_parser() -> argparse.ArgumentParser:
         epilog="""
 Examples:
   ros2 run contraction_controller_px4 run_node --platform sim --trajectory hover --hover-mode 1
-  ros2 run contraction_controller_px4 run_node --platform sim --trajectory circle_horz
-  ros2 run contraction_controller_px4 run_node --platform hw  --trajectory helix
+  ros2 run contraction_controller_px4 run_node --platform sim --trajectory figure_eight
+  ros2 run contraction_controller_px4 run_node --platform sim --trajectory trefoil
+  ros2 run contraction_controller_px4 run_node --platform hw  --trajectory spiral
         """,
     )
 

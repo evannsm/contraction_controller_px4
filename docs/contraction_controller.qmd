@@ -1,0 +1,278 @@
+---
+title: "Contraction Metric Neural-Network Quadrotor Controller"
+author: "egmc"
+date: today
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+    geometry: margin=1in
+execute:
+  echo: false
+---
+
+# Overview
+
+This document describes the contraction-metric tracking controller implemented
+in `contraction_controller_px4`.  The controller combines a learned
+neural-network policy with a linear stabilising gain to produce a tracking law
+that is provably contracting along any feasible reference trajectory.
+
+Reference states and feedforward controls are computed from trajectory flat
+outputs using JAX automatic differentiation, so any smooth trajectory function
+$\sigma(t)$ can be used without deriving feedforward terms by hand.
+
+# System Model
+
+## State
+
+The quadrotor is represented by a 10-dimensional state vector
+
+$$
+x = \bigl[p_x,\; p_y,\; p_z,\;
+           v_x,\; v_y,\; v_z,\;
+           f,\; \phi,\; \theta,\; \psi
+     \bigr]^\top \in \mathbb{R}^{10},
+$$
+
+where:
+
+- $(p_x, p_y, p_z)$ — NED position (m),
+- $(v_x, v_y, v_z)$ — velocity (m/s),
+- $f = F/m$ — mass-normalised collective thrust, or *specific thrust* (N/kg $\approx$ m/s²), equal to $g \approx 9.81\,\text{m/s}^2$ at hover,
+- $(\phi, \theta, \psi)$ — roll, pitch, yaw (rad).
+
+## Control Input
+
+$$
+u = \bigl[\dot{f},\; \dot{\phi},\; \dot{\theta},\; \dot{\psi}\bigr]^\top \in \mathbb{R}^4,
+$$
+
+i.e.\ the *rates* of specific thrust, roll, pitch, and yaw.  The PX4 interface
+converts $(\dot{\phi}, \dot{\theta}, \dot{\psi})$ directly to body-rate
+setpoints, and $\dot{f}$ is integrated to obtain the actual thrust command.
+
+## Thrust Integration
+
+Because the controller output $u[0] = \dot{f}$ is a rate (N/kg/s), the actual
+thrust command (N) is maintained as a first-order integrator at 100 Hz:
+
+$$
+F_{\text{new}} = F_{\text{last}} + \Delta t \cdot \dot{f} \cdot m,
+$$
+
+where $\Delta t = 0.01\,\text{s}$ and $m$ is the vehicle mass.  This correctly
+handles non-unit masses without any manual scaling.
+
+# Neural-Network Policy
+
+The neural network $\pi_\theta : \mathbb{R}^{10} \to \mathbb{R}^4$ is a
+fully-connected network with the architecture specified in `arch.txt`
+(typically `10 128 softplus 128 softplus 4`), trained using contraction-metric
+certificates (CCM / ControlNet).
+
+Weights are loaded at runtime from `src/controller_params/`:
+
+```python
+control_net = irx.NeuralNetwork('src/controller_params')
+```
+
+The network maps a state $x$ to a raw control output in the same units as $u$
+above.
+
+# Stabilising Gain at Equilibrium
+
+The equilibrium state is
+
+$$
+x_{\text{eq}} = \bigl[0,\,0,\,0,\; 0,\,0,\,0,\; 9.81,\; 0,\,0,\,0\bigr]^\top.
+$$
+
+A linear gain $K_{\text{eq}} \in \mathbb{R}^{4 \times 10}$ (computed offline
+as part of the certificate synthesis and hard-coded in `controller.py`) is
+added around equilibrium:
+
+$$
+\boxed{
+\texttt{control}(x,\,\pi_\theta)
+  = \pi_\theta(x) + K_{\text{eq}}\,(x - x_{\text{eq}}).
+}
+$$
+
+# Tracking Control Law
+
+Let $x_{ff}(t)$ be the feedforward state on the reference trajectory at time
+$t$, and $u_{ff}(t)$ the feedforward control that sustains it.  The full
+tracking input is
+
+$$
+\boxed{
+u(t)
+  = \underbrace{\texttt{control}\!\bigl(x(t),\,\pi_\theta\bigr)
+    }_{\text{feedback at current state}}
+  \;-\;
+  \underbrace{\texttt{control}\!\bigl(x_{ff}(t),\,\pi_\theta\bigr)
+    }_{\text{feedback at reference}}
+  \;+\;
+  \underbrace{u_{ff}(t)}_{\text{feedforward}}.
+}
+$$
+
+**Intuition.**
+
+- *Feedback at $x(t)$* drives the vehicle toward the equilibrium manifold.
+- *Feedback at $x_{ff}(t)$* cancels the nominal action along the reference so
+  the feedforward alone sustains the trajectory when $x = x_{ff}$.
+- *$u_{ff}(t)$* injects the forces required to follow the reference.
+
+This is the contraction-based tracking decomposition: the error
+$e = x - x_{ff}$ is governed by a contracting differential system, giving
+exponential convergence $\|e(t)\| \le c\,e^{-\lambda t}\|e(0)\|$.
+
+# Reference Construction via Differential Flatness
+
+## Flat Output
+
+Every trajectory is defined as a *flat output* (position + heading):
+
+$$
+\sigma(t) = \bigl[p_x(t),\; p_y(t),\; p_z(t),\; \psi(t)\bigr].
+$$
+
+All higher-order quantities (velocity, acceleration, attitude, rates) are
+recovered from $\sigma$ and its derivatives — no further model knowledge is needed.
+
+## Feedforward State $x_{ff}(t)$
+
+Given $\sigma(t)$ and its derivatives (computed by `jax.jacfwd`):
+
+$$
+\begin{aligned}
+\dot{\sigma} &= \bigl[v_x,\; v_y,\; v_z,\; \dot\psi\bigr], \\
+\ddot{\sigma}[:3] &= \bigl[a_x,\; a_y,\; a_z\bigr],
+\end{aligned}
+$$
+
+the feedforward specific thrust and attitude are
+
+$$
+f = \sqrt{a_x^2 + a_y^2 + (a_z - g)^2}, \qquad
+\theta = \arcsin\!\left(\frac{-a_x}{f}\right), \qquad
+\phi = \arctan2\!\left(a_y,\; g - a_z\right),
+$$
+
+giving the full feedforward state
+
+$$
+x_{ff}(t) = \bigl[p_x,\; p_y,\; p_z,\; v_x,\; v_y,\; v_z,\; f,\; \phi,\; \theta,\; \psi\bigr]^\top.
+$$
+
+## Feedforward Control $u_{ff}(t)$
+
+Differentiating $(f, \phi, \theta)$ once more (again via `jax.jacfwd`):
+
+$$
+u_{ff}(t) = \bigl[\dot{f},\; \dot{\phi},\; \dot{\theta},\; \dot{\psi}\bigr]^\top.
+$$
+
+For a constant-position trajectory (hover) all derivatives are zero, so
+$u_{ff} = \mathbf{0}$ automatically.
+
+## Implementation
+
+```python
+def _flat_to_x_u(t, flat_output):
+    px, py, pz, psi     = flat_output(t)
+    vx, vy, vz, dpsi    = jax.jacfwd(flat_output)(t)
+
+    def f_th_phi(t):
+        ax, ay, az = jax.jacfwd(jax.jacfwd(flat_output))(t)[:3]
+        f   = jnp.sqrt(ax**2 + ay**2 + (az - g)**2)
+        th  = jnp.arcsin(-ax / f)
+        phi = jnp.arctan2(ay, g - az)
+        return jnp.array([f, th, phi])
+
+    f, th, phi           = f_th_phi(t)
+    df, dth, dphi        = jax.jacfwd(f_th_phi)(t)
+    x_ff = jnp.array([px, py, pz, vx, vy, vz, f, phi, th, psi])
+    u_ff = jnp.array([df, dphi, dth, dpsi])
+    return x_ff, u_ff
+```
+
+The entire computation is wrapped in `jax.jit` and compiled during the 10-second
+hover cushion before flight, so there is no latency on the first control tick.
+
+# Available Trajectories
+
+Trajectories are defined in `trajectories.py` as functions
+$\sigma : (\text{float},\; \texttt{TrajContext}) \to \mathbb{R}^4$.
+
+| Name | Shape | Period | Sim radius | HW radius |
+|---|---|---|---|---|
+| `hover` | Static point | — | — | — |
+| `figure_eight` | Horizontal Lissajous | 10 s | 2.0 m | 0.5 m |
+| `trefoil` | 3-D trefoil knot | 15 s | 1.0 m | 0.3 m |
+| `spiral` | Horizontal circle | 7.5 s | 2.0 m | 0.5 m |
+| `fig8_heading` | Figure-eight + yaw | 15 s | 1.5 m | 0.4 m |
+
+Heights are set automatically: $-3.0\,\text{m}$ (NED) in simulation and
+$-0.85\,\text{m}$ on hardware.
+
+## Adding a New Trajectory
+
+Define a function in `trajectories.py`:
+
+```python
+def my_traj(t: float, ctx: TrajContext) -> jnp.ndarray:
+    height = SIM_HEIGHT if ctx.sim else HW_HEIGHT
+    px = ...   # smooth function of t
+    py = ...
+    pz = -height
+    psi = 0.0
+    return jnp.array([px, py, pz, psi], dtype=jnp.float32)
+```
+
+Add `MY_TRAJ = "my_traj"` to `TrajectoryType` and register it in `TRAJ_REGISTRY`.
+No feedforward derivation is required — `_flat_to_x_u` handles it via autodiff.
+
+# ROS 2 Integration
+
+The node `ContractionOffboardControl` runs at **100 Hz** and progresses through
+four automatic flight phases:
+
+| Phase | Duration | Mode |
+|---|---|---|
+| HOVER | 10 s cushion | PX4 position setpoint |
+| CUSTOM | `--flight-period` | Contraction controller (bodyrate offboard) |
+| RETURN | 10 s cushion | PX4 position setpoint |
+| LAND | until disarm | PX4 land command |
+
+Subscriptions: `/fmu/out/vehicle_odometry`, `/fmu/out/vehicle_status_v1`,
+`/fmu/out/rc_channels`, `/fmu/out/battery_status`.
+
+Publications: `/fmu/in/vehicle_rates_setpoint`,
+`/fmu/in/trajectory_setpoint`, `/fmu/in/offboard_control_mode`,
+`/fmu/in/vehicle_command`.
+
+# Running the Controller
+
+```bash
+# Simulation — hover at position 1
+make run_controller PLATFORM=sim TRAJECTORY=hover HOVER_MODE=1
+
+# Simulation — figure-eight
+make run_controller PLATFORM=sim TRAJECTORY=figure_eight
+
+# Simulation — trefoil knot
+make run_controller PLATFORM=sim TRAJECTORY=trefoil
+
+# Hardware — spiral
+make run_controller PLATFORM=hw TRAJECTORY=spiral
+
+# Custom weights directory
+make run_controller PLATFORM=sim TRAJECTORY=figure_eight \
+    CONTROLLER_DIR=/path/to/weights
+```
+
+See `README.md` at the repository root for the full setup and workflow.
