@@ -43,7 +43,13 @@ from contraction_controller_px4_utils.transformations.adjust_yaw import adjust_y
 from quad_platforms import PlatformConfig, PlatformType, PLATFORM_REGISTRY  # type: ignore[import]
 from .trajectories import TrajContext, TrajectoryType, TRAJ_REGISTRY
 
-from .controller import contraction_control, load_control_net, X_EQ
+from .controller import (
+    contraction_control,
+    compute_lqr_gain,
+    load_control_net,
+    K_EQ,
+    X_EQ,
+)
 from Logger import LogType, VectorLogType  # type: ignore[import]
 
 GRAVITY: float = 9.81
@@ -205,6 +211,11 @@ class ContractionOffboardControl(Node):
         self.x_ff_last: np.ndarray = np.array(X_EQ)
         self.u_ff_last: np.ndarray = np.zeros(4)
 
+        # ── LQR state ─────────────────────────────────────────────────────────
+        self._K_current: jnp.ndarray = K_EQ
+
+        self.lqr_timer = self.create_timer(0.1, self._lqr_update_callback)  # 10 Hz
+
         # ── Logging ───────────────────────────────────────────────────────────
         self.logging_enabled = logging_enabled
         if self.logging_enabled:
@@ -298,6 +309,18 @@ class ContractionOffboardControl(Node):
         jax.block_until_ready(u)
         t1 = time.perf_counter()
         self.get_logger().info(f"  JIT:    {(t1-t0)*1e3:.1f} ms  → {1.0/(t1-t0):.0f} Hz capable")
+
+        self.get_logger().info("[LQR] Pre-compiling Jacobian + warming up scipy CARE solver...")
+        t0 = time.perf_counter()
+        K = compute_lqr_gain(dummy_xff, dummy_uff)
+        t1 = time.perf_counter()
+        self.get_logger().info(f"  First call (JIT trace + CARE): {(t1-t0)*1e3:.1f} ms")
+
+        t0 = time.perf_counter()
+        K = compute_lqr_gain(dummy_xff, dummy_uff)
+        t1 = time.perf_counter()
+        self.get_logger().info(f"  Second call (JIT + CARE):      {(t1-t0)*1e3:.1f} ms")
+        self._K_current = K
 
     # ── Subscriber callbacks ──────────────────────────────────────────────────
     def vehicle_odometry_callback(self, msg):
@@ -466,15 +489,13 @@ class ContractionOffboardControl(Node):
         t = jnp.float32(self.reference_time)
         x_ff, u_ff = self._flat_to_x_u_jit(t)
 
-        print(f"{x_ff=}")
-        print(f"{u_ff=}")
-
         t0 = time.time()
         u_raw = contraction_control(
             jnp.array(self.contraction_state, dtype=jnp.float32),
             x_ff,
             u_ff if self.use_feedforward else jnp.zeros(4, dtype=jnp.float32),
             self.control_net,
+            K=self._K_current,
         )
         jax.block_until_ready(u_raw)
         self.compute_time = time.time() - t0
@@ -502,6 +523,21 @@ class ContractionOffboardControl(Node):
             float(u_raw[2]),
             float(u_raw[3]),
         ]
+
+    # ── LQR gain update (10 Hz) ───────────────────────────────────────────────
+    def _lqr_update_callback(self) -> None:
+        if not self.trajectory_started:
+            return
+        try:
+            self._K_current = compute_lqr_gain(
+                jnp.array(self.x_ff_last, dtype=jnp.float32),
+                jnp.array(self.u_ff_last, dtype=jnp.float32),
+            )
+        except Exception as e:
+            self.get_logger().warning(
+                f"[LQR] CARE solve failed, keeping previous K: {e}",
+                throttle_duration_sec=1.0,
+            )
 
     # ── Data logging ─────────────────────────────────────────────────────────
     def _data_log_callback(self) -> None:
