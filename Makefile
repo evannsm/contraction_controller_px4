@@ -12,8 +12,8 @@
 #                            (branch: v1.16_minimal_msgs) and pre-built into
 #                            /opt/ws_px4_msgs/install/ so it is always
 #                            available as an upstream ROS 2 overlay
-#   • Python venv          — /opt/px4-venv with JAX, equinox, immrax, linrax
-#                            (jax-0.9-support branches of both)
+#   • Python packages      — JAX, equinox, immrax, linrax installed to system Python
+#                            (jax-0.9-support branches of immrax and linrax)
 #
 # HOW THE CONTAINER INTERACTS WITH THE HOST WORKSPACE
 # ─────────────────────────────────────────────────────
@@ -30,7 +30,6 @@
 # Source chain inside the container (.bashrc / profile.d):
 #   /opt/ros/jazzy/setup.bash
 #   → /opt/ws_px4_msgs/install/setup.bash   (px4_msgs overlay)
-#   → /opt/px4-venv/bin/activate            (Python venv)
 #   → /workspace/install/setup.bash         (your built packages, if present)
 #
 # TYPICAL WORKFLOW
