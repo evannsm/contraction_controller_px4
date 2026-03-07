@@ -411,7 +411,7 @@ class ContractionOffboardControl(Node):
         )
         jax.block_until_ready(u_raw)
         compute_time = time.time() - t0
-
+        # print("HIHIHIHIHI\n\n\n\n")
         # u_raw[0] is df (specific force rate, N/kg/s); scale by mass to get thrust rate (N/s)
         f_dot = float(u_raw[0])
         thrust = self.last_input[0] + 0.01 * f_dot * self.platform.mass
