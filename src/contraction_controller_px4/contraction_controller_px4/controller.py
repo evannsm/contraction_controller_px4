@@ -57,8 +57,11 @@ _N_INPUT = 4
 _B_np = np.zeros((_N_STATE, _N_INPUT), dtype=np.float64)
 _B_np[6:, :] = np.eye(_N_INPUT, dtype=np.float64)
 
-Q_LQR = np.eye(_N_STATE)
-R_LQR = np.eye(_N_INPUT)
+# State:   [px,  py,  pz,   vx,  vy,  vz,   f,   phi, theta, psi]
+# Control: [df,  dphi, dtheta, dpsi]
+# Conservative tuning: modest z/yaw emphasis, R stays near identity.
+Q_LQR = np.diag([2.0, 2.0, 5.0, 1.0, 1.0, 2.0, 1.0, 2.0, 2.0, 8.0])
+R_LQR = np.diag([1.0, 1.0, 1.0, 0.5])
 
 # JIT-compiled Jacobian — Jacobian of NED dynamics w.r.t. state and input
 _jac_dynamics = jax.jit(jax.jacfwd(quad_dynamics_ned, argnums=(0, 1)))
