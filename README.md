@@ -101,6 +101,7 @@ All variables and their defaults:
 | `CONTROLLER_DIR` | *(auto)* | path to weights dir inside container (default: `src/controller_params`) |
 | `LOG` | *(off)* | set to any non-empty value to enable CSV logging |
 | `LOG_FILE` | *(auto)* | log filename stem (without `.csv`); auto-generated if omitted |
+| `NO_FEEDFORWARD` | `0` | set to `1` to disable the `u_ff` term (suffix `_no_ff` in auto filename) |
 
 #### Examples
 
@@ -257,10 +258,13 @@ Logging runs at 10 Hz (during CUSTOM phase only).
 ### Auto-generated filename format
 
 ```
-{platform}_contraction_{trajectory}[_mode{N}].csv
+{platform}_contraction_{trajectory}[_mode{N}][_no_ff].csv
 # e.g.:  sim_contraction_figure_eight.csv
 #        hw_contraction_hover_mode1.csv
+#        sim_contraction_figure_eight_no_ff.csv   (NO_FEEDFORWARD=1)
 ```
+
+The `_no_ff` suffix is appended automatically when `NO_FEEDFORWARD=1` is set.
 
 ---
 
@@ -272,7 +276,10 @@ Logging runs at 10 Hz (during CUSTOM phase only).
 u(t) = π(x(t)) − π(x_ff(t)) + u_ff(t)
 ```
 
-`π` is the trained neural network plus a linear stabilising gain at equilibrium.
+`π` is the trained neural network.  `K(t)` is a time-varying LQR gain computed
+by linearising the NED quadrotor dynamics around the current vehicle state via
+`jax.jacfwd` and solving the continuous-time algebraic Riccati equation with
+`python-control`'s `ctrl.lqr` (updates at 10 Hz).
 `x_ff(t)` and `u_ff(t)` are the feedforward state and control derived from the
 reference trajectory. The error `e = x − x_ff` converges exponentially under the
 contraction metric certificate.
@@ -367,7 +374,7 @@ contraction_controller_px4/        ← repo root = ROS 2 workspace root
 | Base | `osrf/ros:jazzy-desktop-full` |
 | ROS 2 | Jazzy |
 | px4_msgs | pre-built overlay at `/opt/ws_px4_msgs` (branch `v1.16_minimal_msgs`) |
-| Python venv | `/opt/px4-venv` — JAX, equinox, immrax, linrax (`jax-0.9-support` branches) |
+| Python venv | `/opt/px4-venv` — JAX, equinox, immrax, linrax (`jax-0.9-support` branches), python-control |
 
 ---
 
