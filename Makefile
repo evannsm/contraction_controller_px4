@@ -92,6 +92,8 @@ TRAJECTORY      ?= hover
 HOVER_MODE      ?= 1
 FLIGHT_PERIOD   ?=
 CONTROLLER_DIR  ?=
+LOG             ?=
+LOG_FILE        ?=
 
 run_controller:
 	docker exec -it $(CONTAINER_NAME) bash -lc \
@@ -99,6 +101,8 @@ run_controller:
 		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
 		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
-		   $(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),)"
+		   $(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),) \
+		   $(if $(LOG),--log,) \
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
 
 .PHONY: build run stop kill attach build_ros clean_build_ros run_controller

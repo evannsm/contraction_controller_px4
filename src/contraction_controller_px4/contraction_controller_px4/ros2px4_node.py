@@ -44,6 +44,7 @@ from quad_platforms import PlatformConfig, PlatformType, PLATFORM_REGISTRY  # ty
 from .trajectories import TrajContext, TrajectoryType, TRAJ_REGISTRY
 
 from .controller import contraction_control, load_control_net, X_EQ
+from Logger import LogType, VectorLogType  # type: ignore[import]
 
 GRAVITY: float = 9.81
 
@@ -82,6 +83,7 @@ class ContractionOffboardControl(Node):
         hover_mode: int | None = None,
         controller_dir: str | None = None,
         flight_period_: float | None = None,
+        logging_enabled: bool = False,
     ) -> None:
         super().__init__("contraction_offboard_control_node")
         self.get_logger().info("Initializing Contraction Controller ROS2 node.")
@@ -195,6 +197,65 @@ class ContractionOffboardControl(Node):
         self.timer = self.create_timer(0.1, self.offboard_mode_timer_callback)
         self.publish_control_timer = self.create_timer(0.01, self.publish_control_timer_callback)
         self.compute_control_timer = self.create_timer(0.01, self.compute_control_timer_callback)
+
+        self.compute_time: float = 0.0
+        self.x_ff_last: np.ndarray = np.array(X_EQ)
+        self.u_ff_last: np.ndarray = np.zeros(4)
+
+        # ── Logging ───────────────────────────────────────────────────────────
+        self.logging_enabled = logging_enabled
+        if self.logging_enabled:
+            # Metadata (written once)
+            self.platform_logtype      = LogType("platform",   0)
+            self.trajectory_logtype    = LogType("trajectory",  1)
+            self.controller_logtype    = LogType("controller",  2)
+            self.platform_logtype.append(platform_type.value.upper())
+            self.trajectory_logtype.append(trajectory.value)
+            self.controller_logtype.append("contraction")
+
+            # Timing
+            self.time_logtype          = LogType("time",        10)
+            self.traj_time_logtype     = LogType("traj_time",   11)
+            self.comp_time_logtype     = LogType("comp_time",   12)
+
+            # True odometry state (from VehicleOdometry)
+            self.x_logtype             = LogType("x",           20)
+            self.y_logtype             = LogType("y",           21)
+            self.z_logtype             = LogType("z",           22)
+            self.yaw_logtype           = LogType("yaw",         23)
+            self.vx_logtype            = LogType("vx",          24)
+            self.vy_logtype            = LogType("vy",          25)
+            self.vz_logtype            = LogType("vz",          26)
+            self.roll_logtype          = LogType("roll",        27)
+            self.pitch_logtype         = LogType("pitch",       28)
+            self.f_logtype             = LogType("f",           29)  # specific thrust (N/kg)
+            # True body rates (from odometry angular_velocity)
+            self.p_logtype             = LogType("p",           30)
+            self.q_logtype             = LogType("q",           31)
+            self.r_logtype             = LogType("r",           32)
+
+            # Reference state (x_ff from flat_to_x_u)
+            self.x_ref_logtype         = LogType("x_ref",       40)
+            self.y_ref_logtype         = LogType("y_ref",       41)
+            self.z_ref_logtype         = LogType("z_ref",       42)
+            self.yaw_ref_logtype       = LogType("yaw_ref",     43)
+            self.vx_ref_logtype        = LogType("vx_ref",      44)
+            self.vy_ref_logtype        = LogType("vy_ref",      45)
+            self.vz_ref_logtype        = LogType("vz_ref",      46)
+            self.roll_ref_logtype      = LogType("roll_ref",    47)
+            self.pitch_ref_logtype     = LogType("pitch_ref",   48)
+            self.f_ref_logtype         = LogType("f_ref",       49)
+
+            # Reference control (u_ff from flat_to_x_u): rates of [f, phi, th, psi]
+            self.u_ff_logtype          = VectorLogType("u_ff",  50, ["df", "dphi", "dth", "dpsi"])
+
+            # Commanded inputs sent to PX4
+            self.throttle_logtype      = LogType("throttle",    60)
+            self.p_cmd_logtype         = LogType("p_cmd",       61)
+            self.q_cmd_logtype         = LogType("q_cmd",       62)
+            self.r_cmd_logtype         = LogType("r_cmd",       63)
+
+            self.data_log_timer = self.create_timer(0.1, self._data_log_callback)
 
         self.T0 = time.time()
         self.get_logger().info("Contraction controller node ready.")
@@ -410,7 +471,10 @@ class ContractionOffboardControl(Node):
             self.control_net,
         )
         jax.block_until_ready(u_raw)
-        compute_time = time.time() - t0
+        self.compute_time = time.time() - t0
+        compute_time = self.compute_time
+        self.x_ff_last = np.array(x_ff)
+        self.u_ff_last = np.array(u_ff)
         # print("HIHIHIHIHI\n\n\n\n")
         # u_raw[0] is df (specific force rate, N/kg/s); scale by mass to get thrust rate (N/s)
         f_dot = float(u_raw[0])
@@ -432,6 +496,56 @@ class ContractionOffboardControl(Node):
             float(u_raw[2]),
             float(u_raw[3]),
         ]
+
+    # ── Data logging ─────────────────────────────────────────────────────────
+    def _data_log_callback(self) -> None:
+        if self.get_phase() is not FlightPhase.CUSTOM:
+            return
+        if not self.mocap_initialized:
+            return
+
+        # Timing
+        self.time_logtype.append(self.program_time)
+        self.traj_time_logtype.append(self.trajectory_time)
+        self.comp_time_logtype.append(self.compute_time)
+
+        # True state from odometry
+        self.x_logtype.append(self.x)
+        self.y_logtype.append(self.y)
+        self.z_logtype.append(self.z)
+        self.yaw_logtype.append(self.yaw)
+        self.vx_logtype.append(self.vx)
+        self.vy_logtype.append(self.vy)
+        self.vz_logtype.append(self.vz)
+        self.roll_logtype.append(self.roll)
+        self.pitch_logtype.append(self.pitch)
+        self.f_logtype.append(self.last_input[0] / self.platform.mass)  # N → N/kg
+        self.p_logtype.append(self.wx)
+        self.q_logtype.append(self.wy)
+        self.r_logtype.append(self.wz)
+
+        # Reference state (x_ff): [px, py, pz, vx, vy, vz, f, phi, th, psi]
+        xff = self.x_ff_last
+        self.x_ref_logtype.append(xff[0])
+        self.y_ref_logtype.append(xff[1])
+        self.z_ref_logtype.append(xff[2])
+        self.vx_ref_logtype.append(xff[3])
+        self.vy_ref_logtype.append(xff[4])
+        self.vz_ref_logtype.append(xff[5])
+        self.f_ref_logtype.append(xff[6])
+        self.roll_ref_logtype.append(xff[7])    # phi
+        self.pitch_ref_logtype.append(xff[8])   # theta
+        self.yaw_ref_logtype.append(xff[9])
+
+        # Reference control (u_ff): [df, dphi, dth, dpsi]
+        uff = self.u_ff_last
+        self.u_ff_logtype.append(uff[0], uff[1], uff[2], uff[3])
+
+        # Commanded inputs
+        self.throttle_logtype.append(self.normalized_input[0])
+        self.p_cmd_logtype.append(self.normalized_input[1])
+        self.q_cmd_logtype.append(self.normalized_input[2])
+        self.r_cmd_logtype.append(self.normalized_input[3])
 
     # ── Setpoint helpers ──────────────────────────────────────────────────────
     def _publish_position(self, x: float, y: float, z: float, yaw: float) -> None:

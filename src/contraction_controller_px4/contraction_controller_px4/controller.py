@@ -66,7 +66,7 @@ def contraction_control(
     jnp.ndarray, shape (4,)
         Control input [T (N), p_cmd (rad/s), q_cmd (rad/s), r_cmd (rad/s)].
     """
-    u = control(x, control_net) - control(x_ff, control_net)# + u_ff
+    u = control(x, control_net) - control(x_ff, control_net) + u_ff
     return u
 
 

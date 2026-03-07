@@ -48,7 +48,7 @@ src/controller_params/
 ## Quickstart
 
 ```bash
-git clone --recurse-submodules <repo-url>
+git clone --recurse-submodules git@github.com:evannsm/contraction_controller_px4.git
 cd contraction_controller_px4
 make build      # build Docker image (~10 min, once)
 make run        # start container
@@ -99,6 +99,8 @@ All variables and their defaults:
 | `HOVER_MODE` | `1` | 1–8, required when `TRAJECTORY=hover` |
 | `FLIGHT_PERIOD` | *(auto)* | flight duration in seconds (30 sim / 60 hw) |
 | `CONTROLLER_DIR` | *(auto)* | path to weights dir inside container (default: `src/controller_params`) |
+| `LOG` | *(off)* | set to any non-empty value to enable CSV logging |
+| `LOG_FILE` | *(auto)* | log filename stem (without `.csv`); auto-generated if omitted |
 
 #### Examples
 
@@ -130,6 +132,12 @@ make run_controller PLATFORM=hw TRAJECTORY=figure_eight
 # Custom weights
 make run_controller PLATFORM=sim TRAJECTORY=hover HOVER_MODE=1 \
     CONTROLLER_DIR=/workspace/src/my_weights
+
+# With data logging (auto-generated filename)
+make run_controller PLATFORM=sim TRAJECTORY=figure_eight LOG=1
+
+# With data logging and custom filename
+make run_controller PLATFORM=sim TRAJECTORY=trefoil LOG=1 LOG_FILE=my_run
 ```
 
 Or drop into the container and run the node directly:
@@ -220,6 +228,39 @@ HOVER (10 s) → CUSTOM (flight-period) → RETURN (10 s) → LAND
 | **CUSTOM** | Offboard bodyrate control | Contraction NN controller tracks the selected trajectory |
 | **RETURN** | PX4 position setpoint | Vehicle returns to hover point |
 | **LAND** | PX4 land command | Descends and disarms automatically |
+
+---
+
+## Data logging
+
+Pass `LOG=1` to enable CSV logging. The file is written to
+`src/data_analysis/log_files/` (on the host, since the workspace is bind-mounted)
+when the node shuts down (Ctrl+C or end of flight).
+
+### Logged columns
+
+| Group | Columns | Description |
+|---|---|---|
+| Timing | `time`, `traj_time`, `comp_time` | program time, trajectory time, controller compute time (s) |
+| True state | `x`, `y`, `z`, `roll`, `pitch`, `yaw` | NED position and Euler angles (m, rad) |
+| True velocity | `vx`, `vy`, `vz` | NED velocity (m/s) |
+| True thrust | `f` | specific thrust = F/m (N/kg) |
+| True rates | `p`, `q`, `r` | body angular rates from odometry (rad/s) |
+| Reference state | `x_ref`, `y_ref`, `z_ref`, `roll_ref`, `pitch_ref`, `yaw_ref` | x_ff position and angles |
+| Reference velocity | `vx_ref`, `vy_ref`, `vz_ref` | x_ff velocity |
+| Reference thrust | `f_ref` | x_ff specific thrust (N/kg) |
+| Reference control | `u_ff_df`, `u_ff_dphi`, `u_ff_dth`, `u_ff_dpsi` | feedforward rates (N/kg/s, rad/s) |
+| Commands | `throttle`, `p_cmd`, `q_cmd`, `r_cmd` | normalized throttle and body-rate commands sent to PX4 |
+
+Logging runs at 10 Hz (during CUSTOM phase only).
+
+### Auto-generated filename format
+
+```
+{platform}_contraction_{trajectory}[_mode{N}].csv
+# e.g.:  sim_contraction_figure_eight.csv
+#        hw_contraction_hover_mode1.csv
+```
 
 ---
 
