@@ -320,7 +320,7 @@ class ContractionOffboardControl(Node):
         K = compute_lqr_gain(dummy_xff, dummy_uff)
         t1 = time.perf_counter()
         self.get_logger().info(f"  Second call (JIT + CARE):      {(t1-t0)*1e3:.1f} ms")
-        self._K_current = K
+        # Do NOT assign _K_current here — leave it as K_EQ until LQR is validated
 
     # ── Subscriber callbacks ──────────────────────────────────────────────────
     def vehicle_odometry_callback(self, msg):
@@ -530,7 +530,7 @@ class ContractionOffboardControl(Node):
             return
         try:
             self._K_current = compute_lqr_gain(
-                jnp.array(self.x_ff_last, dtype=jnp.float32),
+                jnp.array(self.contraction_state, dtype=jnp.float32),
                 jnp.array(self.u_ff_last, dtype=jnp.float32),
             )
         except Exception as e:
