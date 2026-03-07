@@ -105,6 +105,6 @@ run_controller:
 		   $(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
-		   $(if $(NO_FEEDFORWARD),--no-feedforward,)"
+		   $(if $(filter 1,$(NO_FEEDFORWARD)),--no-feedforward,)"
 
 .PHONY: build run stop kill attach build_ros clean_build_ros run_controller

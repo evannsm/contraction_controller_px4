@@ -11,7 +11,6 @@ from .trajectories import TrajectoryType
 from .ros2px4_node import ContractionOffboardControl
 
 from Logger import Logger  # type: ignore[import]
-from Logger.shutdown_helpers import install_shutdown_logging  # type: ignore[import]
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -138,9 +137,6 @@ def main():
     )
 
     logger = Logger(log_file, base_path) if logging_enabled else None
-
-    if logger is not None:
-        install_shutdown_logging(logger, node)
 
     try:
         rclpy.spin(node)
