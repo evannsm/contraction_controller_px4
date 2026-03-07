@@ -195,8 +195,9 @@ class ContractionOffboardControl(Node):
         # ── Timers ────────────────────────────────────────────────────────────
         self.offboard_setpoint_counter = 0
         self.timer = self.create_timer(0.1, self.offboard_mode_timer_callback)
-        self.publish_control_timer = self.create_timer(0.01, self.publish_control_timer_callback)
-        self.compute_control_timer = self.create_timer(0.01, self.compute_control_timer_callback)
+        self.controller_period = 0.01
+        self.publish_control_timer = self.create_timer(self.controller_period, self.publish_control_timer_callback)
+        self.compute_control_timer = self.create_timer(self.controller_period, self.compute_control_timer_callback)
 
         self.compute_time: float = 0.0
         self.x_ff_last: np.ndarray = np.array(X_EQ)
@@ -475,10 +476,10 @@ class ContractionOffboardControl(Node):
         compute_time = self.compute_time
         self.x_ff_last = np.array(x_ff)
         self.u_ff_last = np.array(u_ff)
-        # print("HIHIHIHIHI\n\n\n\n")
+
         # u_raw[0] is df (specific force rate, N/kg/s); scale by mass to get thrust rate (N/s)
         f_dot = float(u_raw[0])
-        thrust = self.last_input[0] + 0.01 * f_dot * self.platform.mass
+        thrust = self.last_input[0] + (self.controller_period) * (f_dot * self.platform.mass)
         self.last_input = np.array([thrust, float(u_raw[1]), float(u_raw[2]), float(u_raw[3])])
         self.get_logger().warning(
             f"Compute: {compute_time*1e3:.2f} ms  u={np.array(u_raw)}  thrust={thrust:.3f}",
