@@ -1,0 +1,2 @@
+time,x,y,z,yaw,platform,trajectory,controller,feedforward,traj_time,comp_time,vx,vy,vz,roll,pitch,f,p,q,r,x_ref,y_ref,z_ref,yaw_ref,vx_ref,vy_ref,vz_ref,roll_ref,pitch_ref,f_ref,u_ff_df,u_ff_dphi,u_ff_dpsi,u_ff_dth,throttle,p_cmd,q_cmd,r_cmd
+nan,nan,nan,nan,nan,SIM,figure_eight,contraction,1,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
