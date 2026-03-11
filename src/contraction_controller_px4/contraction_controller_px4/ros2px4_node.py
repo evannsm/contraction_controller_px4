@@ -77,9 +77,21 @@ def _flat_to_x_u(t, flat_output):
 
     f, th, phi = f_th_phi(t)
     df, dth, dphi = jax.jacfwd(f_th_phi)(t)
-    x_ff = jnp.array([px, py, pz, vx, vy, vz, f, phi, th, psi])
-    u_ff = jnp.array([df, dphi, dth, dpsi])
+    x_ff = jnp.array([px, py, pz, vx, vy, vz, f, phi, th, psi], dtype=jnp.float32)
+    u_ff = jnp.array([df, dphi, dth, dpsi], dtype=jnp.float32)
     return x_ff, u_ff
+
+
+def _flat_to_x(t, flat_output):
+    """Compute reference state x_ff only — skips u_ff (3rd-order) derivatives."""
+    g = GRAVITY
+    px, py, pz, psi = flat_output(t)
+    vx, vy, vz, _ = jax.jacfwd(flat_output)(t)
+    ax, ay, az = jax.jacfwd(jax.jacfwd(flat_output))(t)[:3]
+    f = jnp.sqrt(ax**2 + ay**2 + (az - g) ** 2)
+    th = jnp.arcsin(-ax / f)
+    phi = jnp.arctan2(ay, g - az)
+    return jnp.array([px, py, pz, vx, vy, vz, f, phi, th, psi], dtype=jnp.float32)
 
 
 class ContractionOffboardControl(Node):
@@ -201,7 +213,10 @@ class ContractionOffboardControl(Node):
         _ctx = TrajContext(sim=self.sim, hover_mode=self.hover_mode)
         _traj_func = TRAJ_REGISTRY[self.ref_type]
         self._flat_output = lambda t: _traj_func(t, _ctx)
-        self._flat_to_x_u_jit = jax.jit(lambda t: _flat_to_x_u(t, self._flat_output))
+        if self.use_feedforward:
+            self._flat_to_x_u_jit = jax.jit(lambda t: _flat_to_x_u(t, self._flat_output))
+        else:
+            self._flat_to_x_jit = jax.jit(lambda t: _flat_to_x(t, self._flat_output))
 
         # JIT-compile contraction_control with control_net captured in closure
         # (control_net is a fixed PyTree; K changes at 10 Hz so stays dynamic)
@@ -292,25 +307,39 @@ class ContractionOffboardControl(Node):
 
     # ── Warm-up ───────────────────────────────────────────────────────────────
     def _jit_warmup(self) -> None:
-        dummy_x   = jnp.array(X_EQ)
-        dummy_xff = jnp.array(X_EQ)
-        dummy_uff = jnp.array([0.0, 0.0, 0.0, 0.0])
+        if self.use_feedforward:
+            self.get_logger().info("[JIT] Pre-compiling flat_to_x_u (with FF)...")
+            t0 = time.perf_counter()
+            x_ff, u_ff = self._flat_to_x_u_jit(0.0)
+            jax.block_until_ready(x_ff); jax.block_until_ready(u_ff)
+            t1 = time.perf_counter()
+            self.get_logger().info(f"  Trace:  {(t1-t0)*1e3:.1f} ms")
 
-        self.get_logger().info("[JIT] Pre-compiling flat_to_x_u...")
-        t0 = time.perf_counter()
-        x_ff, u_ff = self._flat_to_x_u_jit(jnp.float32(0.0))
-        jax.block_until_ready(x_ff); jax.block_until_ready(u_ff)
-        t1 = time.perf_counter()
-        self.get_logger().info(f"  Trace:  {(t1-t0)*1e3:.1f} ms")
+            t0 = time.perf_counter()
+            x_ff, u_ff = self._flat_to_x_u_jit(0.1)
+            jax.block_until_ready(x_ff); jax.block_until_ready(u_ff)
+            t1 = time.perf_counter()
+            self.get_logger().info(f"  JIT:    {(t1-t0)*1e3:.1f} ms  x_ff={x_ff}")
+        else:
+            self.get_logger().info("[JIT] Pre-compiling flat_to_x (no FF)...")
+            t0 = time.perf_counter()
+            x_ff = self._flat_to_x_jit(0.0)
+            jax.block_until_ready(x_ff)
+            t1 = time.perf_counter()
+            self.get_logger().info(f"  Trace:  {(t1-t0)*1e3:.1f} ms")
 
-        t0 = time.perf_counter()
-        x_ff, u_ff = self._flat_to_x_u_jit(jnp.float32(0.1))
-        jax.block_until_ready(x_ff); jax.block_until_ready(u_ff)
-        t1 = time.perf_counter()
-        self.get_logger().info(f"  JIT:    {(t1-t0)*1e3:.1f} ms  x_ff={x_ff}")
+            t0 = time.perf_counter()
+            x_ff = self._flat_to_x_jit(0.1)
+            jax.block_until_ready(x_ff)
+            t1 = time.perf_counter()
+            self.get_logger().info(f"  JIT:    {(t1-t0)*1e3:.1f} ms  x_ff={x_ff}")
+            u_ff = jnp.zeros(4, dtype=jnp.float32)
 
         self.get_logger().info("[JIT] Pre-compiling contraction control function...")
         dummy_K = K_EQ
+        dummy_x   = jnp.array(X_EQ, dtype=jnp.float32)
+        dummy_xff = jnp.array(X_EQ, dtype=jnp.float32)
+        dummy_uff = jnp.zeros(4, dtype=jnp.float32)
         t0 = time.perf_counter()
         u = self._contraction_control_jit(dummy_x, dummy_xff, dummy_uff, dummy_K)
         jax.block_until_ready(u)
@@ -505,19 +534,23 @@ class ContractionOffboardControl(Node):
         self.trajectory_time = time.time() - self.trajectory_T0
         self.reference_time = self.trajectory_time  # no lookahead for contraction
 
-        t = jnp.float32(self.reference_time)
-        x_ff, u_ff = self._flat_to_x_u_jit(t)
+        t = float(self.reference_time)  # float64 for precision in autodiff
+        if self.use_feedforward:
+            x_ff, u_ff = self._flat_to_x_u_jit(t)
+        else:
+            x_ff = self._flat_to_x_jit(t)
+            u_ff = jnp.zeros(4, dtype=jnp.float32)
 
         t0 = time.time()
         u_raw = self._contraction_control_jit(
             jnp.array(self.contraction_state, dtype=jnp.float32),
             x_ff,
-            u_ff if self.use_feedforward else jnp.zeros(4, dtype=jnp.float32),
+            u_ff,
             self._K_current,
         )
         jax.block_until_ready(u_raw)
         self.compute_time = time.time() - t0
-        self.get_logger().info(f"Control computed. Good for {1.0/self.compute_time:.1f} Hz")
+        self.get_logger().info(f"Control computed. Good for {1.0/self.compute_time:.1f} Hz", throttle_duration_sec=0.5)
         compute_time = self.compute_time
         self.x_ff_last = np.array(x_ff)
         self.u_ff_last = np.array(u_ff)

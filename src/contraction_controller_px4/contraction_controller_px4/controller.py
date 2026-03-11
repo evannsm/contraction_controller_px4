@@ -8,7 +8,7 @@ from pathlib import Path
 
 GRAVITY = 9.806
 
-X_EQ = jnp.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.81, 0.0, 0.0, 0.0])
+X_EQ = jnp.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.81, 0.0, 0.0, 0.0], dtype=jnp.float32)
 
 K_EQ = jnp.array([
     [ 1.3687341e-15,  9.2672128e-16,  1.0000000e+00,  8.3074916e-16,
@@ -161,7 +161,5 @@ def load_control_net(controller_dir: str | Path):
     -------
     immrax.NeuralNetwork
     """
-    import jax
     import immrax as irx  # type: ignore[import]
-    jax.config.update("jax_enable_x64", False)  # model weights are float32
     return irx.NeuralNetwork(str(controller_dir))
