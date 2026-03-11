@@ -203,6 +203,12 @@ class ContractionOffboardControl(Node):
         self._flat_output = lambda t: _traj_func(t, _ctx)
         self._flat_to_x_u_jit = jax.jit(lambda t: _flat_to_x_u(t, self._flat_output))
 
+        # JIT-compile contraction_control with control_net captured in closure
+        # (control_net is a fixed PyTree; K changes at 10 Hz so stays dynamic)
+        self._contraction_control_jit = jax.jit(
+            lambda x, x_ff, u_ff, K: contraction_control(x, x_ff, u_ff, self.control_net, K)
+        )
+
         # ── JIT warm-up ───────────────────────────────────────────────────────
         self._jit_warmup()
 
@@ -304,14 +310,15 @@ class ContractionOffboardControl(Node):
         self.get_logger().info(f"  JIT:    {(t1-t0)*1e3:.1f} ms  x_ff={x_ff}")
 
         self.get_logger().info("[JIT] Pre-compiling contraction control function...")
+        dummy_K = K_EQ
         t0 = time.perf_counter()
-        u = contraction_control(dummy_x, dummy_xff, dummy_uff, self.control_net)
+        u = self._contraction_control_jit(dummy_x, dummy_xff, dummy_uff, dummy_K)
         jax.block_until_ready(u)
         t1 = time.perf_counter()
         self.get_logger().info(f"  Trace:  {(t1-t0)*1e3:.1f} ms")
 
         t0 = time.perf_counter()
-        u = contraction_control(dummy_x, dummy_xff, dummy_uff, self.control_net)
+        u = self._contraction_control_jit(dummy_x, dummy_xff, dummy_uff, dummy_K)
         jax.block_until_ready(u)
         t1 = time.perf_counter()
         self.get_logger().info(f"  JIT:    {(t1-t0)*1e3:.1f} ms  → {1.0/(t1-t0):.0f} Hz capable")
@@ -502,15 +509,15 @@ class ContractionOffboardControl(Node):
         x_ff, u_ff = self._flat_to_x_u_jit(t)
 
         t0 = time.time()
-        u_raw = contraction_control(
+        u_raw = self._contraction_control_jit(
             jnp.array(self.contraction_state, dtype=jnp.float32),
             x_ff,
             u_ff if self.use_feedforward else jnp.zeros(4, dtype=jnp.float32),
-            self.control_net,
-            K=self._K_current,
+            self._K_current,
         )
         jax.block_until_ready(u_raw)
         self.compute_time = time.time() - t0
+        self.get_logger().info(f"Control computed. Good for {1.0/self.compute_time:.1f} Hz")
         compute_time = self.compute_time
         self.x_ff_last = np.array(x_ff)
         self.u_ff_last = np.array(u_ff)
