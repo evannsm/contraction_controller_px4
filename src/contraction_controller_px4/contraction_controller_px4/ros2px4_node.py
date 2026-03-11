@@ -24,6 +24,7 @@ from px4_msgs.msg import (
     RcChannels,
     TrajectorySetpoint,
     VehicleCommand,
+    VehicleLocalPosition,
     VehicleOdometry,
     VehicleRatesSetpoint,
     VehicleStatus,
@@ -159,6 +160,11 @@ class ContractionOffboardControl(Node):
         self.current_voltage: float = 16.0
         self.battery_status_subscriber = self.create_subscription(
             BatteryStatus, "/fmu/out/battery_status", self.battery_status_callback, qos
+        )
+
+        self.a_world = np.array([0.0, 0.0, GRAVITY])  # NED world-frame acceleration (m/s^2)
+        self.vehicle_local_position_subscriber = self.create_subscription(
+            VehicleLocalPosition, "/fmu/out/vehicle_local_position", self.vehicle_local_position_callback, qos
         )
 
         # ── Flight phases and timing ──────────────────────────────────────────
@@ -343,9 +349,12 @@ class ContractionOffboardControl(Node):
         self.euler_angle_total_yaw = np.array([self.roll, self.pitch, self.yaw])
 
         # 10D contraction state: [px,py,pz, vx,vy,vz, az, roll,pitch,yaw]
-        # az is the current collective thrust per unit mass (N/kg ≈ 9.81 at hover)
-        current_thrust = float(self.last_input[0])
-        az = current_thrust / self.platform.mass
+        # az: specific thrust (N/kg). vehicle_local_position gives kinematic acceleration
+        # (gravity removed), so subtract gravity to get specific force in NED, rotate to
+        # body frame, then negate z (thrust acts in -z_body → specific force z = -f).
+        a_specific_ned = self.a_world - np.array([0.0, 0.0, GRAVITY])
+        a_specific_body = orientation.inv().apply(a_specific_ned)
+        az = -a_specific_body[2]
         self.contraction_state = np.hstack((
             self.position,
             self.velocity,
@@ -375,6 +384,9 @@ class ContractionOffboardControl(Node):
 
     def battery_status_callback(self, battery_status):
         self.current_voltage = battery_status.voltage_v
+
+    def vehicle_local_position_callback(self, msg):
+        self.a_world = np.array([msg.ax, msg.ay, msg.az])
 
     # ── Flight phase helpers ──────────────────────────────────────────────────
     def get_phase(self) -> FlightPhase:
