@@ -1,0 +1,293 @@
+---
+title: "ff_f8_px4 Controller Note"
+subtitle: "Feedforward, Ramp, and Light Feedback for f8_contraction"
+date: today
+format:
+  pdf:
+    documentclass: article
+    classoption: [11pt, a4paper]
+    geometry: [top=1in, bottom=1in, left=1.1in, right=1.1in]
+    number-sections: true
+    colorlinks: true
+    toc: true
+    toc-depth: 2
+    highlight-style: github
+    include-in-header:
+      text: |
+        \usepackage{amsmath,amssymb}
+        \usepackage{booktabs}
+---
+
+## Overview {.unnumbered}
+
+`ff_f8_px4` is a ROS 2 controller for the `f8_contraction` trajectory that publishes
+PX4 body-rate setpoints directly. It is not a full trajectory-tracking controller like
+NMPC or Newton-Raphson. Instead, it starts from a flatness-derived nominal command and
+optionally adds a small amount of stabilizing feedback.
+
+The command sent to PX4 is:
+
+$$
+u = [\tilde{T}, p, q, r]^T
+$$
+
+where $\tilde{T}$ is normalized throttle and $[p,q,r]$ are desired body rates.
+
+# Flatness Feedforward
+
+The package uses the `f8_contraction` flat output
+
+$$
+\sigma(t) = [p_x(t), p_y(t), p_z(t), \psi(t)]^T
+$$
+
+and evaluates `flat_to_x_u(t, flat_output)` to obtain:
+
+$$
+x_{ff} = [p_x, p_y, p_z, v_x, v_y, v_z, f, \phi, \theta, \psi]^T
+$$
+
+and
+
+$$
+u_{ff} = [\dot{f}, \dot{\phi}, \dot{\theta}, \dot{\psi}]^T.
+$$
+
+The important terms are:
+
+- $x_{ff}[6] = f$: specific thrust in $\mathrm{m/s^2}$
+- $x_{ff}[7], x_{ff}[8]$: nominal roll and pitch
+- $u_{ff}[1:4]$: Euler-angle rates, not body rates
+
+# Conversion to PX4 Commands
+
+PX4 expects body rates, so the controller converts Euler-angle rates with the standard ZYX
+kinematic matrix
+
+$$
+\begin{bmatrix}
+\dot{\phi}\\
+\dot{\theta}\\
+\dot{\psi}
+\end{bmatrix}
+=
+T(\phi,\theta)
+\begin{bmatrix}
+p\\
+q\\
+r
+\end{bmatrix}.
+$$
+
+The controller solves for $[p,q,r]^T$:
+
+$$
+\begin{bmatrix}
+p\\
+q\\
+r
+\end{bmatrix}
+=
+T(\phi,\theta)^{-1}
+\begin{bmatrix}
+\dot{\phi}\\
+\dot{\theta}\\
+\dot{\psi}
+\end{bmatrix}.
+$$
+
+Specific thrust is converted to force with
+
+$$
+F = m f
+$$
+
+and then mapped to PX4 throttle with the platform-specific thrust curve.
+
+# Why Pure Feedforward Was Unstable
+
+The vehicle begins the maneuver from hover. Even if its initial position matches the
+trajectory origin, it does not match the trajectory's implied velocity, tilt, and angular
+rate demands. A pure open-loop command therefore asks the vehicle to instantaneously jump
+onto a moving figure-8 with no correction term.
+
+That creates three practical problems:
+
+1. startup mismatch between hover and moving trajectory
+2. no rejection of disturbances or model mismatch
+3. no damping once the vehicle starts deviating
+
+# Startup Ramp
+
+To reduce the initial discontinuity, `ff_f8_px4` uses a startup ramp controlled by
+`--ramp-seconds`.
+
+It applies two smoothing mechanisms:
+
+## 1. Time Warp
+
+During the first ramp interval $T_r$, the trajectory clock is slowed:
+
+$$
+\tau(t) =
+\begin{cases}
+\frac{1}{2}\frac{t^2}{T_r}, & t < T_r \\
+t - \frac{1}{2}T_r, & t \ge T_r
+\end{cases}
+$$
+
+This makes trajectory velocity start at zero and rise smoothly.
+
+## 2. Command Blend
+
+The controller blends from hover commands
+
+$$
+u_{hover} = [\tilde{T}_{hover}, 0, 0, 0]^T
+$$
+
+to the feedforward command $u_{ff,cmd}$ using a smoothstep blend
+
+$$
+\alpha(s) = s^2 (3 - 2s), \qquad s = \mathrm{clip}(t/T_r, 0, 1)
+$$
+
+and
+
+$$
+u = (1-\alpha)u_{hover} + \alpha u_{ff,cmd}.
+$$
+
+# Optional Light Feedback
+
+When `--p-feedback` is enabled, the controller adds a small stabilizing correction around the
+nominal feedforward command.
+
+The current implementation uses:
+
+- position error in $x,y,z$
+- velocity error in $v_x,v_y,v_z$
+- yaw error
+- direct damping of measured body rates
+
+Conceptually, it computes corrected desired attitude and thrust:
+
+$$
+\phi_d = \phi_{ff} + k_{px} e_y + k_{vx} e_{v_y}
+$$
+
+$$
+\theta_d = \theta_{ff} - k_{px} e_x - k_{vx} e_{v_x}
+$$
+
+$$
+f_d = f_{ff} - k_{pz} e_z - k_{vz} e_{v_z}.
+$$
+
+Then it adds attitude-rate corrections and measured-rate damping before publishing.
+
+# Hover and Return Reference
+
+The package no longer hovers at a generic hardcoded point. Instead, the hover and return
+setpoints are taken from the actual first `f8_contraction` reference point:
+
+$$
+[p_x(0), p_y(0), p_z(0), \psi(0)].
+$$
+
+This reduces mismatch at the mode transition, especially on hardware where the old hover
+altitude did not exactly match the trajectory altitude.
+
+# Recommended Usage
+
+Pure feedforward is best treated as a comparison baseline. For practical use, the recommended
+mode is:
+
+```bash
+ros2 run ff_f8_px4 run_node --platform sim --p-feedback --ramp-seconds 4.0 --log
+```
+
+If the vehicle is still too aggressive at startup, increase `--ramp-seconds`. If it becomes
+too sluggish, reduce the ramp and tune the feedback gains in the node.
+
+# What Finally Made It Work
+
+The controller did not become usable because of a single bug fix. It became usable after the
+combination of three changes below:
+
+1. **startup ramp**
+   - reduced the discontinuity between hover and the moving figure-8
+   - slowed the trajectory clock initially
+   - blended hover commands into feedforward commands
+
+2. **hover / return at the actual first trajectory point**
+   - removed avoidable position and altitude mismatch at the mode switch
+
+3. **light feedback and damping**
+   - corrected position, velocity, yaw, and body-rate errors that pure open-loop feedforward
+     cannot reject on its own
+
+The most important conclusion is that **feedforward alone was not enough**. The controller
+started to work once the feedforward command was surrounded by enough transition handling and
+light stabilization to make it physically executable from a hover initial condition.
+
+# How Much Is Feedforward vs. Everything Else?
+
+There is no single honest fixed percentage that can be assigned without running an ablation
+study. The split depends on:
+
+- how close the vehicle is to the nominal trajectory at the start
+- how accurate the platform model and thrust curve are
+- how much disturbance is present
+- whether the test is in simulation or hardware
+
+So a statement like "it is 73% feedforward and 27% other stuff" would not be technically
+defensible from the code alone.
+
+What can be said clearly is this:
+
+- **feedforward provides the motion plan**
+  - the shape of the figure-8
+  - the nominal thrust
+  - the nominal roll / pitch / yaw-rate behavior
+
+- **the other pieces make that plan flyable**
+  - the ramp makes the transition from hover feasible
+  - the hover-point alignment reduces startup mismatch
+  - the feedback and damping keep the vehicle from diverging once mismatch appears
+
+In that sense:
+
+- the **trajectory content** is fundamentally coming from feedforward
+- the **practical stability and robustness** are largely coming from the startup handling and
+  light feedback
+
+If you want numerical percentages, the right method is an ablation set:
+
+1. pure feedforward only
+2. feedforward + ramp
+3. feedforward + ramp + hover-point alignment
+4. feedforward + ramp + hover-point alignment + p-feedback / damping
+
+Then compare tracking error, crash / no-crash behavior, and control effort. That would let
+you make a data-backed statement rather than a guess.
+
+# Logging
+
+When `--log` is enabled, logs are saved under:
+
+```text
+src/data_analysis/log_files/ff_f8_px4/
+```
+
+with filenames of the form
+
+```text
+{platform}_ff_f8[_pfb][_rampXs]_{speed}.csv
+```
+
+Examples:
+
+- `sim_ff_f8_ramp2p0s_1x.csv`
+- `sim_ff_f8_pfb_ramp4p0s_1x.csv`
+- `hw_ff_f8_pfb_ramp2p0s_2x.csv`

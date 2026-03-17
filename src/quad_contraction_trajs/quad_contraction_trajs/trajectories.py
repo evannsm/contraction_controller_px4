@@ -1,4 +1,4 @@
-"""Self-contained trajectory definitions for the contraction controller.
+"""Shared trajectory definitions for quadrotor controllers.
 
 Each function has signature (t: float, ctx: TrajContext) -> jnp.ndarray[4]
 returning [px, py, pz, psi] in NED (z negative = above ground).
@@ -25,17 +25,21 @@ HW_HEIGHT    = 0.85  # nominal hw height above ground in NED (pz = -HW_HEIGHT)
 class TrajContext:
     sim: bool
     hover_mode: Optional[int] = None
+    spin: bool = False
+    double_speed: bool = False
+    short: bool = False
 
 
 class TrajectoryType(StrEnum):
-    HOVER        = "hover"
-    SPIRAL       = "spiral"
-    FIGURE_EIGHT = "figure_eight"
-    TREFOIL      = "trefoil"
-    FIG8_HEADING = "fig8_heading"
+    HOVER          = "hover"
+    SPIRAL         = "spiral"
+    FIGURE_EIGHT   = "figure_eight"
+    TREFOIL        = "trefoil"
+    FIG8_HEADING   = "fig8_heading"
+    F8_CONTRACTION = "f8_contraction"
 
 
-# ── Trajectory functions ──────────────────────────────────────────────────────
+# -- Trajectory functions ------------------------------------------------------
 
 def hover(t: float, ctx: TrajContext) -> jnp.ndarray:
     height = SIM_HEIGHT if ctx.sim else HW_HEIGHT
@@ -147,12 +151,13 @@ def trefoil(t: float, ctx: TrajContext) -> jnp.ndarray:
     return jnp.array([px, py, pz, psi], dtype=jnp.float32)
 
 
-# ── Registry ──────────────────────────────────────────────────────────────────
+# -- Registry ------------------------------------------------------------------
 
 TRAJ_REGISTRY: Dict[TrajectoryType, object] = {
-    TrajectoryType.HOVER:        hover,
-    TrajectoryType.SPIRAL:       spiral,
-    TrajectoryType.FIGURE_EIGHT: figure_eight,
-    TrajectoryType.TREFOIL:      trefoil,
-    TrajectoryType.FIG8_HEADING: fig8_heading,
+    TrajectoryType.HOVER:          hover,
+    TrajectoryType.SPIRAL:         spiral,
+    TrajectoryType.FIGURE_EIGHT:   figure_eight,
+    TrajectoryType.TREFOIL:        trefoil,
+    TrajectoryType.FIG8_HEADING:   fig8_heading,
+    TrajectoryType.F8_CONTRACTION: figure_eight,
 }

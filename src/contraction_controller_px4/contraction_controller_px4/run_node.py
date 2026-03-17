@@ -7,7 +7,7 @@ import traceback
 import rclpy
 
 from quad_platforms import PlatformType  # type: ignore[import]
-from .trajectories import TrajectoryType
+from quad_contraction_trajs import TrajectoryType
 from .ros2px4_node import ContractionOffboardControl
 
 from Logger import Logger  # type: ignore[import]

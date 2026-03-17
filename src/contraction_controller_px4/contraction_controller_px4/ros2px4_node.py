@@ -42,7 +42,7 @@ from contraction_controller_px4_utils.px4_utils.flight_phases import FlightPhase
 from contraction_controller_px4_utils.transformations.adjust_yaw import adjust_yaw
 
 from quad_platforms import PlatformConfig, PlatformType, PLATFORM_REGISTRY  # type: ignore[import]
-from .trajectories import TrajContext, TrajectoryType, TRAJ_REGISTRY
+from quad_contraction_trajs import TrajContext, TrajectoryType, TRAJ_REGISTRY, GRAVITY, flat_to_x_u, flat_to_x
 
 from .controller import (
     contraction_control,
@@ -52,46 +52,6 @@ from .controller import (
     X_EQ,
 )
 from Logger import LogType, VectorLogType  # type: ignore[import]
-
-GRAVITY: float = 9.81
-
-
-def _flat_to_x_u(t, flat_output):
-    """Compute contraction state x_ff and feedforward control u_ff from flat outputs via autodiff.
-
-    The flat output is [px, py, pz, psi]. Derivatives are computed with jax.jacfwd.
-    State:   x = [px, py, pz, vx, vy, vz, f, phi, th, psi]
-               where f = specific thrust (N/kg), phi = roll, th = pitch
-    Control: u = [df, dphi, dth, dpsi]  (rates of f, roll, pitch, yaw)
-    """
-    g = GRAVITY
-    px, py, pz, psi = flat_output(t)
-    vx, vy, vz, dpsi = jax.jacfwd(flat_output)(t)
-
-    def f_th_phi(t):
-        ax, ay, az = jax.jacfwd(jax.jacfwd(flat_output))(t)[:3]
-        f = jnp.sqrt(ax**2 + ay**2 + (az - g) ** 2)
-        th = jnp.arcsin(-ax / f)
-        phi = jnp.arctan2(ay, g - az)
-        return jnp.array([f, th, phi])
-
-    f, th, phi = f_th_phi(t)
-    df, dth, dphi = jax.jacfwd(f_th_phi)(t)
-    x_ff = jnp.array([px, py, pz, vx, vy, vz, f, phi, th, psi], dtype=jnp.float32)
-    u_ff = jnp.array([df, dphi, dth, dpsi], dtype=jnp.float32)
-    return x_ff, u_ff
-
-
-def _flat_to_x(t, flat_output):
-    """Compute reference state x_ff only — skips u_ff (3rd-order) derivatives."""
-    g = GRAVITY
-    px, py, pz, psi = flat_output(t)
-    vx, vy, vz, _ = jax.jacfwd(flat_output)(t)
-    ax, ay, az = jax.jacfwd(jax.jacfwd(flat_output))(t)[:3]
-    f = jnp.sqrt(ax**2 + ay**2 + (az - g) ** 2)
-    th = jnp.arcsin(-ax / f)
-    phi = jnp.arctan2(ay, g - az)
-    return jnp.array([px, py, pz, vx, vy, vz, f, phi, th, psi], dtype=jnp.float32)
 
 
 class ContractionOffboardControl(Node):
@@ -214,9 +174,9 @@ class ContractionOffboardControl(Node):
         _traj_func = TRAJ_REGISTRY[self.ref_type]
         self._flat_output = lambda t: _traj_func(t, _ctx)
         if self.use_feedforward:
-            self._flat_to_x_u_jit = jax.jit(lambda t: _flat_to_x_u(t, self._flat_output))
+            self._flat_to_x_u_jit = jax.jit(lambda t: flat_to_x_u(t, self._flat_output))
         else:
-            self._flat_to_x_jit = jax.jit(lambda t: _flat_to_x(t, self._flat_output))
+            self._flat_to_x_jit = jax.jit(lambda t: flat_to_x(t, self._flat_output))
 
         # JIT-compile contraction_control with control_net captured in closure
         # (control_net is a fixed PyTree; K changes at 10 Hz so stays dynamic)

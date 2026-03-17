@@ -1,19 +1,13 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>contraction_controller_px4</name>
+  <name>quad_contraction_trajs</name>
   <version>0.1.0</version>
-  <description>Contraction metric neural-network controller for quadrotor trajectory tracking via PX4 offboard control</description>
+  <description>Shared quadrotor trajectory definitions and differential-flatness utilities</description>
   <maintainer email="egmc@todo.todo">egmc</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
-
-  <depend>rclpy</depend>
-  <depend>px4_msgs</depend>
-<depend>quad_platforms</depend>
-  <depend>quad_contraction_trajs</depend>
-  <depend>Logger</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
