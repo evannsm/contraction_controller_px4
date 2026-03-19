@@ -26,9 +26,9 @@ from px4_msgs.msg import (
 )
 
 from quad_platforms import PlatformType, PlatformConfig, PLATFORM_REGISTRY
-from quad_contraction_trajs import TrajContext, TrajectoryType, TRAJ_REGISTRY, flat_to_x_u
+from quad_trajectories import TrajContext, TrajectoryType, TRAJ_REGISTRY, flat_to_x_u
 
-from Logger import LogType  # type: ignore
+from ros2_logger import LogType  # type: ignore
 
 GRAVITY: float = 9.806
 

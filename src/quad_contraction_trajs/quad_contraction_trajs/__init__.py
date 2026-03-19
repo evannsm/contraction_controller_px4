@@ -9,6 +9,7 @@ from .trajectories import (
     fig8_heading,
     spiral,
     trefoil,
+    f8_contraction,
 )
 
 from .utils import (
@@ -18,3 +19,22 @@ from .utils import (
     generate_reference_trajectory,
     generate_feedforward_trajectory,
 )
+
+__all__ = [
+    "SIM_HEIGHT",
+    "HW_HEIGHT",
+    "TrajContext",
+    "TrajectoryType",
+    "TRAJ_REGISTRY",
+    "hover",
+    "figure_eight",
+    "fig8_heading",
+    "spiral",
+    "trefoil",
+    "f8_contraction",
+    "GRAVITY",
+    "flat_to_x_u",
+    "flat_to_x",
+    "generate_reference_trajectory",
+    "generate_feedforward_trajectory",
+]

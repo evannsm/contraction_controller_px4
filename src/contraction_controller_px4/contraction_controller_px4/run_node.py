@@ -7,10 +7,20 @@ import traceback
 import rclpy
 
 from quad_platforms import PlatformType  # type: ignore[import]
-from quad_contraction_trajs import TrajectoryType
+from quad_trajectories import TrajectoryType
 from .ros2px4_node import ContractionOffboardControl
 
-from Logger import Logger  # type: ignore[import]
+from ros2_logger import Logger  # type: ignore[import]
+
+
+CONTRACTION_TRAJECTORIES = (
+    TrajectoryType.HOVER_CONTRACTION,
+    TrajectoryType.SPIRAL_CONTRACTION,
+    TrajectoryType.FIGURE_EIGHT_CONTRACTION,
+    TrajectoryType.TREFOIL_CONTRACTION,
+    TrajectoryType.FIG8_HEADING_CONTRACTION,
+    TrajectoryType.F8_CONTRACTION,
+)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -19,10 +29,10 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  ros2 run contraction_controller_px4 run_node --platform sim --trajectory hover --hover-mode 1
-  ros2 run contraction_controller_px4 run_node --platform sim --trajectory figure_eight --log
-  ros2 run contraction_controller_px4 run_node --platform sim --trajectory trefoil --log --log-file my_run
-  ros2 run contraction_controller_px4 run_node --platform hw  --trajectory spiral
+  ros2 run contraction_controller_px4 run_node --platform sim --trajectory hover_contraction --hover-mode 1
+  ros2 run contraction_controller_px4 run_node --platform sim --trajectory figure_eight_contraction --log
+  ros2 run contraction_controller_px4 run_node --platform sim --trajectory trefoil_contraction --log --log-file my_run
+  ros2 run contraction_controller_px4 run_node --platform hw  --trajectory spiral_contraction
         """,
     )
 
@@ -36,9 +46,9 @@ Examples:
     parser.add_argument(
         "--trajectory",
         type=TrajectoryType,
-        choices=list(TrajectoryType),
+        choices=CONTRACTION_TRAJECTORIES,
         required=True,
-        help="Trajectory: " + ", ".join(e.value for e in TrajectoryType),
+        help="Trajectory: " + ", ".join(e.value for e in CONTRACTION_TRAJECTORIES),
     )
     parser.add_argument(
         "--hover-mode",
@@ -80,19 +90,19 @@ Examples:
 
 
 def validate_args(args, parser: argparse.ArgumentParser) -> None:
-    if args.trajectory == TrajectoryType.HOVER:
+    if args.trajectory == TrajectoryType.HOVER_CONTRACTION:
         if args.hover_mode is None:
-            parser.error("--hover-mode is required when --trajectory=hover")
+            parser.error("--hover-mode is required when --trajectory=hover_contraction")
     else:
         if args.hover_mode is not None:
-            parser.error("--hover-mode is only valid when --trajectory=hover")
+            parser.error("--hover-mode is only valid when --trajectory=hover_contraction")
     if args.log_file is not None and not args.log:
         parser.error("--log-file requires --log")
 
 
 def _auto_log_filename(args) -> str:
     parts = [args.platform.value, "contraction", args.trajectory.value]
-    if args.trajectory == TrajectoryType.HOVER and args.hover_mode is not None:
+    if args.trajectory == TrajectoryType.HOVER_CONTRACTION and args.hover_mode is not None:
         parts.append(f"mode{args.hover_mode}")
     parts.append("no_ff" if args.no_feedforward else "ff")
     return "_".join(parts) + ".csv"

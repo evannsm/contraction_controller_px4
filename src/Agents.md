@@ -1,4 +1,5 @@
-1. Create a new ros2 package called quad_contraction_trajs with the trajectories in /home/egmc/ws_contraction_px4/src/contraction_controller_px4/contraction_controller_px4/trajectories.py
-2. Then make all of the other controller packages: newton_raphson_px4, newton_raphson_px4_cpp, nmpc_acados_px4, and nmpc_acados_px4_cpp depend on the new quad_contraction_trajs package and import the trajectories from there. This way we can have a single source of truth for the trajectories and avoid code duplication across the different controllers.
-3. Finally, update the test_plots_traj_updated.ipynb notebook to import the trajectories from the new quad_contraction_trajs package and plot them as before.
-4. I want to basically have a single source of truth for the trajectories that all the different controllers can use, and then we can easily update the trajectories in one place if needed. This will also make it easier to maintain and test the trajectories separately from the controllers.
+1. `quad_trajectories` and `quad_trajectories_cpp` are the shared source of truth for trajectories across controller packages in this workspace.
+2. Trajectories that overlap with the vetted workspace definitions keep the vetted names there, and contraction-specific variants live alongside them with `_contraction` suffixes so both can coexist.
+3. `quad_contraction_trajs` remains only as a compatibility shim for legacy contraction imports; new controller and analysis code should import from `quad_trajectories` instead.
+4. Shared support packages are intended to stay submodule-backed so this workspace can match the cross-compatible layout used in `/home/egmc/ws_px4_work/src`.
+5. The expected local environment on this machine is `jazz`, then `cap` for the `px4_msgs` overlay, plus a compatible mamba env such as `ros2jazzy_px4_immrax` or `ros2jazzy_px4_acados`.

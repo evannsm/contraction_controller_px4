@@ -4,3 +4,27 @@
 [submodule "src/quad_trajectories"]
 	path = src/quad_trajectories
 	url = https://github.com/evannsm/quad_trajectories.git
+[submodule "src/quad_platforms_cpp"]
+	path = src/quad_platforms_cpp
+	url = https://github.com/evannsm/quad_platforms_cpp.git
+[submodule "src/quad_trajectories_cpp"]
+	path = src/quad_trajectories_cpp
+	url = https://github.com/evannsm/quad_trajectories_cpp.git
+[submodule "src/ros2_logger"]
+	path = src/ros2_logger
+	url = https://github.com/evannsm/ROS2Logger.git
+[submodule "src/ros2_logger_cpp"]
+	path = src/ros2_logger_cpp
+	url = https://github.com/evannsm/ROS2Logger_cpp.git
+[submodule "src/newton_raphson_px4"]
+	path = src/newton_raphson_px4
+	url = /home/egmc/ws_px4_work/src/newton_raphson_px4
+[submodule "src/newton_raphson_px4_cpp"]
+	path = src/newton_raphson_px4_cpp
+	url = /home/egmc/ws_px4_work/src/newton_raphson_px4_cpp
+[submodule "src/nmpc_acados_px4"]
+	path = src/nmpc_acados_px4
+	url = /home/egmc/ws_px4_work/src/nmpc_acados_px4
+[submodule "src/nmpc_acados_px4_cpp"]
+	path = src/nmpc_acados_px4_cpp
+	url = /home/egmc/ws_px4_work/src/nmpc_acados_px4_cpp

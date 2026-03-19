@@ -42,7 +42,7 @@ from contraction_controller_px4_utils.px4_utils.flight_phases import FlightPhase
 from contraction_controller_px4_utils.transformations.adjust_yaw import adjust_yaw
 
 from quad_platforms import PlatformConfig, PlatformType, PLATFORM_REGISTRY  # type: ignore[import]
-from quad_contraction_trajs import TrajContext, TrajectoryType, TRAJ_REGISTRY, GRAVITY, flat_to_x_u, flat_to_x
+from quad_trajectories import TrajContext, TrajectoryType, TRAJ_REGISTRY, GRAVITY, flat_to_x_u, flat_to_x
 
 from .controller import (
     contraction_control,
@@ -51,14 +51,14 @@ from .controller import (
     K_EQ,
     X_EQ,
 )
-from Logger import LogType, VectorLogType  # type: ignore[import]
+from ros2_logger import LogType, VectorLogType  # type: ignore[import]
 
 
 class ContractionOffboardControl(Node):
     def __init__(
         self,
         platform_type: PlatformType,
-        trajectory: TrajectoryType = TrajectoryType.HOVER,
+        trajectory: TrajectoryType = TrajectoryType.HOVER_CONTRACTION,
         hover_mode: int | None = None,
         controller_dir: str | None = None,
         flight_period_: float | None = None,
@@ -619,5 +619,4 @@ class ContractionOffboardControl(Node):
         msg.thrust_body[2] = -float(thrust)
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
         self.rates_setpoint_publisher.publish(msg)
-
 

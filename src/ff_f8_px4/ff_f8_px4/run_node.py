@@ -6,7 +6,7 @@ import argparse
 import os
 from pathlib import Path
 
-from Logger import Logger  # type: ignore
+from ros2_logger import Logger  # type: ignore
 from .ros2px4_node import FeedforwardControl
 
 from quad_platforms import PlatformType
