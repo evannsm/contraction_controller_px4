@@ -47,9 +47,12 @@ ENV LD_LIBRARY_PATH="${ACADOS_ROOT}/lib:${LD_LIBRARY_PATH}"
 ENV ACADOS_SOURCE_DIR="${ACADOS_ROOT}"
 
 # ── acados Python interface + tera_renderer ──────────────────────────────────
-RUN pip3 install --no-cache-dir --break-system-packages \
+RUN pip3 install --no-cache-dir --break-system-packages --ignore-installed \
         -e ${ACADOS_ROOT}/interfaces/acados_template && \
-    python3 -c "from acados_template.utils import get_tera; get_tera()"
+    mkdir -p ${ACADOS_ROOT}/bin && \
+    wget -q https://github.com/acados/tera_renderer/releases/download/v0.0.34/t_renderer-v0.0.34-linux \
+         -O ${ACADOS_ROOT}/bin/t_renderer && \
+    chmod +x ${ACADOS_ROOT}/bin/t_renderer
 
 # ── Python deps — installed to system Python ──────────────────────────────────
 COPY docker/requirements.txt /tmp/requirements.txt

@@ -19,7 +19,6 @@ from rclpy.qos import (
 )
 
 from px4_msgs.msg import (
-    BatteryStatus,
     OffboardControlMode,
     RcChannels,
     TrajectorySetpoint,
@@ -127,11 +126,6 @@ class ContractionOffboardControl(Node):
         self.mode_channel = 5
         self.rc_channels_subscriber = self.create_subscription(
             RcChannels, "/fmu/out/rc_channels", self.rc_channel_callback, qos
-        )
-
-        self.current_voltage: float = 16.0
-        self.battery_status_subscriber = self.create_subscription(
-            BatteryStatus, "/fmu/out/battery_status", self.battery_status_callback, qos
         )
 
         self.a_world = np.array([0.0, 0.0, GRAVITY])  # NED world-frame acceleration (m/s^2)
@@ -378,9 +372,6 @@ class ContractionOffboardControl(Node):
         flight_mode = rc_channels.channels[self.mode_channel - 1]
         self.offboard_mode_rc_switch_on = flight_mode >= 0.75
 
-    def battery_status_callback(self, battery_status):
-        self.current_voltage = battery_status.voltage_v
-
     def vehicle_local_position_callback(self, msg):
         self.a_world = np.array([msg.ax, msg.ay, msg.az])
 
@@ -526,8 +517,7 @@ class ContractionOffboardControl(Node):
 
         # Convert to PX4 normalized inputs
         throttle_raw = float(self.platform.get_throttle_from_force(thrust))
-        battery_compensation = 1 - 0.0779 * (self.current_voltage - 16.0)
-        throttle = throttle_raw# * battery_compensation
+        throttle = throttle_raw
 
         self.normalized_input = [
             throttle,

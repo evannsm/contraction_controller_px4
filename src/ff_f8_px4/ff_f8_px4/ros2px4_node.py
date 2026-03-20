@@ -22,7 +22,6 @@ from px4_msgs.msg import (
     VehicleStatus,
     VehicleOdometry,
     RcChannels,
-    BatteryStatus,
 )
 
 from quad_platforms import PlatformType, PlatformConfig, PLATFORM_REGISTRY
@@ -142,8 +141,6 @@ class FeedforwardControl(Node):
         self.vx = self.vy = self.vz = 0.0
         self.wx = self.wy = self.wz = 0.0
         self.roll = self.pitch = self.yaw = 0.0
-        self.current_voltage = 16.8
-
         self.in_offboard_mode       = False
         self.armed                  = False
         self.in_land_mode           = False
@@ -157,9 +154,6 @@ class FeedforwardControl(Node):
                                  self._status_cb, qos)
         self.create_subscription(RcChannels, "/fmu/out/rc_channels",
                                  self._rc_cb, qos)
-        self.create_subscription(BatteryStatus, "/fmu/out/battery_status",
-                                 self._battery_cb, qos)
-
         # Flight timing
         self.T0              = time.time()
         self.program_time    = 0.0
@@ -323,9 +317,6 @@ class FeedforwardControl(Node):
 
     def _rc_cb(self, msg):
         self.offboard_mode_rc_switch_on = (msg.channels[self.mode_channel - 1] >= 0.75)
-
-    def _battery_cb(self, msg):
-        self.current_voltage = msg.voltage_v
 
     # ------------------------------------------------------------------ #
     #  Flight phase helpers                                                #
