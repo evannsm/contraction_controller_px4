@@ -10,5 +10,13 @@ src/contraction_controller_px4/new_project/
 __pycache__/
 *.py[cod]
 
+# Markdown (except README and command/test files)
+*.md
+!README.md
+!*command*.md
+!*test*.md
+!*sim*.md
+!*hardware*.md
+
 # IDE / tooling
 .cache/
