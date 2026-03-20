@@ -9,3 +9,6 @@ src/contraction_controller_px4/new_project/
 # Python
 __pycache__/
 *.py[cod]
+
+# IDE / tooling
+.cache/
