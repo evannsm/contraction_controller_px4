@@ -99,17 +99,22 @@ SPIN            ?=
 FF              ?=
 LOG             ?=
 LOG_FILE        ?=
+PYJOULES        ?=
 
 # Contraction-specific
 CONTROLLER_DIR  ?=
 NO_FEEDFORWARD  ?=
+
+# ff_f8-specific
+P_FEEDBACK      ?=
+RAMP_SECONDS    ?=
 
 # ── Contraction controller (Python) ──────────────────────────────────────────
 run_contraction:
 	docker exec -it $(CONTAINER_NAME) bash -lc \
 		"ros2 run contraction_controller_px4 run_node \
 		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
-		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+		   $(if $(filter hover_contraction,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
 		   $(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),) \
 		   $(if $(LOG),--log,) \
@@ -128,7 +133,8 @@ run_newton_raphson:
 		   $(if $(SPIN),--spin,) \
 		   $(if $(FF),--ff,) \
 		   $(if $(LOG),--log,) \
-		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
+		   $(if $(PYJOULES),--pyjoules,)"
 
 # ── Newton-Raphson (C++) ─────────────────────────────────────────────────────
 run_newton_raphson_cpp:
@@ -156,7 +162,8 @@ run_nmpc:
 		   $(if $(SPIN),--spin,) \
 		   $(if $(FF),--ff,) \
 		   $(if $(LOG),--log,) \
-		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
+		   $(if $(PYJOULES),--pyjoules,)"
 
 # ── NMPC Acados (C++) ────────────────────────────────────────────────────────
 run_nmpc_cpp:
@@ -179,6 +186,8 @@ run_ff_f8:
 		   --platform $(PLATFORM) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
 		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   $(if $(P_FEEDBACK),--p-feedback,) \
+		   $(if $(RAMP_SECONDS),--ramp-seconds $(RAMP_SECONDS),) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
 

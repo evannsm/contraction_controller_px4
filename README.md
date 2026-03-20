@@ -110,7 +110,7 @@ make build_ros
 ### Step 4 — Run a controller
 
 ```bash
-make run_contraction PLATFORM=sim TRAJECTORY=hover HOVER_MODE=1
+make run_contraction PLATFORM=sim TRAJECTORY=hover_contraction HOVER_MODE=1
 make run_newton_raphson PLATFORM=sim TRAJECTORY=helix DOUBLE_SPEED=1 SPIN=1 LOG=1
 make run_nmpc PLATFORM=sim TRAJECTORY=fig8_contraction FF=1 LOG=1
 make run_nmpc_cpp PLATFORM=sim TRAJECTORY=circle_horz LOG=1
@@ -161,16 +161,19 @@ make generate_nmpc_solver    # generate acados C solver (required before buildin
 |---|---|---|
 | `PLATFORM` | `sim` | `sim` or `hw` |
 | `TRAJECTORY` | `hover` | see trajectory table below |
-| `HOVER_MODE` | `1` | 1–8, required when `TRAJECTORY=hover` |
+| `HOVER_MODE` | `1` | 1–8 for sim / 1–4 for hw; required for `TRAJECTORY=hover`, and for `run_contraction` when `TRAJECTORY=hover_contraction` |
 | `FLIGHT_PERIOD` | *(auto)* | flight duration in seconds (30 sim / 60 hw) |
-| `DOUBLE_SPEED` | *(off)* | set to any non-empty value for 2x speed |
+| `DOUBLE_SPEED` | *(off)* | set to any non-empty value for 2x speed on trajectories that implement it |
 | `SHORT` | *(off)* | short variant for fig8_vert |
-| `SPIN` | *(off)* | enable spin for circle_horz and helix |
+| `SPIN` | *(off)* | enable yaw spin on trajectories that implement it (`circle_*`, `fig8_*`, `helix`, `sawtooth`, `triangle`) |
 | `FF` | *(off)* | enable differential-flatness feedforward (fig8_contraction only) |
 | `LOG` | *(off)* | enable CSV logging |
 | `LOG_FILE` | *(auto)* | log filename stem (without `.csv`) |
+| `PYJOULES` | *(off)* | enable PyJoules energy logging (Python NR / NMPC only) |
 | `CONTROLLER_DIR` | *(auto)* | neural network weights dir (contraction only) |
 | `NO_FEEDFORWARD` | `0` | set to `1` to disable u_ff (contraction only) |
+| `P_FEEDBACK` | *(off)* | enable proportional feedback layer in `run_ff_f8` |
+| `RAMP_SECONDS` | *(default node value)* | startup ramp override for `run_ff_f8` |
 
 ---
 
