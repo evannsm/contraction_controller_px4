@@ -1,47 +1,39 @@
 # =============================================================================
-# contraction_controller_px4 — Docker + ROS 2 workspace management
+# PX4 Quadrotor Controllers — Docker + ROS 2 workspace management
 # =============================================================================
 #
 # HOW THE DOCKER IMAGE IS BUILT
 # ──────────────────────────────
-# The image (px4_contraction_jazzy) is built from docker/Dockerfile with
-# the repo root as the build context.  It contains:
+# The image is built from docker/Dockerfile with the repo root as the build
+# context.  It contains:
 #
 #   • ROS 2 Jazzy          — from osrf/ros:jazzy-desktop-full base image
-#   • px4_msgs             — cloned from github.com/evannsm/px4_msgs
-#                            (branch: v1.16_minimal_msgs) and pre-built into
-#                            /opt/ws_px4_msgs/install/ so it is always
-#                            available as an upstream ROS 2 overlay
-#   • Python packages      — JAX, equinox, immrax, linrax installed to system Python
-#                            (jax-0.9-support branches of immrax and linrax)
+#   • px4_msgs             — pre-built into /opt/ws_px4_msgs/install/
+#   • acados               — built from source at /opt/acados (v0.5.1)
+#   • Python packages      — JAX, equinox, immrax, linrax, casadi, acados_template
+#   • C++ deps             — Eigen3, OpenBLAS, LAPACK (for C++ controllers)
 #
 # HOW THE CONTAINER INTERACTS WITH THE HOST WORKSPACE
 # ─────────────────────────────────────────────────────
 # `make run` mounts the repo root → /workspace inside the container.
-# This means:
-#   • /workspace/src/    — all ROS 2 packages (controller + submodule deps)
-#   • /workspace/build/  — colcon build artifacts  (persisted on host)
-#   • /workspace/install/— colcon install tree      (persisted on host)
-#   • /workspace/log/    — colcon logs              (persisted on host)
-#
 # The container uses --net host, so it sees all ROS 2 topics from the host
 # PX4 sim and MicroXRCE bridge without any extra networking setup.
 #
-# Source chain inside the container (.bashrc / profile.d):
-#   /opt/ros/jazzy/setup.bash
-#   → /opt/ws_px4_msgs/install/setup.bash   (px4_msgs overlay)
-#   → /workspace/install/setup.bash         (your built packages, if present)
-#
 # TYPICAL WORKFLOW
 # ────────────────
-#   make build          # build the image once (or after Dockerfile changes)
-#   make run            # start the container
-#   make build_ros      # build all packages in the workspace
-#   make run_controller # run the contraction controller node
+#   make build                   # build the image once
+#   make run                     # start the container
+#   make build_ros               # build all ROS 2 packages
+#   make run_contraction ...     # run a controller
+#
+# NMPC C++ WORKFLOW
+# ─────────────────
+#   make generate_nmpc_solver    # generate acados C solver (once)
+#   make build_ros               # then build all packages including nmpc_acados_px4_cpp
 # =============================================================================
 
-IMAGE_NAME     = px4_contraction_jazzy
-CONTAINER_NAME = px4_contraction
+IMAGE_NAME     = px4_controllers_jazzy
+CONTAINER_NAME = px4_controllers
 WS_ROOT        := $(CURDIR)
 
 # ── Docker image ──────────────────────────────────────────────────────────────
@@ -85,28 +77,116 @@ clean_build_ros:
 		"rm -rf /workspace/build /workspace/install /workspace/log"
 	$(MAKE) build_ros PACKAGES="$(PACKAGES)"
 
-# ── Run the contraction controller ───────────────────────────────────────────
+# ── Generate NMPC acados solver ──────────────────────────────────────────────
+# Must be run before building nmpc_acados_px4_cpp.
+generate_nmpc_solver:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"cd /workspace && python3 src/nmpc_acados_px4/generate_solver.py"
+
+# =============================================================================
+# Controller run targets
+# =============================================================================
+# Shared variables — override on the command line, e.g.:
+#   make run_newton_raphson PLATFORM=hw TRAJECTORY=helix DOUBLE_SPEED=1 LOG=1
+
 PLATFORM        ?= sim
 TRAJECTORY      ?= hover
 HOVER_MODE      ?= 1
 FLIGHT_PERIOD   ?=
-CONTROLLER_DIR  ?=
+DOUBLE_SPEED    ?=
+SHORT           ?=
+SPIN            ?=
+FF              ?=
 LOG             ?=
 LOG_FILE        ?=
+
+# Contraction-specific
+CONTROLLER_DIR  ?=
 NO_FEEDFORWARD  ?=
 
-# Allow TRAJECTORY=fig8 as shorthand for figure_eight
-_TRAJ := $(if $(filter fig8,$(TRAJECTORY)),figure_eight,$(TRAJECTORY))
-
-run_controller:
+# ── Contraction controller (Python) ──────────────────────────────────────────
+run_contraction:
 	docker exec -it $(CONTAINER_NAME) bash -lc \
 		"ros2 run contraction_controller_px4 run_node \
-		   --platform $(PLATFORM) --trajectory $(_TRAJ) \
-		   $(if $(filter hover,$(_TRAJ)),--hover-mode $(HOVER_MODE),) \
+		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
+		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
 		   $(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
 		   $(if $(filter 1,$(NO_FEEDFORWARD)),--no-feedforward,)"
 
-.PHONY: build run stop kill attach build_ros clean_build_ros run_controller
+# ── Newton-Raphson (Python) ──────────────────────────────────────────────────
+run_newton_raphson:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"ros2 run newton_raphson_px4 run_node \
+		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
+		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   $(if $(SHORT),--short,) \
+		   $(if $(SPIN),--spin,) \
+		   $(if $(FF),--ff,) \
+		   $(if $(LOG),--log,) \
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+
+# ── Newton-Raphson (C++) ─────────────────────────────────────────────────────
+run_newton_raphson_cpp:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"ros2 run newton_raphson_px4_cpp run_node \
+		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
+		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   $(if $(SHORT),--short,) \
+		   $(if $(SPIN),--spin,) \
+		   $(if $(FF),--ff,) \
+		   $(if $(LOG),--log,) \
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+
+# ── NMPC Acados (Python) ─────────────────────────────────────────────────────
+run_nmpc:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"ros2 run nmpc_acados_px4 run_node \
+		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
+		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   $(if $(SHORT),--short,) \
+		   $(if $(SPIN),--spin,) \
+		   $(if $(FF),--ff,) \
+		   $(if $(LOG),--log,) \
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+
+# ── NMPC Acados (C++) ────────────────────────────────────────────────────────
+run_nmpc_cpp:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"ros2 run nmpc_acados_px4_cpp run_node \
+		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
+		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   $(if $(SHORT),--short,) \
+		   $(if $(SPIN),--spin,) \
+		   $(if $(FF),--ff,) \
+		   $(if $(LOG),--log,) \
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+
+# ── Feedforward figure-8 (Python) ────────────────────────────────────────────
+run_ff_f8:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"ros2 run ff_f8_px4 run_node \
+		   --platform $(PLATFORM) \
+		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   $(if $(LOG),--log,) \
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+
+# Backward compat alias
+run_controller: run_contraction
+
+.PHONY: build run stop kill attach build_ros clean_build_ros \
+        generate_nmpc_solver \
+        run_controller run_contraction \
+        run_newton_raphson run_newton_raphson_cpp \
+        run_nmpc run_nmpc_cpp run_ff_f8

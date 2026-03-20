@@ -6,3 +6,4 @@ jax[cpu]
 equinox
 jaxtyping
 pyJoules
+casadi

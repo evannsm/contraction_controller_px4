@@ -9,8 +9,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     python3-dev \
     git \
+    cmake \
+    build-essential \
     libgmp-dev \
     libcdd-dev \
+    libeigen3-dev \
+    liblapack-dev \
+    libopenblas-dev \
+    wget \
     && apt-get remove -y python3-matplotlib \
     && rm -rf /var/lib/apt/lists/*
 
@@ -23,6 +29,27 @@ RUN mkdir -p /opt/ws_px4_msgs/src && \
     colcon build \
         --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     rm -rf /opt/ws_px4_msgs/build /opt/ws_px4_msgs/log /opt/ws_px4_msgs/src
+
+# ── acados: build from source ────────────────────────────────────────────────
+ENV ACADOS_ROOT=/opt/acados
+RUN git clone https://github.com/acados/acados.git ${ACADOS_ROOT} && \
+    cd ${ACADOS_ROOT} && \
+    git checkout v0.5.1 && \
+    git submodule update --recursive --init && \
+    mkdir -p build && cd build && \
+    cmake -DACADOS_WITH_QPOASES=ON \
+          -DCMAKE_INSTALL_PREFIX=${ACADOS_ROOT} \
+          .. && \
+    make install -j$(nproc) && \
+    rm -rf ${ACADOS_ROOT}/build
+
+ENV LD_LIBRARY_PATH="${ACADOS_ROOT}/lib:${LD_LIBRARY_PATH}"
+ENV ACADOS_SOURCE_DIR="${ACADOS_ROOT}"
+
+# ── acados Python interface + tera_renderer ──────────────────────────────────
+RUN pip3 install --no-cache-dir --break-system-packages \
+        -e ${ACADOS_ROOT}/interfaces/acados_template && \
+    python3 -c "from acados_template.utils import get_tera; get_tera()"
 
 # ── Python deps — installed to system Python ──────────────────────────────────
 COPY docker/requirements.txt /tmp/requirements.txt
@@ -49,6 +76,8 @@ RUN git clone --depth 1 --branch jax-0.9-support \
 RUN echo "source /opt/ros/jazzy/setup.bash" > /etc/profile.d/ros_setup.sh && \
     echo "source /opt/ws_px4_msgs/install/setup.bash" >> /etc/profile.d/ros_setup.sh && \
     echo 'if [ -f /workspace/install/setup.bash ]; then source /workspace/install/setup.bash; fi' >> /etc/profile.d/ros_setup.sh && \
+    echo "export ACADOS_SOURCE_DIR=${ACADOS_ROOT}" >> /etc/profile.d/ros_setup.sh && \
+    echo "export LD_LIBRARY_PATH=${ACADOS_ROOT}/lib:\${LD_LIBRARY_PATH}" >> /etc/profile.d/ros_setup.sh && \
     echo "source /etc/profile.d/ros_setup.sh" >> /root/.bashrc
 
 WORKDIR /workspace
