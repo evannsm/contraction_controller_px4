@@ -3,7 +3,7 @@
 <package format="3">
   <name>ff_f8_px4</name>
   <version>0.1.0</version>
-  <description>Pure feedforward controller for the f8_contraction trajectory</description>
+  <description>Pure feedforward controller for the fig8_contraction trajectory</description>
   <maintainer email="egmc@todo.todo">egmc</maintainer>
   <license>MIT</license>
 

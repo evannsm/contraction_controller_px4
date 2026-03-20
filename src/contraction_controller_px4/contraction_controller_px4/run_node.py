@@ -15,11 +15,10 @@ from ros2_logger import Logger  # type: ignore[import]
 
 CONTRACTION_TRAJECTORIES = (
     TrajectoryType.HOVER_CONTRACTION,
-    TrajectoryType.SPIRAL_CONTRACTION,
-    TrajectoryType.FIGURE_EIGHT_CONTRACTION,
-    TrajectoryType.TREFOIL_CONTRACTION,
+    TrajectoryType.FIG8_CONTRACTION,
     TrajectoryType.FIG8_HEADING_CONTRACTION,
-    TrajectoryType.F8_CONTRACTION,
+    TrajectoryType.SPIRAL_CONTRACTION,
+    TrajectoryType.TREFOIL_CONTRACTION,
 )
 
 
@@ -30,7 +29,7 @@ def create_parser() -> argparse.ArgumentParser:
         epilog="""
 Examples:
   ros2 run contraction_controller_px4 run_node --platform sim --trajectory hover_contraction --hover-mode 1
-  ros2 run contraction_controller_px4 run_node --platform sim --trajectory figure_eight_contraction --log
+  ros2 run contraction_controller_px4 run_node --platform sim --trajectory fig8_contraction --log
   ros2 run contraction_controller_px4 run_node --platform sim --trajectory trefoil_contraction --log --log-file my_run
   ros2 run contraction_controller_px4 run_node --platform hw  --trajectory spiral_contraction
         """,

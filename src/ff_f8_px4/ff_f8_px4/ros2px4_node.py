@@ -1,7 +1,7 @@
-"""Pure feedforward ROS 2 node for the f8_contraction trajectory.
+"""Pure feedforward ROS 2 node for the fig8_contraction trajectory.
 
 Publishes [throttle, p, q, r] commands derived entirely from differential-flatness
-inversion of the f8_contraction trajectory — no feedback from odometry.
+inversion of the fig8_contraction trajectory — no feedback from odometry.
 """
 
 import time
@@ -90,7 +90,7 @@ def _wrap_to_pi(angle: float) -> float:
 
 
 class FeedforwardControl(Node):
-    """Open-loop feedforward controller for the f8_contraction trajectory."""
+    """Open-loop feedforward controller for the fig8_contraction trajectory."""
 
     def __init__(
         self,
@@ -222,7 +222,7 @@ class FeedforwardControl(Node):
 
             self.platform_logtype.append(self.platform_type.value.upper())
             self.controller_logtype.append("ff_f8_pfb" if self.p_feedback else "ff_f8")
-            self.trajectory_logtype.append("F8_CONTRACTION")
+            self.trajectory_logtype.append("FIG8_CONTRACTION")
             self.traj_double_logtype.append("DblSpd" if self.double_speed else "NormSpd")
             self.lookahead_time_logtype.append(0.0)  # no lookahead for open-loop
 
@@ -269,7 +269,7 @@ class FeedforwardControl(Node):
             T = self.ramp_seconds
             return jnp.where(t < T, 0.5 * t * t / T, t - 0.5 * T)
 
-        flat_output = lambda t: TRAJ_REGISTRY[TrajectoryType.F8_CONTRACTION](_time_warp(t), ctx)
+        flat_output = lambda t: TRAJ_REGISTRY[TrajectoryType.FIG8_CONTRACTION](_time_warp(t), ctx)
         self._ff_jit = jax.jit(lambda t: flat_to_x_u(t, flat_output))
 
         def _timed(t):
@@ -285,7 +285,7 @@ class FeedforwardControl(Node):
         print(f"  Speed-up: {t1/t2:.1f}x   Good for {1.0/t2:.0f} Hz")
 
         # Use the actual first trajectory point for hover/return positioning.
-        x0 = TRAJ_REGISTRY[TrajectoryType.F8_CONTRACTION](0.0, ctx)
+        x0 = TRAJ_REGISTRY[TrajectoryType.FIG8_CONTRACTION](0.0, ctx)
         self.hover_ref = (float(x0[0]), float(x0[1]), float(x0[2]), float(x0[3]))
 
     # ------------------------------------------------------------------ #

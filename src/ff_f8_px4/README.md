@@ -1,10 +1,10 @@
 # ff_f8_px4
 
-ROS 2 package for the `f8_contraction` trajectory that publishes body-rate and thrust
+ROS 2 package for the `fig8_contraction` trajectory that publishes body-rate and thrust
 commands derived from differential-flatness feedforward. The package now supports
 three layers that can be combined:
 
-- flatness feedforward for the nominal `f8_contraction` motion
+- flatness feedforward for the nominal `fig8_contraction` motion
 - an optional startup ramp so the controller does not jump instantly from hover to the moving trajectory
 - an optional light feedback layer (`--p-feedback`) that adds position, velocity, attitude, and body-rate damping
 
@@ -16,7 +16,7 @@ three layers that can be combined:
 
 ## How It Works
 
-At each control tick the node evaluates the `f8_contraction` flat output and runs
+At each control tick the node evaluates the `fig8_contraction` flat output and runs
 `flat_to_x_u(...)` from `quad_trajectories`. That returns:
 
 - `x_ff = [px, py, pz, vx, vy, vz, f_specific, phi, th, psi]`
@@ -145,7 +145,7 @@ ros2 run ff_f8_px4 run_node --platform hw --double-speed --p-feedback --ramp-sec
 - `pure ff` is mainly useful as a baseline comparison and is sensitive to mismatch.
 - `--p-feedback` is the recommended mode if you want the controller to actually track the trajectory reasonably.
 - increasing `--ramp-seconds` reduces the startup discontinuity when switching from hover to figure-8 flight.
-- the hover / return position is the actual first `f8_contraction` reference point, not a generic hardcoded hover point.
+- the hover / return position is the actual first `fig8_contraction` reference point, not a generic hardcoded hover point.
 - logs are saved under `src/data_analysis/log_files/ff_f8_px4/`.
 
 ## Log Filenames

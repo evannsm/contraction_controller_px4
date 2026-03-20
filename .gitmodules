@@ -18,13 +18,13 @@
 	url = https://github.com/evannsm/ROS2Logger_cpp.git
 [submodule "src/newton_raphson_px4"]
 	path = src/newton_raphson_px4
-	url = /home/egmc/ws_px4_work/src/newton_raphson_px4
+	url = https://github.com/evannsm/newton_raphson_px4.git
 [submodule "src/newton_raphson_px4_cpp"]
 	path = src/newton_raphson_px4_cpp
-	url = /home/egmc/ws_px4_work/src/newton_raphson_px4_cpp
+	url = https://github.com/evannsm/newton_raphson_px4_cpp.git
 [submodule "src/nmpc_acados_px4"]
 	path = src/nmpc_acados_px4
-	url = /home/egmc/ws_px4_work/src/nmpc_acados_px4
+	url = https://github.com/evannsm/nmpc_acados_px4.git
 [submodule "src/nmpc_acados_px4_cpp"]
 	path = src/nmpc_acados_px4_cpp
-	url = /home/egmc/ws_px4_work/src/nmpc_acados_px4_cpp
+	url = https://github.com/evannsm/nmpc_acados_px4_cpp.git

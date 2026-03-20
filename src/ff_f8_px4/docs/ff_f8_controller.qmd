@@ -1,6 +1,6 @@
 ---
 title: "ff_f8_px4 Controller Note"
-subtitle: "Feedforward, Ramp, and Light Feedback for f8_contraction"
+subtitle: "Feedforward, Ramp, and Light Feedback for fig8_contraction"
 date: today
 format:
   pdf:
@@ -20,7 +20,7 @@ format:
 
 ## Overview {.unnumbered}
 
-`ff_f8_px4` is a ROS 2 controller for the `f8_contraction` trajectory that publishes
+`ff_f8_px4` is a ROS 2 controller for the `fig8_contraction` trajectory that publishes
 PX4 body-rate setpoints directly. It is not a full trajectory-tracking controller like
 NMPC or Newton-Raphson. Instead, it starts from a flatness-derived nominal command and
 optionally adds a small amount of stabilizing feedback.
@@ -35,7 +35,7 @@ where $\tilde{T}$ is normalized throttle and $[p,q,r]$ are desired body rates.
 
 # Flatness Feedforward
 
-The package uses the `f8_contraction` flat output
+The package uses the `fig8_contraction` flat output
 
 $$
 \sigma(t) = [p_x(t), p_y(t), p_z(t), \psi(t)]^T
@@ -189,7 +189,7 @@ Then it adds attitude-rate corrections and measured-rate damping before publishi
 # Hover and Return Reference
 
 The package no longer hovers at a generic hardcoded point. Instead, the hover and return
-setpoints are taken from the actual first `f8_contraction` reference point:
+setpoints are taken from the actual first `fig8_contraction` reference point:
 
 $$
 [p_x(0), p_y(0), p_z(0), \psi(0)].

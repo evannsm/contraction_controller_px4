@@ -1,6 +1,6 @@
 # ff_f8_px4 Commands
 
-Feedforward controller for `f8_contraction` that publishes `[throttle, p, q, r]`
+Feedforward controller for `fig8_contraction` that publishes `[throttle, p, q, r]`
 derived from differential-flatness inversion. Pure open-loop is the default;
 `--p-feedback` adds a small proportional correction using odometry, and
 `--ramp-seconds` blends from hover commands into feedforward at startup.
@@ -146,8 +146,8 @@ Examples:
 
 | Run | Command | Log file |
 |-----|---------|----------|
-| NR feedback only | `ros2 run newton_raphson_px4 run_node --platform sim --trajectory f8_contraction --log` | `sim_nr_std_f8_contraction_1x.csv` |
-| NR + feedforward | `ros2 run newton_raphson_px4 run_node --platform sim --trajectory f8_contraction --ff --log` | `sim_nr_std_f8_contraction_ff_1x.csv` |
+| NR feedback only | `ros2 run newton_raphson_px4 run_node --platform sim --trajectory fig8_contraction --log` | `sim_nr_std_fig8_contraction_1x.csv` |
+| NR + feedforward | `ros2 run newton_raphson_px4 run_node --platform sim --trajectory fig8_contraction --ff --log` | `sim_nr_std_fig8_contraction_ff_1x.csv` |
 | Pure feedforward | `ros2 run ff_f8_px4 run_node --platform sim --log` | `sim_ff_f8_ramp2p0s_1x.csv` |
 | Feedforward + P feedback | `ros2 run ff_f8_px4 run_node --platform sim --p-feedback --log` | `sim_ff_f8_pfb_ramp2p0s_1x.csv` |
 
