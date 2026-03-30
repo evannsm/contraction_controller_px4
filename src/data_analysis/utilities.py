@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import re
+import shutil
 
 
 # ============================================================================
@@ -360,8 +361,8 @@ def get_flat_output_and_desired(df: pd.DataFrame, flip_z: bool = True, align_loo
     reference_values_clean = trim_trailing_and_leading_all_nan(reference_values)
 
     n = min(len(actual_values_clean), len(reference_values_clean))
-    actual_values_clean = actual_values_clean[:n]
-    reference_values_clean = reference_values_clean[:n]
+    actual_values_clean = actual_values_clean[:n].copy()
+    reference_values_clean = reference_values_clean[:n].copy()
 
     # Flip z and z_ref if needed (NED to ENU conversion)
     if flip_z:
@@ -636,7 +637,32 @@ def format_latex_table(df: pd.DataFrame) -> str:
     str
         LaTeX table string
     """
-    return df.to_latex(index=False, float_format="%.4f", escape=False)
+    def format_cell(value) -> str:
+        if pd.isna(value):
+            return "-"
+        if isinstance(value, (float, np.floating)):
+            return f"{value:.4f}"
+        return str(value)
+
+    columns = [str(column) for column in df.columns]
+    alignment = "l" * len(columns)
+    lines = [
+        r"\begin{tabular}{" + alignment + "}",
+        r"\hline",
+        " & ".join(columns) + r" \\",
+        r"\hline",
+    ]
+
+    for _, row in df.iterrows():
+        lines.append(" & ".join(format_cell(row[column]) for column in df.columns) + r" \\")
+
+    lines.extend(
+        [
+            r"\hline",
+            r"\end{tabular}",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 # ============================================================================
@@ -647,10 +673,11 @@ def setup_publication_style():
     """
     Set up matplotlib for publication-quality plots.
     """
+    use_tex = shutil.which("latex") is not None
     plt.rcParams.update({
-        "text.usetex": True,
+        "text.usetex": use_tex,
         "font.family": "serif",
-        "font.serif": ["Computer Modern Roman"],
+        "font.serif": ["Computer Modern Roman" if use_tex else "DejaVu Serif"],
         "font.size": 12,
         "axes.labelsize": 14,
         "axes.titlesize": 14,

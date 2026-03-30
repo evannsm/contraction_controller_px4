@@ -5,6 +5,8 @@ log/
 
 # controller weights (not tracked — place manually, see README)
 src/contraction_controller_px4/new_project/
+src/data_analysis/results/
+src/data_analysis/log_files/
 
 # Python
 __pycache__/

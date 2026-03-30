@@ -5,10 +5,13 @@
 ```bash
 make build
 make run
+make run ROS_DOMAIN_ID=42
 make build_ros
 make build_ros PACKAGES="pkg1 pkg2"
+make build_ros UP_TO=nmpc_acados_px4_cpp
 make clean_build_ros
 make generate_nmpc_solver
+make generate_nmpc_solver PLATFORM=hw FORCE=1
 make attach
 make stop
 make kill
@@ -320,7 +323,7 @@ make run_nmpc PLATFORM=hw TRAJECTORY=trefoil_contraction
 
 ## NMPC Acados C++
 
-Run `make generate_nmpc_solver` before the first C++ NMPC build, then use `make run_nmpc_cpp ...`. Add `LOG=1`, `LOG_FILE=...`, or `FLIGHT_PERIOD=...` as needed.
+`make run_nmpc_cpp ...` auto-checks the solver stamp, regenerates when the platform/formulation changed, rebuilds the C++ package, and then runs. `make generate_nmpc_solver PLATFORM=sim|hw` is still available as a manual convenience target.
 
 ```bash
 # Hover

@@ -1,0 +1,379 @@
+---
+title: "PX4 Workspace Structure and Automation Summary"
+author: "egmc"
+date: today
+format:
+  html:
+    toc: true
+    number-sections: true
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+    geometry: margin=1in
+execute:
+  echo: false
+---
+
+# Overview
+
+This workspace is a ROS 2 + PX4 controller workspace with a mixed execution
+model:
+
+- PX4 SITL and `MicroXRCEAgent` run on the host machine.
+- The controller packages run inside Docker.
+- The Docker container uses host networking and the mounted workspace, so it
+  can see the PX4 ROS 2 topics and share build/log/artifact state with the
+  host.
+
+The current repository supports:
+
+- manual controller runs through `make run_*` targets,
+- helper targets for host SITL and bridge startup,
+- one-command simulation experiments through `make fly`,
+- multi-controller simulation sweeps through `make fly_all`,
+- automatic NMPC solver guarding/regeneration for sim vs hardware platform
+  changes,
+- automatic post-flight analysis without notebooks.
+
+# Mental Model
+
+The easiest way to think about the workspace is:
+
+1. The host owns PX4 SITL, Gazebo or headless execution, and the XRCE bridge.
+2. Docker owns the ROS 2 controller environment, dependencies, and builds.
+3. Shared workspace files on disk connect them.
+4. Analysis consumes the CSV logs produced by controller runs.
+
+In practice, the data flow looks like this:
+
+```text
+Host PX4 SITL/Gazebo or headless
+        |
+        v
+Host MicroXRCEAgent
+        |
+        v
+ROS 2 topics visible on host network
+        |
+        v
+Docker container (--net host, workspace mounted at /workspace)
+        |
+        v
+Controller package run_node
+        |
+        v
+CSV logs under src/data_analysis/log_files/...
+        |
+        v
+run_analysis.py -> tables, plots, manifests under src/data_analysis/results/...
+```
+
+# Top-Level Structure
+
+## Root Files
+
+- `Makefile`: the main operator interface for building, running, and automating
+  experiments.
+- `README.md`: high-level user documentation.
+- `sim_commands.md`: simulation command reference.
+- `hw_commands.md`: hardware command reference.
+- `docker/`: the unified Docker build context for the whole workspace.
+
+## Source Tree
+
+- `src/contraction_controller_px4`: contraction controller package.
+- `src/newton_raphson_px4`: Newton-Raphson Python controller.
+- `src/newton_raphson_px4_cpp`: Newton-Raphson C++ controller.
+- `src/nmpc_acados_px4`: Python NMPC package and shared acados generation path.
+- `src/nmpc_acados_px4_cpp`: C++ NMPC package that consumes generated acados solver artifacts.
+- `src/ff_f8_px4`: feedforward figure-eight controller.
+- `src/quad_trajectories` and `src/quad_trajectories_cpp`: shared trajectory definitions.
+- `src/quad_platforms` and `src/quad_platforms_cpp`: shared platform/mass definitions.
+- `src/data_analysis`: reusable analysis utilities plus the non-notebook CLI.
+- `src/workspace_tools`: workspace-level orchestration scripts, currently the
+  `fly_pipeline.py` automation path.
+
+# Docker and Host Responsibilities
+
+## Docker Side
+
+The Docker image is the common runtime/build environment for all controllers.
+It exists so the workspace can keep ROS 2, JAX, acados, CasADi, Eigen, and
+related dependencies in one reproducible environment.
+
+The key operational assumptions are:
+
+- the repo root is mounted into the container at `/workspace`,
+- the container uses `--net host`,
+- ROS 2 builds happen inside the container,
+- Python controller execution happens inside the container,
+- C++ controller execution also happens inside the container after `colcon build`.
+
+## Host Side
+
+The host is responsible for:
+
+- `~/PX4-Autopilot`,
+- `MicroXRCEAgent`,
+- local GPU/windowing behavior for Gazebo when non-headless,
+- local ROS 2 network visibility to PX4 topics,
+- storing the workspace files that Docker mounts.
+
+This design avoids trying to run PX4 SITL inside the container. Instead, the
+automation layer controls host PX4 from the repo while keeping the controllers
+containerized.
+
+# Main Run Modes
+
+## 1. Manual Host + Manual Container Workflow
+
+This is the low-automation path:
+
+1. Start PX4 SITL on the host.
+2. Start `MicroXRCEAgent` on the host.
+3. Start the Docker container with `make run`.
+4. Build the ROS 2 workspace with `make build_ros`.
+5. Run a controller with a `make run_*` target.
+
+This is the best mode when you are iterating on one controller and want direct,
+explicit control over each stage.
+
+## 2. Host Helper Targets
+
+The helper targets exist so you do not need to remember the exact host-side
+commands:
+
+- `make start_sitl`
+- `make start_sitl_headless`
+- `make start_bridge`
+
+These are convenience wrappers around your local PX4 tree and Micro XRCE bridge.
+
+## 3. One-Command Experiment
+
+`make fly` runs one simulation experiment end-to-end:
+
+1. check host prerequisites,
+2. ensure the Docker image/container exists,
+3. start host bridge,
+4. start host PX4 SITL,
+5. wait for PX4 ROS 2 readiness,
+6. build the needed package inside Docker,
+7. run the requested controller,
+8. wait for the CSV log,
+9. run the non-notebook analysis pipeline.
+
+This is the default "single experiment" automation path.
+
+## 4. Multi-Controller Sweep
+
+`make fly_all` runs the same end-to-end flow for a set of controllers on the
+same trajectory.
+
+The orchestration script restarts SITL and the bridge between controller runs,
+collects all logs, and then runs combined analysis over the whole set.
+
+This is the best mode when you want side-by-side performance comparisons.
+
+# Controller Entry Points
+
+The main controller targets are:
+
+- `make run_contraction`
+- `make run_newton_raphson`
+- `make run_newton_raphson_cpp`
+- `make run_nmpc`
+- `make run_nmpc_cpp`
+- `make run_ff_f8`
+
+These are still useful even after `fly` and `fly_all` exist, because they are
+the simplest way to launch exactly one controller from an already-running
+container.
+
+## Python vs C++ Controllers
+
+Python controllers primarily need the runtime environment and sourced ROS 2
+workspace.
+
+C++ controllers additionally depend on a fresh `colcon build`, so the C++
+targets build and source immediately before running. That means the run target
+itself is also the rebuild path.
+
+# NMPC Solver Regeneration
+
+## Problem Being Solved
+
+The NMPC formulation depends on vehicle mass. Simulation and hardware use
+different masses, so stale generated acados artifacts can silently become wrong
+when switching platform.
+
+Historically, the workaround was to remember to delete generated acados files
+manually.
+
+## Current Guard Design
+
+The workspace now uses a solver guard:
+
+- it computes the expected solver specification,
+- it compares that to a stored metadata stamp,
+- it checks whether the generated artifacts exist,
+- it regenerates if the platform, mass, horizon, discretization, or tracked
+  source files changed.
+
+This guard is used by:
+
+- `make generate_nmpc_solver`
+- `make run_nmpc`
+- `make run_nmpc_cpp`
+- `make fly`
+- `make fly_all`
+
+The C++ NMPC package still shares the generated solver artifacts with the Python
+NMPC package, but it no longer depends on you manually running the Python
+controller first.
+
+# Analysis Pipeline
+
+## Why It Exists
+
+The reusable analysis logic already lived in `src/data_analysis/utilities.py`,
+but it was notebook-oriented. That made it awkward to plug into automation.
+
+## Current Structure
+
+The workspace now has a non-notebook entry point:
+
+- `src/data_analysis/run_analysis.py`
+
+That script:
+
+- accepts one or more CSV logs,
+- loads and normalizes them,
+- computes summary RMSE tables,
+- generates Markdown, CSV, and LaTeX summaries,
+- generates per-log trajectory plots,
+- generates per-log time-series plots,
+- generates an overlay comparison plot when multiple logs are provided,
+- writes a machine-readable manifest of produced artifacts.
+
+## Output Locations
+
+Logs are written under:
+
+```text
+src/data_analysis/log_files/<package>/...
+```
+
+Automated experiment results are written under:
+
+```text
+src/data_analysis/results/<run_name>/...
+```
+
+Typical contents of a result directory are:
+
+- `host_logs/`
+- `analysis/summary.csv`
+- `analysis/summary.md`
+- `analysis/summary.tex`
+- `analysis/*_trajectory.pdf`
+- `analysis/*_timeseries.pdf`
+- `analysis/comparison_overlay.pdf` when applicable
+- `manifest.json`
+
+# Shared Packages
+
+The workspace is intentionally structured so that controllers do not each carry
+their own private copy of trajectory or platform definitions.
+
+The shared source-of-truth packages are:
+
+- `quad_trajectories`
+- `quad_trajectories_cpp`
+- `quad_platforms`
+- `quad_platforms_cpp`
+
+This matters because:
+
+- trajectory naming stays consistent across controllers,
+- sim/hardware mass and related platform properties stay centralized,
+- C++ and Python packages can evolve in parallel without drifting as badly.
+
+# Important Variables
+
+Some of the most important runtime knobs are:
+
+- `PLATFORM=sim|hw`
+- `TRAJECTORY=...`
+- `HOVER_MODE=...`
+- `DOUBLE_SPEED=1`
+- `SPIN=1`
+- `SHORT=1`
+- `FF=1`
+- `LOG=1`
+- `LOG_FILE=...`
+- `HEADLESS=1`
+- `PX4_MODEL=...`
+- `NMPC_HORIZON=...`
+- `NMPC_NUM_STEPS=...`
+- `RESULTS_DIR=...`
+- `RUN_NAME=...`
+- `CONTROLLER=...`
+- `CONTROLLERS=a,b,c`
+
+Less frequently used but still operationally important overrides include:
+
+- `PX4_DIR=~/PX4-Autopilot`
+- `MICROXRCE_PORT=8888`
+- `ROS_DOMAIN_ID=31`
+- `FORCE=1` for forced NMPC regeneration
+
+# Suggested Operator Workflow
+
+## When Developing or Debugging One Controller
+
+Use the manual path:
+
+1. `make run`
+2. `make build_ros`
+3. host SITL + host bridge
+4. one `make run_*` target
+
+This gives the tightest loop and the clearest failure isolation.
+
+## When Running Repeatable Experiments
+
+Use:
+
+1. `make fly ...` for one controller
+2. `make fly_all ...` for controller sweeps
+
+This is the intended path for headless experiment batches and automatic analysis.
+
+# Documentation Map
+
+Use the docs in this order:
+
+- `README.md` for the overall workflow and variable summary.
+- `sim_commands.md` for simulation command recipes.
+- `hw_commands.md` for hardware command recipes.
+- this writeup for architectural understanding.
+- package-local READMEs when a package has special behavior, especially NMPC.
+
+# Practical Summary
+
+At a high level, the workspace is doing three things:
+
+1. providing multiple controllers that share trajectories and platform data,
+2. separating host PX4/SITL concerns from containerized ROS 2/controller concerns,
+3. automating enough of the build-run-log-analyze loop that you can do repeatable
+   comparisons without manually stitching the workflow together each time.
+
+That is the structure to keep in mind when you return to this repo later:
+
+- host PX4,
+- Docker controllers,
+- shared trajectories/platforms,
+- guarded NMPC generation,
+- automated analysis from logs.
