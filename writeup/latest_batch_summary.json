@@ -1,0 +1,97 @@
+{
+  "created_at": "2026-03-30",
+  "workspace_root": "/home/egmc/ws_contraction_px4",
+  "purpose": "Handoff summary for the next agent after the automation, analysis, documentation, and live-verification batch.",
+  "overall_status": "completed_and_pushed",
+  "summary": "The workspace now has verified end-to-end headless automation for make fly and make fly_all, platform-aware NMPC solver regeneration, non-notebook analysis generation, expanded run/docs coverage, and a Quarto architecture writeup. The changes were live-tested against PX4 SITL and pushed to the relevant remotes.",
+  "completed_work": [
+    "Added platform-aware NMPC solver guarding/regeneration in src/nmpc_acados_px4, including a solver metadata stamp and Docker-safe source hashing.",
+    "Updated root Makefile so NMPC and C++ controller runs rebuild or regenerate as needed before launch.",
+    "Added host-side SITL/bridge orchestration and one-command experiment automation in src/workspace_tools/fly_pipeline.py.",
+    "Added non-notebook analysis CLI in src/data_analysis/run_analysis.py.",
+    "Updated analysis utilities to avoid hard dependency on LaTeX/Jinja2 and to handle aligned NumPy slices safely.",
+    "Expanded README.md, sim_commands.md, and hw_commands.md with operational and recovery details.",
+    "Added writeup/workspace_structure_summary.qmd to explain the repo structure and run model.",
+    "Ignored generated results and log files in .gitignore."
+  ],
+  "live_verification": {
+    "status": "passed",
+    "single_run": {
+      "command": "make -C /home/egmc/ws_contraction_px4 fly CONTROLLER=nmpc_cpp TRAJECTORY=hover HOVER_MODE=1 HEADLESS=1 RUN_NAME=acceptance_fly_nmpc_cpp_hover_v3",
+      "result": "passed",
+      "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/acceptance_fly_nmpc_cpp_hover_v3"
+    },
+    "multi_run": {
+      "command": "make -C /home/egmc/ws_contraction_px4 fly_all TRAJECTORY=fig8_contraction HEADLESS=1 RUN_NAME=acceptance_fly_all_fig8_contraction_v2",
+      "result": "passed",
+      "controllers_run": [
+        "contraction",
+        "newton_raphson",
+        "newton_raphson_cpp",
+        "nmpc",
+        "nmpc_cpp",
+        "ff_f8"
+      ],
+      "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/acceptance_fly_all_fig8_contraction_v2"
+    }
+  },
+  "runtime_issues_found_and_fixed_during_live_testing": [
+    "fly_pipeline.py originally required host ros2 for readiness; readiness was moved to docker exec inside the controller container.",
+    "The automation container originally exited immediately because docker run used detached mode without an interactive shell lifetime; the container startup now uses -it so docker exec targets remain available.",
+    "The readiness probe was checking /fmu/out/vehicle_status, but the active PX4 topic is /fmu/out/vehicle_status_v1; this was corrected.",
+    "The NMPC solver stamp logic was hashing the wrong package root inside Docker and tried to read /workspace/src/generate_solver.py; source path resolution was fixed.",
+    "Analysis initially failed because pandas.to_latex required jinja2; the LaTeX export path was rewritten to be dependency-free.",
+    "Analysis initially failed on a read-only NumPy slice during z-axis sign flipping; aligned arrays are now copied before mutation."
+  ],
+  "important_artifacts": [
+    "/home/egmc/ws_contraction_px4/writeup/workspace_structure_summary.qmd",
+    "/home/egmc/ws_contraction_px4/src/data_analysis/run_analysis.py",
+    "/home/egmc/ws_contraction_px4/src/workspace_tools/fly_pipeline.py",
+    "/home/egmc/ws_contraction_px4/src/data_analysis/results/acceptance_fly_nmpc_cpp_hover_v3",
+    "/home/egmc/ws_contraction_px4/src/data_analysis/results/acceptance_fly_all_fig8_contraction_v2"
+  ],
+  "documentation_locations": [
+    "/home/egmc/ws_contraction_px4/README.md",
+    "/home/egmc/ws_contraction_px4/sim_commands.md",
+    "/home/egmc/ws_contraction_px4/hw_commands.md",
+    "/home/egmc/ws_contraction_px4/writeup/workspace_structure_summary.qmd",
+    "/home/egmc/ws_contraction_px4/src/nmpc_acados_px4/README.md",
+    "/home/egmc/ws_contraction_px4/src/nmpc_acados_px4_cpp/README.md"
+  ],
+  "commits_pushed": {
+    "root_repo": {
+      "repo": "git@github.com:evannsm/contraction_controller_px4.git",
+      "branch": "main",
+      "commit": "595f8e2",
+      "message": "Automate verified fly/fly_all sweeps with CLI analysis and recovery docs"
+    },
+    "submodules": [
+      {
+        "path": "/home/egmc/ws_contraction_px4/src/nmpc_acados_px4",
+        "repo": "git@github.com:evannsm/nmpc_acados_px4.git",
+        "branch": "main",
+        "commit": "42a4e58",
+        "message": "Add platform-aware NMPC solver guard and Docker-safe source hashing"
+      },
+      {
+        "path": "/home/egmc/ws_contraction_px4/src/nmpc_acados_px4_cpp",
+        "repo": "git@github.com:evannsm/nmpc_acados_px4_cpp.git",
+        "branch": "main",
+        "commit": "ddd9e3f",
+        "message": "Document ensure_solver workflow for C++ NMPC builds"
+      }
+    ]
+  },
+  "repo_state_after_push": {
+    "root_clean": true,
+    "notes": [
+      "Generated log files and results are now gitignored.",
+      "The Docker image was rebuilt locally during verification to include pandas."
+    ]
+  },
+  "remaining_caveats": [
+    "run_analysis.py may print benign warnings when a log does not include lookahead_time; this is expected for some controllers.",
+    "The Quarto writeup exists as a .qmd source file but was not rendered to HTML or PDF in this batch.",
+    "The automation model is host PX4 plus Dockerized controllers, not PX4 itself running inside Docker."
+  ]
+}
