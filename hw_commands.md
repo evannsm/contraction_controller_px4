@@ -27,7 +27,7 @@ LOG=1 LOG_FILE=my_run
 FLIGHT_PERIOD=60
 ```
 
-Python NR / NMPC also support:
+Python NR / diff-flat / NMPC also support:
 
 ```bash
 PYJOULES=1
@@ -56,6 +56,7 @@ RAMP_SECONDS=4.0
 - `SPIN=1` is meaningful for `circle_horz`, `circle_vert`, `fig8_horz`, `fig8_vert`, `helix`, `sawtooth`, and `triangle`.
 - `SHORT=1` is only meaningful for `fig8_vert`.
 - `FF=1` is only valid for `fig8_contraction`.
+- `CTRL_TYPE=jax|numpy` is only meaningful for `make run_nr_diff_flat`.
 - `fig8_contraction` ignores `DOUBLE_SPEED=1`, so no 2x command is listed for it.
 - `make run_ff_f8` accepts `P_FEEDBACK=1` and `RAMP_SECONDS=<seconds>` in addition to `DOUBLE_SPEED=1`.
 
@@ -163,6 +164,83 @@ make run_newton_raphson PLATFORM=hw TRAJECTORY=spiral_contraction
 
 # Trefoil contraction
 make run_newton_raphson PLATFORM=hw TRAJECTORY=trefoil_contraction
+```
+
+## Newton-Raphson Diff-Flat (Python)
+
+Use `make run_nr_diff_flat ...`. Add `LOG=1`, `LOG_FILE=...`, `FLIGHT_PERIOD=...`, and optionally `PYJOULES=1` or `CTRL_TYPE=numpy`.
+
+```bash
+# Hover
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=hover HOVER_MODE=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=hover HOVER_MODE=2
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=hover HOVER_MODE=3
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=hover HOVER_MODE=4
+
+# Hover contraction
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=hover_contraction
+
+# Yaw only
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=yaw_only
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=yaw_only DOUBLE_SPEED=1
+
+# Circle horizontal
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=circle_horz
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=circle_horz SPIN=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=circle_horz DOUBLE_SPEED=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=circle_horz SPIN=1 DOUBLE_SPEED=1
+
+# Circle vertical
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=circle_vert
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=circle_vert SPIN=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=circle_vert DOUBLE_SPEED=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=circle_vert SPIN=1 DOUBLE_SPEED=1
+
+# Figure-8 horizontal
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_horz
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_horz SPIN=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_horz DOUBLE_SPEED=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_horz SPIN=1 DOUBLE_SPEED=1
+
+# Figure-8 vertical
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_vert
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_vert SPIN=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_vert SHORT=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_vert DOUBLE_SPEED=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_vert SPIN=1 SHORT=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_vert SPIN=1 DOUBLE_SPEED=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_vert SHORT=1 DOUBLE_SPEED=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_vert SPIN=1 SHORT=1 DOUBLE_SPEED=1
+
+# Helix
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=helix
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=helix SPIN=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=helix DOUBLE_SPEED=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=helix SPIN=1 DOUBLE_SPEED=1
+
+# Sawtooth
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=sawtooth
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=sawtooth SPIN=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=sawtooth DOUBLE_SPEED=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=sawtooth SPIN=1 DOUBLE_SPEED=1
+
+# Triangle
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=triangle
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=triangle SPIN=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=triangle DOUBLE_SPEED=1
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=triangle SPIN=1 DOUBLE_SPEED=1
+
+# Figure-8 contraction
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_contraction
+
+# Figure-8 heading contraction
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=fig8_heading_contraction
+
+# Spiral contraction
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=spiral_contraction
+
+# Trefoil contraction
+make run_nr_diff_flat PLATFORM=hw TRAJECTORY=trefoil_contraction
 ```
 
 ## Newton-Raphson C++

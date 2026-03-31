@@ -87,7 +87,14 @@ def extract_metadata_from_data(df: pd.DataFrame) -> Dict[str, str]:
 
     # String to standard name mappings
     PLATFORM_STR_MAP = {'sim': 'Simulation', 'hw': 'Hardware'}
-    CONTROLLER_STR_MAP = {'nr': 'NR Standard', 'nr_enhanced': 'NR Enhanced', 'mpc': 'MPC'}
+    CONTROLLER_STR_MAP = {
+        'nr': 'NR Standard',
+        'nr_enhanced': 'NR Enhanced',
+        'nr_df': 'NR Diff-Flat',
+        'nr_df_jax': 'NR Diff-Flat (JAX)',
+        'nr_df_numpy': 'NR Diff-Flat (NumPy)',
+        'mpc': 'MPC',
+    }
     TRAJECTORY_STR_MAP = {
         'circle_horz': 'Circle H',
         'circle_vert': 'Circle V',

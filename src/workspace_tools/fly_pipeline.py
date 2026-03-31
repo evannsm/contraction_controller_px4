@@ -81,6 +81,12 @@ CONTROLLERS: dict[str, ControllerSpec] = {
         build_up_to="newton_raphson_px4",
         supports=COMMON_TRAJECTORIES,
     ),
+    "nr_diff_flat": ControllerSpec(
+        key="nr_diff_flat",
+        package="nr_diff_flat_px4",
+        build_up_to="nr_diff_flat_px4",
+        supports=COMMON_TRAJECTORIES,
+    ),
     "newton_raphson_cpp": ControllerSpec(
         key="newton_raphson_cpp",
         package="newton_raphson_px4_cpp",
@@ -129,6 +135,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--spin", action="store_true")
     parser.add_argument("--ff", action="store_true")
     parser.add_argument("--pyjoules", action="store_true")
+    parser.add_argument("--ctrl-type", default="jax", choices=["jax", "numpy"])
     parser.add_argument("--controller-dir", default="")
     parser.add_argument("--no-feedforward", action="store_true")
     parser.add_argument("--p-feedback", action="store_true")
@@ -169,6 +176,7 @@ def main() -> None:
         "px4_model": args.px4_model,
         "nmpc_horizon": args.nmpc_horizon,
         "nmpc_num_steps": args.nmpc_num_steps,
+        "ctrl_type": args.ctrl_type,
         "controllers": controller_keys,
         "runs": [],
     }
@@ -323,6 +331,7 @@ def default_controller_set(trajectory: str) -> list[str]:
         return [
             "contraction",
             "newton_raphson",
+            "nr_diff_flat",
             "newton_raphson_cpp",
             "nmpc",
             "nmpc_cpp",
@@ -332,12 +341,14 @@ def default_controller_set(trajectory: str) -> list[str]:
         return [
             "contraction",
             "newton_raphson",
+            "nr_diff_flat",
             "newton_raphson_cpp",
             "nmpc",
             "nmpc_cpp",
         ]
     return [
         "newton_raphson",
+        "nr_diff_flat",
         "newton_raphson_cpp",
         "nmpc",
         "nmpc_cpp",
@@ -474,6 +485,8 @@ def build_ros2_run_command(
             cmd.extend(["--hover-mode", str(args.hover_mode)])
         if args.flight_period is not None:
             cmd.extend(["--flight-period", str(args.flight_period)])
+        if controller_key == "nr_diff_flat":
+            cmd.extend(["--ctrl-type", args.ctrl_type])
         if args.double_speed:
             cmd.append("--double-speed")
         if args.short:
@@ -482,7 +495,7 @@ def build_ros2_run_command(
             cmd.append("--spin")
         if args.ff:
             cmd.append("--ff")
-        if args.pyjoules and controller_key in {"newton_raphson", "nmpc"}:
+        if args.pyjoules and controller_key in {"newton_raphson", "nr_diff_flat", "nmpc"}:
             cmd.append("--pyjoules")
 
     cmd.extend(["--log", "--log-file", log_stem])

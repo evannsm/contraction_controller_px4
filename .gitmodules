@@ -28,3 +28,6 @@
 [submodule "src/nmpc_acados_px4_cpp"]
 	path = src/nmpc_acados_px4_cpp
 	url = https://github.com/evannsm/nmpc_acados_px4_cpp.git
+[submodule "src/nr_diff_flat_px4"]
+	path = src/nr_diff_flat_px4
+	url = git@github.com:evannsm/nr_diff_flat_px4.git

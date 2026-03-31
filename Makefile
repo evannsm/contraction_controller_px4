@@ -127,6 +127,9 @@ PYJOULES        ?=
 CONTROLLER_DIR  ?=
 NO_FEEDFORWARD  ?=
 
+# nr_diff_flat-specific
+CTRL_TYPE       ?=
+
 # ff_f8-specific
 P_FEEDBACK      ?=
 RAMP_SECONDS    ?=
@@ -154,6 +157,21 @@ run_newton_raphson:
 		   $(if $(SHORT),--short,) \
 		   $(if $(SPIN),--spin,) \
 		   $(if $(FF),--ff,) \
+		   $(if $(LOG),--log,) \
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
+		   $(if $(PYJOULES),--pyjoules,)"
+
+# ── Newton-Raphson Diff-Flat (Python) ────────────────────────────────────────
+run_nr_diff_flat:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"ros2 run nr_diff_flat_px4 run_node \
+		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
+		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(CTRL_TYPE),--ctrl-type $(CTRL_TYPE),) \
+		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   $(if $(SHORT),--short,) \
+		   $(if $(SPIN),--spin,) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
 		   $(if $(PYJOULES),--pyjoules,)"
@@ -264,6 +282,7 @@ fly:
 		$(if $(SHORT),--short,) \
 		$(if $(SPIN),--spin,) \
 		$(if $(FF),--ff,) \
+		$(if $(CTRL_TYPE),--ctrl-type $(CTRL_TYPE),) \
 		$(if $(PYJOULES),--pyjoules,) \
 		$(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),) \
 		$(if $(filter 1,$(NO_FEEDFORWARD)),--no-feedforward,) \
@@ -294,6 +313,7 @@ fly_all:
 		$(if $(SHORT),--short,) \
 		$(if $(SPIN),--spin,) \
 		$(if $(FF),--ff,) \
+		$(if $(CTRL_TYPE),--ctrl-type $(CTRL_TYPE),) \
 		$(if $(PYJOULES),--pyjoules,) \
 		$(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),) \
 		$(if $(filter 1,$(NO_FEEDFORWARD)),--no-feedforward,) \
@@ -308,7 +328,7 @@ run_controller: run_contraction
 .PHONY: build run stop kill attach build_ros clean_build_ros \
 	        generate_nmpc_solver \
 	        run_controller run_contraction \
-	        run_newton_raphson run_newton_raphson_cpp \
+	        run_newton_raphson run_nr_diff_flat run_newton_raphson_cpp \
 	        run_nmpc run_nmpc_cpp run_ff_f8 \
 	        start_sitl start_sitl_headless start_bridge \
 	        fly fly_all

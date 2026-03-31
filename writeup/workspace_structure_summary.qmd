@@ -84,6 +84,7 @@ run_analysis.py -> tables, plots, manifests under src/data_analysis/results/...
 
 - `src/contraction_controller_px4`: contraction controller package.
 - `src/newton_raphson_px4`: Newton-Raphson Python controller.
+- `src/nr_diff_flat_px4`: differential-flatness / feedback-linearization Python controller with JAX and NumPy variants.
 - `src/newton_raphson_px4_cpp`: Newton-Raphson C++ controller.
 - `src/nmpc_acados_px4`: Python NMPC package and shared acados generation path.
 - `src/nmpc_acados_px4_cpp`: C++ NMPC package that consumes generated acados solver artifacts.
@@ -182,6 +183,7 @@ The main controller targets are:
 
 - `make run_contraction`
 - `make run_newton_raphson`
+- `make run_nr_diff_flat`
 - `make run_newton_raphson_cpp`
 - `make run_nmpc`
 - `make run_nmpc_cpp`

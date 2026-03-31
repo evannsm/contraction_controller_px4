@@ -9,6 +9,7 @@ all sharing a common trajectory library and platform abstraction layer.
 |---|---|---|---|
 | `run_contraction` | `contraction_controller_px4` | Python | JAX, equinox, immrax, linrax |
 | `run_newton_raphson` | `newton_raphson_px4` | Python | JAX |
+| `run_nr_diff_flat` | `nr_diff_flat_px4` | Python | JAX or NumPy, differential flatness / feedback linearization |
 | `run_newton_raphson_cpp` | `newton_raphson_px4_cpp` | C++ | Eigen, autodiff |
 | `run_nmpc` | `nmpc_acados_px4` | Python | acados, casadi |
 | `run_nmpc_cpp` | `nmpc_acados_px4_cpp` | C++ | acados C API |
@@ -134,6 +135,7 @@ make build_ros
 ```bash
 make run_contraction PLATFORM=sim TRAJECTORY=hover_contraction HOVER_MODE=1
 make run_newton_raphson PLATFORM=sim TRAJECTORY=helix DOUBLE_SPEED=1 SPIN=1 LOG=1
+make run_nr_diff_flat PLATFORM=sim TRAJECTORY=helix CTRL_TYPE=jax LOG=1
 make run_nmpc PLATFORM=sim TRAJECTORY=fig8_contraction FF=1 LOG=1
 make run_nmpc_cpp PLATFORM=sim TRAJECTORY=circle_horz LOG=1
 make run_ff_f8 PLATFORM=sim LOG=1
@@ -206,7 +208,8 @@ solver when the mass or formulation changed.
 | `FF` | *(off)* | enable differential-flatness feedforward (fig8_contraction only) |
 | `LOG` | *(off)* | enable CSV logging |
 | `LOG_FILE` | *(auto)* | log filename stem (without `.csv`) |
-| `PYJOULES` | *(off)* | enable PyJoules energy logging (Python NR / NMPC only) |
+| `PYJOULES` | *(off)* | enable PyJoules energy logging (Python NR / diff-flat / NMPC only) |
+| `CTRL_TYPE` | *(package default)* | `jax` or `numpy` for `run_nr_diff_flat`, and forwarded through `fly` / `fly_all` when `CONTROLLER=nr_diff_flat` |
 | `CONTROLLER_DIR` | *(auto)* | neural network weights dir (contraction only) |
 | `NO_FEEDFORWARD` | `0` | set to `1` to disable u_ff (contraction only) |
 | `P_FEEDBACK` | *(off)* | enable proportional feedback layer in `run_ff_f8` |
@@ -214,8 +217,8 @@ solver when the mass or formulation changed.
 | `HEADLESS` | *(off)* | use headless PX4 SITL in `fly` / `fly_all` |
 | `RESULTS_DIR` | `src/data_analysis/results/<auto>` | output directory for `fly` / `fly_all` (must stay under the workspace root so the container can write analysis artifacts) |
 | `RUN_NAME` | *(auto)* | custom experiment name for `fly` / `fly_all` |
-| `CONTROLLER` | `newton_raphson` | controller key for `fly` |
-| `CONTROLLERS` | *(auto)* | comma-separated controller list override for `fly_all` |
+| `CONTROLLER` | `newton_raphson` | controller key for `fly` (`contraction`, `newton_raphson`, `nr_diff_flat`, `newton_raphson_cpp`, `nmpc`, `nmpc_cpp`, `ff_f8`) |
+| `CONTROLLERS` | *(auto)* | comma-separated controller list override for `fly_all` using the same keys as `CONTROLLER` |
 
 ### Infrastructure and recovery variables
 
@@ -245,12 +248,15 @@ make generate_nmpc_solver PLATFORM=hw FORCE=1
 # Run automation in a different ROS domain
 make fly CONTROLLER=nmpc_cpp TRAJECTORY=fig8_contraction ROS_DOMAIN_ID=42
 
+# Run the differential-flatness controller with the NumPy variant
+make fly CONTROLLER=nr_diff_flat TRAJECTORY=helix CTRL_TYPE=numpy HEADLESS=1
+
 # Name a run explicitly or choose the output directory
 make fly CONTROLLER=nmpc TRAJECTORY=helix RUN_NAME=helix_trial_01
 make fly_all TRAJECTORY=fig8_contraction RESULTS_DIR=src/data_analysis/results/fig8_batch
 
 # Override the default fly_all controller set
-make fly_all TRAJECTORY=fig8_contraction CONTROLLERS=nmpc,nmpc_cpp,ff_f8
+make fly_all TRAJECTORY=fig8_contraction CONTROLLERS=nr_diff_flat,nmpc,nmpc_cpp,ff_f8
 ```
 
 ---
