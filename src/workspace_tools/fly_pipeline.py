@@ -555,6 +555,8 @@ def build_log_stem(controller_key: str, args: argparse.Namespace, run_index: int
         "newton_raphson_enhanced_cpp",
         "nmpc",
         "nmpc_cpp",
+        "nr_diff_flat",
+        "nr_diff_flat_cpp",
     }:
         ff_suffix = "_ff"
     if args.no_feedforward and controller_key == "contraction":

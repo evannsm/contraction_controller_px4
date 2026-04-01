@@ -82,7 +82,8 @@ def extract_metadata_from_data(df: pd.DataFrame) -> Dict[str, str]:
         'controller': 'Unknown',
         'trajectory': 'Unknown',
         'traj_double': False,
-        'traj_spin': False
+        'traj_spin': False,
+        'traj_short': False,
     }
 
     # String to standard name mappings
@@ -159,7 +160,49 @@ def extract_metadata_from_data(df: pd.DataFrame) -> Dict[str, str]:
         else:
             metadata['traj_spin'] = bool(traj_spin_val)
 
+    if 'traj_short' in df.columns:
+        traj_short_val = df['traj_short'].mode()[0]
+        if isinstance(traj_short_val, str):
+            metadata['traj_short'] = 'short' in traj_short_val.lower() and 'not' not in traj_short_val.lower()
+        else:
+            metadata['traj_short'] = bool(traj_short_val)
+
     return metadata
+
+
+def infer_run_modifiers_from_filename(filename: str, controller: str) -> List[str]:
+    """Infer experiment modifiers that are only encoded in the run/log stem."""
+    stem = Path(filename).stem.lower()
+    padded_stem = f"_{stem}_"
+
+    nr_family = (
+        'newton_raphson' in stem
+        or 'nr_diff_flat' in stem
+        or 'nr_std' in stem
+        or 'nr_enhanced' in stem
+        or 'nr_df' in stem
+        or controller.startswith('NR ')
+    )
+    ff_capable = nr_family or 'nmpc' in stem or controller == 'MPC'
+
+    modifiers: List[str] = []
+
+    if '_workshop_' in padded_stem:
+        modifiers.append('workshop')
+    elif nr_family:
+        modifiers.append('baseline')
+
+    if '_ff_' in padded_stem:
+        modifiers.append('ff')
+    elif '_noff_' in padded_stem:
+        modifiers.append('noff')
+    elif ff_capable:
+        modifiers.append('noff')
+
+    if '_short_' in padded_stem:
+        modifiers.append('short')
+
+    return modifiers
 
 
 def extract_metadata_from_filename(filename: str) -> Dict[str, str]:
@@ -594,12 +637,14 @@ def generate_results_table(data_dict: Dict[str, pd.DataFrame],
             controller = metadata['controller']
             trajectory = metadata['trajectory']
 
-            # Build trajectory modifier string
-            modifiers = []
+            # Build modifier string from both data metadata and run-stem tokens.
+            modifiers = infer_run_modifiers_from_filename(filename, controller)
             if metadata['traj_double']:
                 modifiers.append('2x')
             if metadata['traj_spin']:
                 modifiers.append('spin')
+            if metadata.get('traj_short'):
+                modifiers.append('short')
             modifier_str = '+'.join(modifiers) if modifiers else '-'
 
         else:
