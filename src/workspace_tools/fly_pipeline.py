@@ -139,7 +139,7 @@ CONTROLLERS: dict[str, ControllerSpec] = {
         key="ff_f8",
         package="ff_f8_px4",
         build_up_to="ff_f8_px4",
-        supports={"fig8_contraction"},
+        supports=CONTRACTION_ONLY_TRAJECTORIES,
     ),
 }
 

@@ -53,6 +53,20 @@ SUMMARY_CONTROLLER_TO_KEY = {
     "FBL": "fbl",
 }
 
+REQUESTED_CONTROLLER_TO_LABEL = {
+    "contraction": "contraction",
+    "nmpc": "NMPC",
+    "nmpc_cpp": "NMPC",
+    "ff_f8": "Flatness Feedforward",
+    "fbl": "FBL",
+    "newton_raphson": "NR Standard",
+    "newton_raphson_enhanced": "NR Enhanced",
+    "nr_diff_flat": "NR Diff-Flat",
+    "newton_raphson_cpp": "NR Standard",
+    "newton_raphson_enhanced_cpp": "NR Enhanced",
+    "nr_diff_flat_cpp": "NR Diff-Flat",
+}
+
 FBL_PROFILES = {
     "default": {},
     "balanced": {
@@ -293,7 +307,11 @@ def augment_rows(df: pd.DataFrame, record: dict[str, Any]) -> pd.DataFrame:
             augmented[key] = json.dumps(value, sort_keys=True)
         else:
             augmented[key] = value
-    augmented["trajectory_label"] = augmented["trajectory_label"].map(lambda x: x)
+    requested_controllers = record["controllers"]
+    if len(requested_controllers) == 1:
+        requested_key = requested_controllers[0]
+        requested_label = REQUESTED_CONTROLLER_TO_LABEL.get(requested_key, requested_key)
+        augmented.loc[augmented["Controller"].isin(["Unknown", "Controller 2"]), "Controller"] = requested_label
     augmented["controller_key"] = augmented["Controller"].map(normalize_controller_key)
     augmented["comparison_label"] = augmented.apply(comparison_label, axis=1)
     augmented["trajectory_display"] = augmented["trajectory_key"].map(TRAJECTORY_LABELS)
