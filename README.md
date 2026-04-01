@@ -49,7 +49,7 @@ make -j$(nproc) && sudo make install && sudo ldconfig
 Place the trained network files at:
 
 ```
-src/controller_params/
+src/contraction_controller_px4/contraction_controller_px4/params/
 ├── arch.txt       # network architecture, e.g.  10 128 softplus 128 softplus 4
 ├── model.eqx      # equinox-serialised weights
 └── ix_ut.npy      # equilibrium input

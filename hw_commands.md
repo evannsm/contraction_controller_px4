@@ -37,7 +37,7 @@ LOG=1 PYJOULES=1
 Contraction-only extras:
 
 ```bash
-CONTROLLER_DIR=src/controller_params/new_params
+CONTROLLER_DIR=src/contraction_controller_px4/contraction_controller_px4/params/new_params
 NO_FEEDFORWARD=1
 ```
 

@@ -60,7 +60,7 @@ Examples:
         type=str,
         default=None,
         help="Path to the Controller directory containing arch.txt and model.eqx. "
-             "Defaults to src/controller_params relative to workspace root.",
+             "Defaults to the 'params' folder inside the package.",
     )
     parser.add_argument(
         "--flight-period",
@@ -127,7 +127,7 @@ def main():
     print(f"Trajectory:    {args.trajectory.value.upper()}")
     print(f"Hover Mode:    {args.hover_mode if args.hover_mode is not None else 'N/A'}")
     print(f"Flight Period: {args.flight_period or ('30s' if args.platform == PlatformType.SIM else '60s')}")
-    print(f"Controller:    {args.controller_dir or '(default: src/controller_params)'}")
+    print(f"Controller:    {args.controller_dir or '(default: package params/ directory)'}")
     print(f"Feedforward:   {'DISABLED (u_ff = 0)' if args.no_feedforward else 'Enabled'}")
     print(f"Data Logging:  {'Enabled → ' + log_file if logging_enabled else 'Disabled'}")
     print("=" * 60 + "\n")

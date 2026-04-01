@@ -156,7 +156,7 @@ class ContractionOffboardControl(Node):
         if controller_dir is None:
             controller_dir = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
-                "..", "..", "controller_params",
+                "params",
             )
         self.controller_dir = Path(controller_dir).resolve()
         self.get_logger().info(f"Loading neural network from: {self.controller_dir}")

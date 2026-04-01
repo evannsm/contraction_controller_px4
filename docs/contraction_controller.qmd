@@ -72,10 +72,10 @@ fully-connected network with the architecture specified in `arch.txt`
 (typically `10 128 softplus 128 softplus 4`), trained using contraction-metric
 certificates (CCM / ControlNet).
 
-Weights are loaded at runtime from `src/controller_params/`:
+Weights are loaded at runtime from `src/contraction_controller_px4/contraction_controller_px4/params/`:
 
 ```python
-control_net = irx.NeuralNetwork('src/controller_params')
+control_net = irx.NeuralNetwork('src/contraction_controller_px4/contraction_controller_px4/params')
 ```
 
 The network maps a state $x$ to a raw control output in the same units as $u$
