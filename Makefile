@@ -83,7 +83,7 @@ PACKAGES ?=
 UP_TO    ?=
 
 build_ros:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
+	docker exec $(CONTAINER_NAME) bash -lc \
 		"cd /workspace && colcon build \
 			   --symlink-install \
 			   --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
@@ -91,14 +91,14 @@ build_ros:
 
 # Wipe build/install/log then rebuild from scratch.
 clean_build_ros:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
+	docker exec $(CONTAINER_NAME) bash -lc \
 		"rm -rf /workspace/build /workspace/install /workspace/log"
 	$(MAKE) build_ros PACKAGES="$(PACKAGES)"
 
 # ── Generate NMPC acados solver ──────────────────────────────────────────────
 # Regenerates only when the requested platform/mass or NMPC formulation changed.
 generate_nmpc_solver:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
+	docker exec $(CONTAINER_NAME) bash -lc \
 		"cd /workspace && python3 src/nmpc_acados_px4/ensure_solver.py \
 		   --platform $(PLATFORM) \
 		   --horizon $(NMPC_HORIZON) \
@@ -129,8 +129,9 @@ NO_FEEDFORWARD  ?=
 
 # nr_diff_flat-specific
 CTRL_TYPE       ?=
+NR_PROFILE      ?=
 
-# ff_f8-specific
+# flatness/FBL-specific
 P_FEEDBACK      ?=
 RAMP_SECONDS    ?=
 
@@ -157,6 +158,7 @@ run_newton_raphson:
 		   $(if $(SHORT),--short,) \
 		   $(if $(SPIN),--spin,) \
 		   $(if $(FF),--ff,) \
+		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
 		   $(if $(PYJOULES),--pyjoules,)"
@@ -169,9 +171,26 @@ run_nr_diff_flat:
 		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
 		   $(if $(CTRL_TYPE),--ctrl-type $(CTRL_TYPE),) \
+		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		   $(if $(DOUBLE_SPEED),--double-speed,) \
 		   $(if $(SHORT),--short,) \
 		   $(if $(SPIN),--spin,) \
+		   $(if $(LOG),--log,) \
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
+		   $(if $(PYJOULES),--pyjoules,)"
+
+# ── Newton-Raphson Enhanced (Python) ─────────────────────────────────────────
+run_newton_raphson_enhanced:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"ros2 run newton_raphson_enhanced_px4 run_node \
+		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
+		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   $(if $(SHORT),--short,) \
+		   $(if $(SPIN),--spin,) \
+		   $(if $(FF),--ff,) \
+		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
 		   $(if $(PYJOULES),--pyjoules,)"
@@ -192,6 +211,47 @@ run_newton_raphson_cpp:
 		   $(if $(SHORT),--short,) \
 		   $(if $(SPIN),--spin,) \
 		   $(if $(FF),--ff,) \
+		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
+		   $(if $(LOG),--log,) \
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+
+# ── Newton-Raphson Enhanced (C++) ──────────────────────────────────────────
+run_newton_raphson_enhanced_cpp:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"cd /workspace && colcon build \
+		   --symlink-install \
+		   --packages-up-to newton_raphson_enhanced_px4_cpp \
+		   --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
+		   source /workspace/install/setup.bash && \
+		   ros2 run newton_raphson_enhanced_px4_cpp run_node \
+			   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
+			   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+			   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   $(if $(SHORT),--short,) \
+		   $(if $(SPIN),--spin,) \
+		   $(if $(FF),--ff,) \
+		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
+		   $(if $(LOG),--log,) \
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+
+# ── Newton-Raphson Diff-Flat (C++) ──────────────────────────────────────────
+run_nr_diff_flat_cpp:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"cd /workspace && colcon build \
+		   --symlink-install \
+		   --packages-up-to nr_diff_flat_px4_cpp \
+		   --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
+		   source /workspace/install/setup.bash && \
+		   ros2 run nr_diff_flat_px4_cpp run_node \
+			   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
+			   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
+			   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   $(if $(SHORT),--short,) \
+		   $(if $(SPIN),--spin,) \
+		   $(if $(FF),--ff,) \
+		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
 
@@ -238,14 +298,27 @@ run_nmpc_cpp:
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
 
-# ── Feedforward figure-8 (Python) ────────────────────────────────────────────
+# ── Flatness feedforward / FBL (Python) ──────────────────────────────────────
 run_ff_f8:
 	docker exec -it $(CONTAINER_NAME) bash -lc \
 		"ros2 run ff_f8_px4 run_node \
 			   --platform $(PLATFORM) \
+			   --trajectory $(TRAJECTORY) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
 		   $(if $(DOUBLE_SPEED),--double-speed,) \
 		   $(if $(P_FEEDBACK),--p-feedback,) \
+		   $(if $(RAMP_SECONDS),--ramp-seconds $(RAMP_SECONDS),) \
+			   $(if $(LOG),--log,) \
+			   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+
+run_fbl:
+	docker exec -it $(CONTAINER_NAME) bash -lc \
+		"ros2 run ff_f8_px4 run_node \
+			   --platform $(PLATFORM) \
+			   --trajectory $(TRAJECTORY) \
+		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
+		   $(if $(DOUBLE_SPEED),--double-speed,) \
+		   --p-feedback \
 		   $(if $(RAMP_SECONDS),--ramp-seconds $(RAMP_SECONDS),) \
 			   $(if $(LOG),--log,) \
 			   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
@@ -282,6 +355,7 @@ fly:
 		$(if $(SHORT),--short,) \
 		$(if $(SPIN),--spin,) \
 		$(if $(FF),--ff,) \
+		$(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		$(if $(CTRL_TYPE),--ctrl-type $(CTRL_TYPE),) \
 		$(if $(PYJOULES),--pyjoules,) \
 		$(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),) \
@@ -313,6 +387,7 @@ fly_all:
 		$(if $(SHORT),--short,) \
 		$(if $(SPIN),--spin,) \
 		$(if $(FF),--ff,) \
+		$(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		$(if $(CTRL_TYPE),--ctrl-type $(CTRL_TYPE),) \
 		$(if $(PYJOULES),--pyjoules,) \
 		$(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),) \
@@ -328,7 +403,8 @@ run_controller: run_contraction
 .PHONY: build run stop kill attach build_ros clean_build_ros \
 	        generate_nmpc_solver \
 	        run_controller run_contraction \
-	        run_newton_raphson run_nr_diff_flat run_newton_raphson_cpp \
-	        run_nmpc run_nmpc_cpp run_ff_f8 \
+	        run_newton_raphson run_newton_raphson_enhanced run_nr_diff_flat run_newton_raphson_cpp \
+	        run_newton_raphson_enhanced_cpp run_nr_diff_flat_cpp \
+	        run_nmpc run_nmpc_cpp run_ff_f8 run_fbl \
 	        start_sitl start_sitl_headless start_bridge \
 	        fly fly_all

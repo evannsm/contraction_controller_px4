@@ -31,3 +31,6 @@
 [submodule "src/nr_diff_flat_px4"]
 	path = src/nr_diff_flat_px4
 	url = git@github.com:evannsm/nr_diff_flat_px4.git
+[submodule "src/newton_raphson_enhanced_px4"]
+	path = src/newton_raphson_enhanced_px4
+	url = git@github.com:evannsm/newton_raphson_enhanced_px4.git

@@ -81,6 +81,12 @@ CONTROLLERS: dict[str, ControllerSpec] = {
         build_up_to="newton_raphson_px4",
         supports=COMMON_TRAJECTORIES,
     ),
+    "newton_raphson_enhanced": ControllerSpec(
+        key="newton_raphson_enhanced",
+        package="newton_raphson_enhanced_px4",
+        build_up_to="newton_raphson_enhanced_px4",
+        supports=COMMON_TRAJECTORIES,
+    ),
     "nr_diff_flat": ControllerSpec(
         key="nr_diff_flat",
         package="nr_diff_flat_px4",
@@ -91,6 +97,20 @@ CONTROLLERS: dict[str, ControllerSpec] = {
         key="newton_raphson_cpp",
         package="newton_raphson_px4_cpp",
         build_up_to="newton_raphson_px4_cpp",
+        supports=COMMON_TRAJECTORIES,
+        uses_cpp_build=True,
+    ),
+    "newton_raphson_enhanced_cpp": ControllerSpec(
+        key="newton_raphson_enhanced_cpp",
+        package="newton_raphson_enhanced_px4_cpp",
+        build_up_to="newton_raphson_enhanced_px4_cpp",
+        supports=COMMON_TRAJECTORIES,
+        uses_cpp_build=True,
+    ),
+    "nr_diff_flat_cpp": ControllerSpec(
+        key="nr_diff_flat_cpp",
+        package="nr_diff_flat_px4_cpp",
+        build_up_to="nr_diff_flat_px4_cpp",
         supports=COMMON_TRAJECTORIES,
         uses_cpp_build=True,
     ),
@@ -109,12 +129,17 @@ CONTROLLERS: dict[str, ControllerSpec] = {
         needs_nmpc_solver=True,
         uses_cpp_build=True,
     ),
+    "fbl": ControllerSpec(
+        key="fbl",
+        package="ff_f8_px4",
+        build_up_to="ff_f8_px4",
+        supports=CONTRACTION_ONLY_TRAJECTORIES,
+    ),
     "ff_f8": ControllerSpec(
         key="ff_f8",
         package="ff_f8_px4",
         build_up_to="ff_f8_px4",
         supports={"fig8_contraction"},
-        ignores_trajectory=True,
     ),
 }
 
@@ -134,6 +159,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--short", action="store_true")
     parser.add_argument("--spin", action="store_true")
     parser.add_argument("--ff", action="store_true")
+    parser.add_argument("--nr-profile", default="baseline", choices=["baseline", "workshop"])
     parser.add_argument("--pyjoules", action="store_true")
     parser.add_argument("--ctrl-type", default="jax", choices=["jax", "numpy"])
     parser.add_argument("--controller-dir", default="")
@@ -173,6 +199,7 @@ def main() -> None:
         "results_dir": str(results_dir),
         "trajectory": args.trajectory,
         "headless": args.headless,
+        "nr_profile": args.nr_profile,
         "px4_model": args.px4_model,
         "nmpc_horizon": args.nmpc_horizon,
         "nmpc_num_steps": args.nmpc_num_steps,
@@ -331,23 +358,27 @@ def default_controller_set(trajectory: str) -> list[str]:
         return [
             "contraction",
             "newton_raphson",
+            "newton_raphson_enhanced",
             "nr_diff_flat",
             "newton_raphson_cpp",
             "nmpc",
             "nmpc_cpp",
-            "ff_f8",
+            "fbl",
         ]
     if trajectory in CONTRACTION_ONLY_TRAJECTORIES:
         return [
             "contraction",
             "newton_raphson",
+            "newton_raphson_enhanced",
             "nr_diff_flat",
             "newton_raphson_cpp",
             "nmpc",
             "nmpc_cpp",
+            "fbl",
         ]
     return [
         "newton_raphson",
+        "newton_raphson_enhanced",
         "nr_diff_flat",
         "newton_raphson_cpp",
         "nmpc",
@@ -470,13 +501,12 @@ def build_ros2_run_command(
             cmd.extend(["--controller-dir", args.controller_dir])
         if args.no_feedforward:
             cmd.append("--no-feedforward")
-    elif controller_key == "ff_f8":
-        cmd.extend(["--platform", args.platform])
+    elif controller_key in {"ff_f8", "fbl"}:
         if args.flight_period is not None:
             cmd.extend(["--flight-period", str(args.flight_period)])
         if args.double_speed:
             cmd.append("--double-speed")
-        if args.p_feedback:
+        if controller_key == "fbl" or args.p_feedback:
             cmd.append("--p-feedback")
         if args.ramp_seconds is not None:
             cmd.extend(["--ramp-seconds", str(args.ramp_seconds)])
@@ -487,6 +517,9 @@ def build_ros2_run_command(
             cmd.extend(["--flight-period", str(args.flight_period)])
         if controller_key == "nr_diff_flat":
             cmd.extend(["--ctrl-type", args.ctrl_type])
+            cmd.extend(["--nr-profile", args.nr_profile])
+        if controller_key == "nr_diff_flat_cpp":
+            cmd.extend(["--nr-profile", args.nr_profile])
         if args.double_speed:
             cmd.append("--double-speed")
         if args.short:
@@ -495,7 +528,14 @@ def build_ros2_run_command(
             cmd.append("--spin")
         if args.ff:
             cmd.append("--ff")
-        if args.pyjoules and controller_key in {"newton_raphson", "nr_diff_flat", "nmpc"}:
+        if controller_key in {
+            "newton_raphson",
+            "newton_raphson_cpp",
+            "newton_raphson_enhanced",
+            "newton_raphson_enhanced_cpp",
+        }:
+            cmd.extend(["--nr-profile", args.nr_profile])
+        if args.pyjoules and controller_key in {"newton_raphson", "newton_raphson_enhanced", "nr_diff_flat", "nmpc"}:
             cmd.append("--pyjoules")
 
     cmd.extend(["--log", "--log-file", log_stem])
@@ -506,8 +546,35 @@ def build_log_stem(controller_key: str, args: argparse.Namespace, run_index: int
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     suffix = f"{timestamp}_{run_index + 1:02d}" if args.fly_all else timestamp
     mode = "headless" if args.headless else "gazebo"
-    trajectory = args.trajectory if controller_key != "ff_f8" else "fig8_contraction"
-    return f"{args.platform}_{controller_key}_{trajectory}_{mode}_{suffix}"
+    trajectory = args.trajectory
+    ff_suffix = ""
+    if args.ff and controller_key in {
+        "newton_raphson",
+        "newton_raphson_cpp",
+        "newton_raphson_enhanced",
+        "newton_raphson_enhanced_cpp",
+        "nmpc",
+        "nmpc_cpp",
+    }:
+        ff_suffix = "_ff"
+    if args.no_feedforward and controller_key == "contraction":
+        ff_suffix = "_noff"
+
+    ctrl_suffix = ""
+    if controller_key == "nr_diff_flat":
+        ctrl_suffix = f"_{args.ctrl_type}"
+
+    nr_suffix = ""
+    if controller_key in {
+        "newton_raphson",
+        "newton_raphson_cpp",
+        "newton_raphson_enhanced",
+        "newton_raphson_enhanced_cpp",
+        "nr_diff_flat",
+        "nr_diff_flat_cpp",
+    } and args.nr_profile != "baseline":
+        nr_suffix = f"_{args.nr_profile}"
+    return f"{args.platform}_{controller_key}_{trajectory}_{mode}{ff_suffix}{ctrl_suffix}{nr_suffix}_{suffix}"
 
 
 def wait_for_log_file(path: Path, timeout_seconds: int = 30) -> None:
