@@ -1,7 +1,8 @@
-"""Pure feedforward ROS 2 node for the fig8_contraction trajectory.
+"""Flatness-based ROS 2 node for the contraction trajectory family.
 
-Publishes [throttle, p, q, r] commands derived entirely from differential-flatness
-inversion of the fig8_contraction trajectory — no feedback from odometry.
+Publishes [throttle, p, q, r] commands derived from differential-flatness
+inversion of a shared `quad_trajectories` contraction trajectory. An optional
+light feedback layer can be enabled on top of the feedforward command.
 """
 
 import time
@@ -38,6 +39,15 @@ class FlightPhase(Enum):
     CUSTOM = "CUSTOM"
     RETURN = "RETURN"
     LAND   = "LAND"
+
+
+SUPPORTED_TRAJECTORY_TYPES = {
+    TrajectoryType.HOVER_CONTRACTION,
+    TrajectoryType.FIG8_CONTRACTION,
+    TrajectoryType.FIG8_HEADING_CONTRACTION,
+    TrajectoryType.SPIRAL_CONTRACTION,
+    TrajectoryType.TREFOIL_CONTRACTION,
+}
 
 
 def _arm(node):
@@ -89,22 +99,32 @@ def _wrap_to_pi(angle: float) -> float:
 
 
 class FeedforwardControl(Node):
-    """Open-loop feedforward controller for the fig8_contraction trajectory."""
+    """Flatness-based controller for contraction trajectories."""
 
     def __init__(
         self,
         platform_type: PlatformType,
+        trajectory_type: TrajectoryType = TrajectoryType.FIG8_CONTRACTION,
         double_speed: bool = False,
         p_feedback: bool = False,
         ramp_seconds: float = 2.0,
         logging_enabled: bool = False,
         flight_period_: float | None = None,
     ) -> None:
-        super().__init__("ff_f8_offboard_node")
+        if trajectory_type not in SUPPORTED_TRAJECTORY_TYPES:
+            supported = ", ".join(sorted(traj.value for traj in SUPPORTED_TRAJECTORY_TYPES))
+            raise ValueError(
+                f"Unsupported trajectory {trajectory_type.value!r} for ff_f8_px4. "
+                f"Expected one of: {supported}"
+            )
+
+        super().__init__("fbl_offboard_node")
         self.get_logger().info("Initializing FeedforwardControl node")
 
         self.sim             = platform_type == PlatformType.SIM
         self.platform_type   = platform_type
+        self.trajectory_type = trajectory_type
+        self.trajectory_name = trajectory_type.value
         self.double_speed    = double_speed
         self.p_feedback      = p_feedback
         self.ramp_seconds    = max(float(ramp_seconds), 0.0)
@@ -215,8 +235,8 @@ class FeedforwardControl(Node):
             self.lookahead_time_logtype = LogType("lookahead_time", 4)
 
             self.platform_logtype.append(self.platform_type.value.upper())
-            self.controller_logtype.append("ff_f8_pfb" if self.p_feedback else "ff_f8")
-            self.trajectory_logtype.append("FIG8_CONTRACTION")
+            self.controller_logtype.append(self._controller_log_label())
+            self.trajectory_logtype.append(self.trajectory_name)
             self.traj_double_logtype.append("DblSpd" if self.double_speed else "NormSpd")
             self.lookahead_time_logtype.append(0.0)  # no lookahead for open-loop
 
@@ -255,7 +275,7 @@ class FeedforwardControl(Node):
     def _jit_compile(self):
         print("\n[JIT Compilation] Pre-compiling flat_to_x_u...")
         ctx = TrajContext(sim=self.sim, hover_mode=None, spin=False,
-                          double_speed=False, short=False)
+                          double_speed=self.double_speed, short=False)
 
         def _time_warp(t):
             if self.ramp_seconds <= 0.0:
@@ -263,7 +283,7 @@ class FeedforwardControl(Node):
             T = self.ramp_seconds
             return jnp.where(t < T, 0.5 * t * t / T, t - 0.5 * T)
 
-        flat_output = lambda t: TRAJ_REGISTRY[TrajectoryType.FIG8_CONTRACTION](_time_warp(t), ctx)
+        flat_output = lambda t: TRAJ_REGISTRY[self.trajectory_type](_time_warp(t), ctx)
         self._ff_jit = jax.jit(lambda t: flat_to_x_u(t, flat_output))
 
         def _timed(t):
@@ -279,8 +299,15 @@ class FeedforwardControl(Node):
         print(f"  Speed-up: {t1/t2:.1f}x   Good for {1.0/t2:.0f} Hz")
 
         # Use the actual first trajectory point for hover/return positioning.
-        x0 = TRAJ_REGISTRY[TrajectoryType.FIG8_CONTRACTION](0.0, ctx)
+        x0 = TRAJ_REGISTRY[self.trajectory_type](0.0, ctx)
         self.hover_ref = (float(x0[0]), float(x0[1]), float(x0[2]), float(x0[3]))
+
+    def _controller_log_label(self) -> str:
+        if self.p_feedback:
+            return "fbl"
+        if self.trajectory_type == TrajectoryType.FIG8_CONTRACTION:
+            return "ff_f8"
+        return "flat_ff"
 
     # ------------------------------------------------------------------ #
     #  Subscriber callbacks                                                #

@@ -93,15 +93,24 @@ def extract_metadata_from_data(df: pd.DataFrame) -> Dict[str, str]:
         'nr_df': 'NR Diff-Flat',
         'nr_df_jax': 'NR Diff-Flat (JAX)',
         'nr_df_numpy': 'NR Diff-Flat (NumPy)',
+        'fbl': 'FBL',
+        'flat_ff': 'Flatness Feedforward',
+        'ff_f8': 'Flatness Feedforward',
+        'ff_f8_pfb': 'FBL',
         'mpc': 'MPC',
     }
     TRAJECTORY_STR_MAP = {
+        'hover_contraction': 'Hover Contraction',
         'circle_horz': 'Circle H',
         'circle_vert': 'Circle V',
+        'fig8_contraction': 'Fig8 Contraction',
+        'fig8_heading_contraction': 'Fig8 Heading Contraction',
         'fig8_horz': 'Fig8 H',
         'fig8_vert_short': 'Fig8 VS',
         'fig8_vert_tall': 'Fig8 VT',
+        'spiral_contraction': 'Spiral Contraction',
         'sawtooth': 'Sawtooth',
+        'trefoil_contraction': 'Trefoil Contraction',
         'triangle': 'Triangle',
         'helix': 'Helix'
     }

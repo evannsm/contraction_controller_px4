@@ -1,6 +1,6 @@
 ---
 title: "ff_f8_px4 Controller Note"
-subtitle: "Feedforward, Ramp, and Light Feedback for fig8_contraction"
+subtitle: "Generalized Flatness Feedforward and FBL for Contraction Trajectories"
 date: today
 format:
   pdf:
@@ -20,10 +20,22 @@ format:
 
 ## Overview {.unnumbered}
 
-`ff_f8_px4` is a ROS 2 controller for the `fig8_contraction` trajectory that publishes
-PX4 body-rate setpoints directly. It is not a full trajectory-tracking controller like
-NMPC or Newton-Raphson. Instead, it starts from a flatness-derived nominal command and
-optionally adds a small amount of stabilizing feedback.
+`ff_f8_px4` is a ROS 2 controller for the contraction-trajectory family that
+publishes PX4 body-rate setpoints directly. It is not a full horizon-based
+trajectory-tracking controller like NMPC or Newton-Raphson. Instead, it starts
+from a flatness-derived nominal command and optionally adds a small amount of
+stabilizing feedback.
+
+Supported trajectories:
+
+- `hover_contraction`
+- `fig8_contraction`
+- `fig8_heading_contraction`
+- `spiral_contraction`
+- `trefoil_contraction`
+
+Within the top-level workspace comparison flow, the feedback-enabled mode of
+this package is labeled `fbl`.
 
 The command sent to PX4 is:
 
@@ -35,7 +47,7 @@ where $\tilde{T}$ is normalized throttle and $[p,q,r]$ are desired body rates.
 
 # Flatness Feedforward
 
-The package uses the `fig8_contraction` flat output
+The package uses the selected contraction trajectory flat output
 
 $$
 \sigma(t) = [p_x(t), p_y(t), p_z(t), \psi(t)]^T
@@ -106,10 +118,10 @@ and then mapped to PX4 throttle with the platform-specific thrust curve.
 
 # Why Pure Feedforward Was Unstable
 
-The vehicle begins the maneuver from hover. Even if its initial position matches the
-trajectory origin, it does not match the trajectory's implied velocity, tilt, and angular
-rate demands. A pure open-loop command therefore asks the vehicle to instantaneously jump
-onto a moving figure-8 with no correction term.
+The vehicle begins the maneuver from hover. Even if its initial position matches
+the trajectory origin, it does not match the trajectory's implied velocity,
+tilt, and angular-rate demands. A pure open-loop command therefore asks the
+vehicle to instantaneously jump onto a moving reference with no correction term.
 
 That creates three practical problems:
 
@@ -188,8 +200,8 @@ Then it adds attitude-rate corrections and measured-rate damping before publishi
 
 # Hover and Return Reference
 
-The package no longer hovers at a generic hardcoded point. Instead, the hover and return
-setpoints are taken from the actual first `fig8_contraction` reference point:
+The package no longer hovers at a generic hardcoded point. Instead, the hover
+and return setpoints are taken from the actual first trajectory reference point:
 
 $$
 [p_x(0), p_y(0), p_z(0), \psi(0)].
@@ -204,7 +216,7 @@ Pure feedforward is best treated as a comparison baseline. For practical use, th
 mode is:
 
 ```bash
-ros2 run ff_f8_px4 run_node --platform sim --p-feedback --ramp-seconds 4.0 --log
+ros2 run ff_f8_px4 run_node --platform sim --trajectory fig8_contraction --p-feedback --ramp-seconds 4.0 --log
 ```
 
 If the vehicle is still too aggressive at startup, increase `--ramp-seconds`. If it becomes
@@ -216,7 +228,7 @@ The controller did not become usable because of a single bug fix. It became usab
 combination of three changes below:
 
 1. **startup ramp**
-   - reduced the discontinuity between hover and the moving figure-8
+  - reduced the discontinuity between hover and the moving trajectory
    - slowed the trajectory clock initially
    - blended hover commands into feedforward commands
 
@@ -247,7 +259,7 @@ defensible from the code alone.
 What can be said clearly is this:
 
 - **feedforward provides the motion plan**
-  - the shape of the figure-8
+  - the shape of the selected trajectory
   - the nominal thrust
   - the nominal roll / pitch / yaw-rate behavior
 

@@ -1,4 +1,4 @@
-"""Entry point for the fig8_contraction feedforward ROS 2 node."""
+"""Entry point for the flatness-based contraction-trajectory controller."""
 
 import rclpy
 import traceback
@@ -10,27 +10,36 @@ from ros2_logger import Logger  # type: ignore
 from .ros2px4_node import FeedforwardControl
 
 from quad_platforms import PlatformType
+from quad_trajectories import TrajectoryType
+
+
+SUPPORTED_TRAJECTORIES = [
+    TrajectoryType.HOVER_CONTRACTION.value,
+    TrajectoryType.FIG8_CONTRACTION.value,
+    TrajectoryType.FIG8_HEADING_CONTRACTION.value,
+    TrajectoryType.SPIRAL_CONTRACTION.value,
+    TrajectoryType.TREFOIL_CONTRACTION.value,
+]
 
 
 def create_parser():
     parser = argparse.ArgumentParser(
-        description="Feedforward-based controller for the fig8_contraction trajectory",
+        description="Flatness-based controller for contraction trajectories",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
         """ + "==" * 60 + """
         Example usage:
         # Auto-generated log filename:
-        ros2 run ff_f8_px4 run_node --platform sim --log
-        # -> logs to: sim_ff_f8_ramp2p0s_1x.csv
+        ros2 run ff_f8_px4 run_node --platform sim --trajectory fig8_contraction --p-feedback --log
+        # -> logs to: sim_fbl_fig8_contraction_ramp2p0s_1x.csv
 
-        ros2 run ff_f8_px4 run_node --platform sim --double-speed --log
-        # -> logs to: sim_ff_f8_ramp2p0s_2x.csv
+        ros2 run ff_f8_px4 run_node --platform sim --trajectory spiral_contraction --p-feedback --log
 
-        ros2 run ff_f8_px4 run_node --platform sim --p-feedback --ramp-seconds 4.0 --log
-        # -> logs to: sim_ff_f8_pfb_ramp4p0s_1x.csv
+        ros2 run ff_f8_px4 run_node --platform sim --trajectory fig8_contraction --ramp-seconds 4.0 --log
+        # -> logs to: sim_ff_f8_fig8_contraction_ramp4p0s_1x.csv
 
         # Custom log filename:
-        ros2 run ff_f8_px4 run_node --platform sim --log --log-file my_custom_log
+        ros2 run ff_f8_px4 run_node --platform sim --trajectory fig8_contraction --p-feedback --log --log-file my_custom_log
         """ + "==" * 60 + """
         """
     )
@@ -41,6 +50,14 @@ def create_parser():
         choices=list(PlatformType),
         required=True,
         help="Platform type. Options: " + ", ".join(e.value for e in PlatformType) + ".",
+    )
+
+    parser.add_argument(
+        "--trajectory",
+        type=str,
+        default=TrajectoryType.FIG8_CONTRACTION.value,
+        choices=SUPPORTED_TRAJECTORIES,
+        help="Contraction trajectory to execute.",
     )
 
     parser.add_argument(
@@ -93,13 +110,13 @@ def ensure_csv(filename: str) -> str:
 
 
 def generate_log_filename(args) -> str:
-    """Format: {platform}_ff_f8[_pfb][_rampXs]_{speed}"""
+    """Format: {platform}_{controller}_{trajectory}[_rampXs]_{speed}"""
+    controller_tag = "fbl" if args.p_feedback else "ff_f8"
     parts = [
         args.platform.value,
-        "ff_f8",
+        controller_tag,
+        args.trajectory,
     ]
-    if args.p_feedback:
-        parts.append("pfb")
     if args.ramp_seconds > 0.0:
         ramp_tag = str(args.ramp_seconds).replace(".", "p")
         parts.append(f"ramp{ramp_tag}s")
@@ -149,6 +166,7 @@ def main():
     validate_args(args, parser)
 
     platform       = args.platform
+    trajectory_type = TrajectoryType(args.trajectory)
     double_speed   = args.double_speed
     p_feedback     = args.p_feedback
     ramp_seconds   = args.ramp_seconds
@@ -166,9 +184,10 @@ def main():
     print("\n" + "=" * 60)
     print("Feedforward Control Configuration")
     print("=" * 60)
-    print("Controller:    Pure feedforward (fig8_contraction, flat-output inversion)")
+    controller_name = "FBL (flatness + light feedback)" if p_feedback else "Flatness Feedforward"
+    print(f"Controller:    {controller_name}")
     print(f"Platform:      {platform.value.upper()}")
-    print(f"Trajectory:    F8_CONTRACTION")
+    print(f"Trajectory:    {args.trajectory.upper()}")
     print(f"P Feedback:    {'Enabled' if p_feedback else 'Disabled'}")
     print(f"Ramp:          {ramp_seconds:.2f} s")
     print(f"Speed:         {'Double (2x)' if double_speed else 'Regular (1x)'}")
@@ -182,6 +201,7 @@ def main():
     rclpy.init(args=None)
     node = FeedforwardControl(
         platform_type=platform,
+        trajectory_type=trajectory_type,
         double_speed=double_speed,
         p_feedback=p_feedback,
         ramp_seconds=ramp_seconds,
