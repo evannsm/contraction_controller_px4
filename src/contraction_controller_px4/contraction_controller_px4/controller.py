@@ -6,7 +6,7 @@ import numpy as np
 import control as ctrl
 from pathlib import Path
 
-GRAVITY = 9.806
+GRAVITY = 9.8  # Match Gazebo world
 
 X_EQ = jnp.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.81, 0.0, 0.0, 0.0], dtype=jnp.float32)
 

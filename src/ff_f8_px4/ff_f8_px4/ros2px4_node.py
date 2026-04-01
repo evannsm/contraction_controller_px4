@@ -29,7 +29,7 @@ from quad_trajectories import TrajContext, TrajectoryType, TRAJ_REGISTRY, flat_t
 
 from ros2_logger import LogType  # type: ignore
 
-GRAVITY: float = 9.806
+GRAVITY: float = 9.8  # Match Gazebo world
 
 # Flight phases (inline — no shared utils dependency)
 from enum import Enum

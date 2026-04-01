@@ -1,13 +1,16 @@
-FROM osrf/ros:jazzy-desktop-full
+FROM osrf/ros:jazzy-ros-base
 
 SHELL ["/bin/bash", "-c"]
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ── System deps ───────────────────────────────────────────────────────────────
+# ros-base is ~1.8 GB smaller than desktop-full; we only need rclpy/rclcpp +
+# colcon build tools, not rviz2/rqt/perception stacks.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     python3-dev \
+    python3-colcon-common-extensions \
     git \
     cmake \
     build-essential \
@@ -17,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     liblapack-dev \
     libopenblas-dev \
     wget \
-    && apt-get remove -y python3-matplotlib \
+    && apt-get remove -y python3-matplotlib 2>/dev/null || true \
     && rm -rf /var/lib/apt/lists/*
 
 # ── ws_px4_msgs: pre-built inside the image, sourced as upstream overlay ──────
