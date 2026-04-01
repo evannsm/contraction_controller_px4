@@ -134,6 +134,14 @@ NR_PROFILE      ?=
 # flatness/FBL-specific
 P_FEEDBACK      ?=
 RAMP_SECONDS    ?=
+KP_XY           ?=
+KV_XY           ?=
+KP_Z            ?=
+KV_Z            ?=
+KP_ATT          ?=
+KP_YAW          ?=
+KD_BODY_RATES   ?=
+MAX_TILT_CMD    ?=
 
 # ── Contraction controller (Python) ──────────────────────────────────────────
 run_contraction:
@@ -301,25 +309,41 @@ run_nmpc_cpp:
 # ── Flatness feedforward / FBL (Python) ──────────────────────────────────────
 run_ff_f8:
 	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"ros2 run ff_f8_px4 run_node \
+	"ros2 run ff_f8_px4 run_node \
 			   --platform $(PLATFORM) \
 			   --trajectory $(TRAJECTORY) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
 		   $(if $(DOUBLE_SPEED),--double-speed,) \
 		   $(if $(P_FEEDBACK),--p-feedback,) \
 		   $(if $(RAMP_SECONDS),--ramp-seconds $(RAMP_SECONDS),) \
+		   $(if $(KP_XY),--kp-xy $(KP_XY),) \
+		   $(if $(KV_XY),--kv-xy $(KV_XY),) \
+		   $(if $(KP_Z),--kp-z $(KP_Z),) \
+		   $(if $(KV_Z),--kv-z $(KV_Z),) \
+		   $(if $(KP_ATT),--kp-att $(KP_ATT),) \
+		   $(if $(KP_YAW),--kp-yaw $(KP_YAW),) \
+		   $(if $(KD_BODY_RATES),--kd-body-rates $(KD_BODY_RATES),) \
+		   $(if $(MAX_TILT_CMD),--max-tilt-cmd $(MAX_TILT_CMD),) \
 			   $(if $(LOG),--log,) \
 			   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
 
 run_fbl:
 	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"ros2 run ff_f8_px4 run_node \
+	"ros2 run ff_f8_px4 run_node \
 			   --platform $(PLATFORM) \
 			   --trajectory $(TRAJECTORY) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
 		   $(if $(DOUBLE_SPEED),--double-speed,) \
 		   --p-feedback \
 		   $(if $(RAMP_SECONDS),--ramp-seconds $(RAMP_SECONDS),) \
+		   $(if $(KP_XY),--kp-xy $(KP_XY),) \
+		   $(if $(KV_XY),--kv-xy $(KV_XY),) \
+		   $(if $(KP_Z),--kp-z $(KP_Z),) \
+		   $(if $(KV_Z),--kv-z $(KV_Z),) \
+		   $(if $(KP_ATT),--kp-att $(KP_ATT),) \
+		   $(if $(KP_YAW),--kp-yaw $(KP_YAW),) \
+		   $(if $(KD_BODY_RATES),--kd-body-rates $(KD_BODY_RATES),) \
+		   $(if $(MAX_TILT_CMD),--max-tilt-cmd $(MAX_TILT_CMD),) \
 			   $(if $(LOG),--log,) \
 			   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
 
@@ -362,6 +386,14 @@ fly:
 		$(if $(filter 1,$(NO_FEEDFORWARD)),--no-feedforward,) \
 		$(if $(P_FEEDBACK),--p-feedback,) \
 		$(if $(RAMP_SECONDS),--ramp-seconds $(RAMP_SECONDS),) \
+		$(if $(KP_XY),--kp-xy $(KP_XY),) \
+		$(if $(KV_XY),--kv-xy $(KV_XY),) \
+		$(if $(KP_Z),--kp-z $(KP_Z),) \
+		$(if $(KV_Z),--kv-z $(KV_Z),) \
+		$(if $(KP_ATT),--kp-att $(KP_ATT),) \
+		$(if $(KP_YAW),--kp-yaw $(KP_YAW),) \
+		$(if $(KD_BODY_RATES),--kd-body-rates $(KD_BODY_RATES),) \
+		$(if $(MAX_TILT_CMD),--max-tilt-cmd $(MAX_TILT_CMD),) \
 		$(if $(RESULTS_DIR),--results-dir $(RESULTS_DIR),) \
 		$(if $(RUN_NAME),--run-name $(RUN_NAME),)
 
@@ -394,6 +426,14 @@ fly_all:
 		$(if $(filter 1,$(NO_FEEDFORWARD)),--no-feedforward,) \
 		$(if $(P_FEEDBACK),--p-feedback,) \
 		$(if $(RAMP_SECONDS),--ramp-seconds $(RAMP_SECONDS),) \
+		$(if $(KP_XY),--kp-xy $(KP_XY),) \
+		$(if $(KV_XY),--kv-xy $(KV_XY),) \
+		$(if $(KP_Z),--kp-z $(KP_Z),) \
+		$(if $(KV_Z),--kv-z $(KV_Z),) \
+		$(if $(KP_ATT),--kp-att $(KP_ATT),) \
+		$(if $(KP_YAW),--kp-yaw $(KP_YAW),) \
+		$(if $(KD_BODY_RATES),--kd-body-rates $(KD_BODY_RATES),) \
+		$(if $(MAX_TILT_CMD),--max-tilt-cmd $(MAX_TILT_CMD),) \
 		$(if $(RESULTS_DIR),--results-dir $(RESULTS_DIR),) \
 		$(if $(RUN_NAME),--run-name $(RUN_NAME),)
 

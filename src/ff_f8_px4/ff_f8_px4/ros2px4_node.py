@@ -7,6 +7,7 @@ light feedback layer can be enabled on top of the feedforward command.
 
 import time
 import math as m
+from dataclasses import dataclass
 import numpy as np
 import jax
 import jax.numpy as jnp
@@ -48,6 +49,21 @@ SUPPORTED_TRAJECTORY_TYPES = {
     TrajectoryType.SPIRAL_CONTRACTION,
     TrajectoryType.TREFOIL_CONTRACTION,
 }
+
+
+@dataclass(frozen=True)
+class FBLGains:
+    kp_xy: float = 0.12
+    kv_xy: float = 0.18
+    kp_z: float = 0.35
+    kv_z: float = 0.28
+    kp_att: float = 1.2
+    kp_yaw: float = 1.5
+    kd_body_rates: float = 0.18
+    max_tilt_cmd: float = 0.35
+
+
+DEFAULT_FBL_GAINS = FBLGains()
 
 
 def _arm(node):
@@ -110,6 +126,7 @@ class FeedforwardControl(Node):
         ramp_seconds: float = 2.0,
         logging_enabled: bool = False,
         flight_period_: float | None = None,
+        gains: FBLGains = DEFAULT_FBL_GAINS,
     ) -> None:
         if trajectory_type not in SUPPORTED_TRAJECTORY_TYPES:
             supported = ", ".join(sorted(traj.value for traj in SUPPORTED_TRAJECTORY_TYPES))
@@ -129,6 +146,7 @@ class FeedforwardControl(Node):
         self.p_feedback      = p_feedback
         self.ramp_seconds    = max(float(ramp_seconds), 0.0)
         self.logging_enabled = logging_enabled
+        self.gains           = gains
 
         flight_period = flight_period_ if flight_period_ is not None else (30.0 if self.sim else 60.0)
 
@@ -198,14 +216,14 @@ class FeedforwardControl(Node):
 
         # Optional light feedback on top of feedforward for hover -> trajectory
         # handoff and disturbance rejection.
-        self.kp_xy = 0.12
-        self.kv_xy = 0.18
-        self.kp_z = 0.35
-        self.kv_z = 0.28
-        self.kp_att = 1.2
-        self.kp_yaw = 1.5
-        self.kd_body_rates = 0.18
-        self.max_tilt_cmd = 0.35
+        self.kp_xy = gains.kp_xy
+        self.kv_xy = gains.kv_xy
+        self.kp_z = gains.kp_z
+        self.kv_z = gains.kv_z
+        self.kp_att = gains.kp_att
+        self.kp_yaw = gains.kp_yaw
+        self.kd_body_rates = gains.kd_body_rates
+        self.max_tilt_cmd = gains.max_tilt_cmd
 
         # Feedforward JIT
         self._ff_jit = None

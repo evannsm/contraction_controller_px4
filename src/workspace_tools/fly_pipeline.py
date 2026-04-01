@@ -166,6 +166,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-feedforward", action="store_true")
     parser.add_argument("--p-feedback", action="store_true")
     parser.add_argument("--ramp-seconds", type=float, default=None)
+    parser.add_argument("--kp-xy", type=float, default=None)
+    parser.add_argument("--kv-xy", type=float, default=None)
+    parser.add_argument("--kp-z", type=float, default=None)
+    parser.add_argument("--kv-z", type=float, default=None)
+    parser.add_argument("--kp-att", type=float, default=None)
+    parser.add_argument("--kp-yaw", type=float, default=None)
+    parser.add_argument("--kd-body-rates", type=float, default=None)
+    parser.add_argument("--max-tilt-cmd", type=float, default=None)
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--px4-dir", default=str(Path.home() / "PX4-Autopilot"))
     parser.add_argument("--px4-model", default=PX4_MODEL)
@@ -205,6 +213,16 @@ def main() -> None:
         "nmpc_num_steps": args.nmpc_num_steps,
         "ctrl_type": args.ctrl_type,
         "controllers": controller_keys,
+        "fbl_gains": {
+            "kp_xy": args.kp_xy,
+            "kv_xy": args.kv_xy,
+            "kp_z": args.kp_z,
+            "kv_z": args.kv_z,
+            "kp_att": args.kp_att,
+            "kp_yaw": args.kp_yaw,
+            "kd_body_rates": args.kd_body_rates,
+            "max_tilt_cmd": args.max_tilt_cmd,
+        },
         "runs": [],
     }
 
@@ -510,6 +528,22 @@ def build_ros2_run_command(
             cmd.append("--p-feedback")
         if args.ramp_seconds is not None:
             cmd.extend(["--ramp-seconds", str(args.ramp_seconds)])
+        if args.kp_xy is not None:
+            cmd.extend(["--kp-xy", str(args.kp_xy)])
+        if args.kv_xy is not None:
+            cmd.extend(["--kv-xy", str(args.kv_xy)])
+        if args.kp_z is not None:
+            cmd.extend(["--kp-z", str(args.kp_z)])
+        if args.kv_z is not None:
+            cmd.extend(["--kv-z", str(args.kv_z)])
+        if args.kp_att is not None:
+            cmd.extend(["--kp-att", str(args.kp_att)])
+        if args.kp_yaw is not None:
+            cmd.extend(["--kp-yaw", str(args.kp_yaw)])
+        if args.kd_body_rates is not None:
+            cmd.extend(["--kd-body-rates", str(args.kd_body_rates)])
+        if args.max_tilt_cmd is not None:
+            cmd.extend(["--max-tilt-cmd", str(args.max_tilt_cmd)])
     else:
         if args.trajectory == "hover":
             cmd.extend(["--hover-mode", str(args.hover_mode)])
@@ -559,12 +593,30 @@ def build_log_stem(controller_key: str, args: argparse.Namespace, run_index: int
         "nr_diff_flat_cpp",
     }:
         ff_suffix = "_ff"
+    if controller_key == "contraction" and not args.no_feedforward:
+        ff_suffix = "_ff"
     if args.no_feedforward and controller_key == "contraction":
         ff_suffix = "_noff"
 
     ctrl_suffix = ""
     if controller_key == "nr_diff_flat":
         ctrl_suffix = f"_{args.ctrl_type}"
+
+    fbl_gain_suffix = ""
+    if controller_key in {"ff_f8", "fbl"} and any(
+        value is not None
+        for value in (
+            args.kp_xy,
+            args.kv_xy,
+            args.kp_z,
+            args.kv_z,
+            args.kp_att,
+            args.kp_yaw,
+            args.kd_body_rates,
+            args.max_tilt_cmd,
+        )
+    ):
+        fbl_gain_suffix = "_tuned"
 
     nr_suffix = ""
     if controller_key in {
@@ -576,7 +628,10 @@ def build_log_stem(controller_key: str, args: argparse.Namespace, run_index: int
         "nr_diff_flat_cpp",
     } and args.nr_profile != "baseline":
         nr_suffix = f"_{args.nr_profile}"
-    return f"{args.platform}_{controller_key}_{trajectory}_{mode}{ff_suffix}{ctrl_suffix}{nr_suffix}_{suffix}"
+    return (
+        f"{args.platform}_{controller_key}_{trajectory}_{mode}"
+        f"{ff_suffix}{ctrl_suffix}{nr_suffix}{fbl_gain_suffix}_{suffix}"
+    )
 
 
 def wait_for_log_file(path: Path, timeout_seconds: int = 30) -> None:

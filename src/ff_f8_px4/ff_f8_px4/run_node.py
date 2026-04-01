@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 from ros2_logger import Logger  # type: ignore
-from .ros2px4_node import FeedforwardControl
+from .ros2px4_node import DEFAULT_FBL_GAINS, FBLGains, FeedforwardControl
 
 from quad_platforms import PlatformType
 from quad_trajectories import TrajectoryType
@@ -99,6 +99,25 @@ def create_parser():
         help="Override default flight duration in seconds (sim: 30s, hw: 60s)",
     )
 
+    parser.add_argument("--kp-xy", type=float, default=None, help="Override lateral position feedback gain.")
+    parser.add_argument("--kv-xy", type=float, default=None, help="Override lateral velocity feedback gain.")
+    parser.add_argument("--kp-z", type=float, default=None, help="Override vertical position feedback gain.")
+    parser.add_argument("--kv-z", type=float, default=None, help="Override vertical velocity feedback gain.")
+    parser.add_argument("--kp-att", type=float, default=None, help="Override attitude feedback gain.")
+    parser.add_argument("--kp-yaw", type=float, default=None, help="Override yaw feedback gain.")
+    parser.add_argument(
+        "--kd-body-rates",
+        type=float,
+        default=None,
+        help="Override body-rate damping gain.",
+    )
+    parser.add_argument(
+        "--max-tilt-cmd",
+        type=float,
+        default=None,
+        help="Override maximum commanded tilt [rad].",
+    )
+
     return parser
 
 
@@ -120,6 +139,20 @@ def generate_log_filename(args) -> str:
     if args.ramp_seconds > 0.0:
         ramp_tag = str(args.ramp_seconds).replace(".", "p")
         parts.append(f"ramp{ramp_tag}s")
+    if any(
+        value is not None
+        for value in (
+            args.kp_xy,
+            args.kv_xy,
+            args.kp_z,
+            args.kv_z,
+            args.kp_att,
+            args.kp_yaw,
+            args.kd_body_rates,
+            args.max_tilt_cmd,
+        )
+    ):
+        parts.append("customgains")
     parts.append("2x" if args.double_speed else "1x")
     return "_".join(parts)
 
@@ -129,6 +162,28 @@ def validate_args(args, parser):
         parser.error("--log-file requires --log to be enabled")
     if args.ramp_seconds < 0.0:
         parser.error("--ramp-seconds must be >= 0")
+
+
+def build_fbl_gains(args) -> FBLGains:
+    """Apply optional CLI overrides on top of the package defaults."""
+    return FBLGains(
+        kp_xy=DEFAULT_FBL_GAINS.kp_xy if args.kp_xy is None else args.kp_xy,
+        kv_xy=DEFAULT_FBL_GAINS.kv_xy if args.kv_xy is None else args.kv_xy,
+        kp_z=DEFAULT_FBL_GAINS.kp_z if args.kp_z is None else args.kp_z,
+        kv_z=DEFAULT_FBL_GAINS.kv_z if args.kv_z is None else args.kv_z,
+        kp_att=DEFAULT_FBL_GAINS.kp_att if args.kp_att is None else args.kp_att,
+        kp_yaw=DEFAULT_FBL_GAINS.kp_yaw if args.kp_yaw is None else args.kp_yaw,
+        kd_body_rates=(
+            DEFAULT_FBL_GAINS.kd_body_rates
+            if args.kd_body_rates is None
+            else args.kd_body_rates
+        ),
+        max_tilt_cmd=(
+            DEFAULT_FBL_GAINS.max_tilt_cmd
+            if args.max_tilt_cmd is None
+            else args.max_tilt_cmd
+        ),
+    )
 
 
 def _logger_base_path(file_path: str, pkg_name: str) -> str:
@@ -170,6 +225,7 @@ def main():
     double_speed   = args.double_speed
     p_feedback     = args.p_feedback
     ramp_seconds   = args.ramp_seconds
+    gains          = build_fbl_gains(args)
     logging_enabled = args.log
     flight_period  = args.flight_period
     base_path      = _logger_base_path(__file__, 'ff_f8_px4')
@@ -196,6 +252,13 @@ def main():
     if logging_enabled:
         print(f"Log File:      {log_file}")
         print(f"Log Path:      {resolved_log_path}")
+    print(
+        "FBL Gains:     "
+        f"kp_xy={gains.kp_xy:.3f}, kv_xy={gains.kv_xy:.3f}, "
+        f"kp_z={gains.kp_z:.3f}, kv_z={gains.kv_z:.3f}, "
+        f"kp_att={gains.kp_att:.3f}, kp_yaw={gains.kp_yaw:.3f}, "
+        f"kd_body_rates={gains.kd_body_rates:.3f}, max_tilt_cmd={gains.max_tilt_cmd:.3f}"
+    )
     print("=" * 60 + "\n")
 
     rclpy.init(args=None)
@@ -207,6 +270,7 @@ def main():
         ramp_seconds=ramp_seconds,
         logging_enabled=logging_enabled,
         flight_period_=flight_period,
+        gains=gains,
     )
 
     logger = None
