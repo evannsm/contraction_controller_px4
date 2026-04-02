@@ -1,6 +1,6 @@
 trajectory_key,trajectory_display,best_overall,best_overall_rmse_m,best_overall_comp_time_ms,best_nr_family,best_nr_rmse_m,best_nmpc,best_nmpc_rmse_m,best_nr_minus_nmpc_m,best_nr_minus_nmpc_pct
 circle_horz,Circle Horizontal,NMPC ff,0.102671,1.776955,NR Enhanced workshop noff,0.260071,NMPC ff,0.102671,0.1574,153.305451
-circle_vert,Circle Vertical,NMPC noff,0.066442,1.853472,NR Diff-Flat workshop noff,0.104739,NMPC noff,0.066442,0.038297,57.640238
+circle_vert,Circle Vertical,NMPC noff,0.066442,1.853472,NR Diff-Flat workshop ff,0.102813,NMPC noff,0.066442,0.036371,54.740683
 fig8_horz,Fig8 Horizontal,NMPC ff,0.067953,1.802991,NR Diff-Flat workshop noff,0.144321,NMPC ff,0.067953,0.076368,112.382592
 fig8_vert,Fig8 Vertical,NMPC ff,0.075764,1.770831,NR Diff-Flat workshop noff,0.142565,NMPC ff,0.075764,0.066801,88.170843
 hover,Hover,NMPC ff,0.258713,1.761421,NR Diff-Flat baseline noff,0.382799,NMPC ff,0.258713,0.124086,47.962894

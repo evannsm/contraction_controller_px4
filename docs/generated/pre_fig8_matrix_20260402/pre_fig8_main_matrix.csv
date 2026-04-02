@@ -3,7 +3,7 @@ circle_horz,Circle Horizontal,NMPC ff,0.102671,1.776955,/home/egmc/ws_contractio
 circle_horz,Circle Horizontal,NMPC noff,0.10544,1.836516,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nmpc_noff
 circle_horz,Circle Horizontal,NR Diff-Flat baseline ff,0.634744,0.751201,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_ff
 circle_horz,Circle Horizontal,NR Diff-Flat baseline noff,0.595158,0.747424,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_noff
-circle_horz,Circle Horizontal,NR Diff-Flat workshop ff,0.314431,0.750743,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_ff
+circle_horz,Circle Horizontal,NR Diff-Flat workshop ff,0.271265,0.740996,/home/egmc/ws_contraction_px4/src/data_analysis/results/nr_diff_flat_ff_hybridtiming_workshop_circle_horz_20260402
 circle_horz,Circle Horizontal,NR Diff-Flat workshop noff,0.302692,0.737606,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_noff
 circle_horz,Circle Horizontal,NR Enhanced baseline ff,0.39677,0.856372,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_ff
 circle_horz,Circle Horizontal,NR Enhanced baseline noff,0.379733,0.58651,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_noff
@@ -17,7 +17,7 @@ circle_vert,Circle Vertical,NMPC ff,0.074012,1.861415,/home/egmc/ws_contraction_
 circle_vert,Circle Vertical,NMPC noff,0.066442,1.853472,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nmpc_noff
 circle_vert,Circle Vertical,NR Diff-Flat baseline ff,0.341491,0.74769,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_ff
 circle_vert,Circle Vertical,NR Diff-Flat baseline noff,0.310903,0.75959,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_noff
-circle_vert,Circle Vertical,NR Diff-Flat workshop ff,0.119975,0.756404,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_ff
+circle_vert,Circle Vertical,NR Diff-Flat workshop ff,0.102813,0.695428,/home/egmc/ws_contraction_px4/src/data_analysis/results/nr_diff_flat_ff_timingfix_workshop_circle_vert_20260402
 circle_vert,Circle Vertical,NR Diff-Flat workshop noff,0.104739,0.757111,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_noff
 circle_vert,Circle Vertical,NR Enhanced baseline ff,0.270275,0.859805,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_ff
 circle_vert,Circle Vertical,NR Enhanced baseline noff,0.271803,0.595012,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_noff
@@ -31,7 +31,7 @@ fig8_horz,Fig8 Horizontal,NMPC ff,0.067953,1.802991,/home/egmc/ws_contraction_px
 fig8_horz,Fig8 Horizontal,NMPC noff,0.068624,1.779799,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nmpc_noff
 fig8_horz,Fig8 Horizontal,NR Diff-Flat baseline ff,0.449533,0.763959,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_ff
 fig8_horz,Fig8 Horizontal,NR Diff-Flat baseline noff,0.260177,0.755195,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_noff
-fig8_horz,Fig8 Horizontal,NR Diff-Flat workshop ff,0.147615,0.741387,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_ff
+fig8_horz,Fig8 Horizontal,NR Diff-Flat workshop ff,0.145318,0.998926,/home/egmc/ws_contraction_px4/src/data_analysis/results/nr_diff_flat_ff_timingfix_workshop_fig8_horz_20260402
 fig8_horz,Fig8 Horizontal,NR Diff-Flat workshop noff,0.144321,0.777659,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_noff
 fig8_horz,Fig8 Horizontal,NR Enhanced baseline ff,0.368289,0.866944,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_ff
 fig8_horz,Fig8 Horizontal,NR Enhanced baseline noff,0.358827,0.593433,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_noff
@@ -45,7 +45,7 @@ fig8_vert,Fig8 Vertical,NMPC ff,0.075764,1.770831,/home/egmc/ws_contraction_px4/
 fig8_vert,Fig8 Vertical,NMPC noff,0.075779,1.80029,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nmpc_noff
 fig8_vert,Fig8 Vertical,NR Diff-Flat baseline ff,0.403856,0.76027,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_ff
 fig8_vert,Fig8 Vertical,NR Diff-Flat baseline noff,0.362788,0.785866,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_noff
-fig8_vert,Fig8 Vertical,NR Diff-Flat workshop ff,0.158878,0.750529,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_ff
+fig8_vert,Fig8 Vertical,NR Diff-Flat workshop ff,0.155035,0.694528,/home/egmc/ws_contraction_px4/src/data_analysis/results/nr_diff_flat_ff_timingfix_workshop_fig8_vert_20260402
 fig8_vert,Fig8 Vertical,NR Diff-Flat workshop noff,0.142565,0.764515,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_noff
 fig8_vert,Fig8 Vertical,NR Enhanced baseline ff,0.37521,0.813119,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_ff
 fig8_vert,Fig8 Vertical,NR Enhanced baseline noff,0.351542,0.588669,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_noff

@@ -558,6 +558,52 @@ least complicated variant.
 | `baseline` | `1.2 s` | ZOH | `1` | `[30, 40, 40, 40]` | disabled |
 | `workshop` | `0.8 s` | FOH | `2` | `[30, 40, 40, 40]` | bounded, enabled |
 
+# Why Feedforward Is Subtracted Before It Is Added Back
+
+At first glance the standard/enhanced NR node code can look backwards because it
+computes a stored deviation like
+
+$$
+u_{\text{dev}} = u_{\text{last}} - u_{\text{ff}}
+$$
+
+and then later reconstructs
+
+$$
+u_{\text{candidate}} = u_{\text{ff}} + u_{\text{dev}}.
+$$
+
+That subtraction is not removing feedforward from the final command. It is only
+changing coordinates.
+
+The controller wants to preserve the feedback correction it has already learned
+while the nominal feedforward operating point moves along the trajectory. So it
+stores the correction relative to feedforward, not the absolute command:
+
+$$
+u = u_{\text{ff}} + \delta u.
+$$
+
+If the code stored the absolute command directly and then also added
+$u_{\text{ff}}$ on the next step, it would double-count the nominal operating
+point. The subtraction is therefore the correct way to recover the deviation
+
+$$
+\delta u = u - u_{\text{ff}}.
+$$
+
+Then the next control update runs around the moving nominal point using
+
+$$
+u_{\text{next}} = u_{\text{ff,next}} + \delta u_{\text{updated}}.
+$$
+
+So the right mental model is:
+
+- feedforward supplies the nominal operating point,
+- Newton-Raphson supplies the correction on top of that nominal point,
+- subtraction is only used to isolate the correction state.
+
 # Appendix: Diff-Flat NR Uses the Same Workshop Pattern
 
 The differential-flatness controller is not built from the same $g_T(x,u)$ map,

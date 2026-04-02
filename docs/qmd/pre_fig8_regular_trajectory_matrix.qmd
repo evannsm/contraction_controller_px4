@@ -80,11 +80,14 @@ Interpretation:
   - `NR Diff-Flat workshop noff` is the strongest NR-family result on
     `circle_vert`, `fig8_horz`, and `fig8_vert`.
   - `NR Diff-Flat baseline noff` is the best NR-family result on `hover`.
-- Feedforward is not a universal improvement on these regular trajectories.
-  `NMPC ff` is beneficial on most of the non-hover regular paths, but the
-  Newton-Raphson families often regress with `ff`, especially in the workshop
-  cases. The most extreme failure in this sweep is `NR Diff-Flat workshop ff`
-  on `hover`, which diverges catastrophically and is therefore easy to spot in
+- Feedforward is still not a universal improvement on these regular
+  trajectories, but the updated `NR Diff-Flat workshop ff` path is no longer as
+  uniformly poor as the first sweep suggested. After correcting the diff-flat
+  feedforward operating-point alignment on the regular trajectories, `ff` now
+  helps on `circle_horz` and `circle_vert`, is nearly neutral on `fig8_horz`,
+  and still regresses on `fig8_vert`, `yaw_only`, and especially `hover`.
+  The most extreme failure in this sweep remains `NR Diff-Flat workshop ff` on
+  `hover`, which diverges catastrophically and is therefore easy to spot in
   both the RMSE table and the trajectory gallery.
 - The regular-trajectory results therefore sharpen the earlier contraction-path
   conclusions:
@@ -92,9 +95,10 @@ Interpretation:
     improvement for the standard controller.
   - `NR Enhanced workshop` is genuinely strong on some paths, but still does
     not dominate the other NR variants across the board.
-  - `NR Diff-Flat workshop` is highly competitive on the vertical and
-    figure-eight regular paths, but not uniformly safer or better than the
-    other families.
+- `NR Diff-Flat workshop` is highly competitive on the vertical and
+  figure-eight regular paths, and the feedforward-assisted version is now
+  meaningfully better on the circular paths, but it is still not uniformly
+  safer or better than the other families.
 
 # Aggregate Tables
 

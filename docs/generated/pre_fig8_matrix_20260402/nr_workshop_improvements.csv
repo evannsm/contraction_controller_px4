@@ -1,23 +1,23 @@
 trajectory_key,trajectory_display,controller,ff_mode,baseline,workshop,delta_m,delta_pct
-circle_horz,Circle Horizontal,NR Diff-Flat,ff,0.634744,0.314431,-0.320313,-50.463396
+circle_horz,Circle Horizontal,NR Diff-Flat,ff,0.634744,0.271265,-0.363479,-57.263836
 circle_horz,Circle Horizontal,NR Diff-Flat,noff,0.595158,0.302692,-0.292466,-49.140834
 circle_horz,Circle Horizontal,NR Enhanced,ff,0.39677,0.281686,-0.115083,-29.005093
 circle_horz,Circle Horizontal,NR Enhanced,noff,0.379733,0.260071,-0.119662,-31.512192
 circle_horz,Circle Horizontal,Standard NR,ff,0.385546,0.280785,-0.10476,-27.171989
 circle_horz,Circle Horizontal,Standard NR,noff,0.385689,0.263959,-0.12173,-31.561692
-circle_vert,Circle Vertical,NR Diff-Flat,ff,0.341491,0.119975,-0.221515,-64.867158
+circle_vert,Circle Vertical,NR Diff-Flat,ff,0.341491,0.102813,-0.238678,-69.892927
 circle_vert,Circle Vertical,NR Diff-Flat,noff,0.310903,0.104739,-0.206164,-66.31127
 circle_vert,Circle Vertical,NR Enhanced,ff,0.270275,0.172549,-0.097727,-36.15815
 circle_vert,Circle Vertical,NR Enhanced,noff,0.271803,0.178182,-0.09362,-34.444224
 circle_vert,Circle Vertical,Standard NR,ff,0.260658,0.166853,-0.093805,-35.987598
 circle_vert,Circle Vertical,Standard NR,noff,0.261516,0.192265,-0.069251,-26.480442
-fig8_horz,Fig8 Horizontal,NR Diff-Flat,ff,0.449533,0.147615,-0.301918,-67.162695
+fig8_horz,Fig8 Horizontal,NR Diff-Flat,ff,0.449533,0.145318,-0.304215,-67.67358
 fig8_horz,Fig8 Horizontal,NR Diff-Flat,noff,0.260177,0.144321,-0.115856,-44.529576
 fig8_horz,Fig8 Horizontal,NR Enhanced,ff,0.368289,0.237652,-0.130637,-35.471302
 fig8_horz,Fig8 Horizontal,NR Enhanced,noff,0.358827,0.234617,-0.12421,-34.615449
 fig8_horz,Fig8 Horizontal,Standard NR,ff,0.346801,0.234825,-0.111976,-32.288339
 fig8_horz,Fig8 Horizontal,Standard NR,noff,0.352456,0.21479,-0.137666,-39.059034
-fig8_vert,Fig8 Vertical,NR Diff-Flat,ff,0.403856,0.158878,-0.244978,-60.659812
+fig8_vert,Fig8 Vertical,NR Diff-Flat,ff,0.403856,0.155035,-0.248821,-61.611354
 fig8_vert,Fig8 Vertical,NR Diff-Flat,noff,0.362788,0.142565,-0.220224,-60.703032
 fig8_vert,Fig8 Vertical,NR Enhanced,ff,0.37521,0.241454,-0.133756,-35.648313
 fig8_vert,Fig8 Vertical,NR Enhanced,noff,0.351542,0.232275,-0.119267,-33.926774
