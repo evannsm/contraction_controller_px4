@@ -468,6 +468,28 @@ The spiral results are not subtle. In `docs/generated/agents_matrix_20260401/nr_
 `NR Diff-Flat` goes from `2.127361` to `109.765922` in `noff`, and from
 `2.330099` to `293.196207` in `ff`.
 
+On April 2, 2026 we traced part of that behavior to the trajectory definition
+itself. The original `spiral_contraction` reference was only position-continuous:
+its retrace branch flipped the velocity sign at the half-cycle, which is
+especially hostile to derivative-aware controllers such as `NR Enhanced` and
+`NR Diff-Flat`. The reference now uses a smooth `0 -> 1 -> 0` progress law in
+[quad_trajectories/core.py](/home/egmc/ws_contraction_px4/src/quad_trajectories/quad_trajectories/core.py)
+and the mirrored C++ implementation in
+[trajectories.hpp](/home/egmc/ws_contraction_px4/src/quad_trajectories_cpp/include/quad_trajectories_cpp/trajectories.hpp).
+
+Targeted reruns on the smoothed spiral showed that the reference regularity was
+part of the problem:
+
+- `NR Enhanced baseline noff`: `1.298151 -> 1.398035`
+- `NR Enhanced workshop noff`: `7.636792 -> 3.224751`
+
+That does not make `NR Enhanced workshop` the best choice on spiral, but it
+removes a large part of the previous catastrophic behavior without changing the
+controller law. A separate `NR Diff-Flat` state re-anchoring idea was explored
+after this fix, but it is not yet merged because the validation runs were
+contaminated by PX4 auto-land/startup issues rather than yielding a clean
+tracking result.
+
 Interpretation:
 
 - Standard NR has the most defensible workshop profile today.
