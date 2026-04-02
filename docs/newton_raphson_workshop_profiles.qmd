@@ -369,6 +369,36 @@ Tracked copies of the generated aggregate artifacts live in:
 These tables are copied from the gitignored experiment directory so the
 workspace docs reference tracked artifacts instead of ephemeral run outputs.
 
+## Comparison Plots
+
+The generated figures for the completed sweep live in:
+
+- `docs/generated/agents_matrix_20260401/plots/`
+
+The most useful plot set is:
+
+- best-per-trajectory snapshot
+- full RMSE heatmap
+- full compute-time heatmap
+- NR workshop delta plot
+- feedforward delta plot
+- FBL tuning summary
+- C++ acceptance summary
+
+![Best controller on each trajectory](generated/agents_matrix_20260401/plots/best_by_trajectory_rmse.png)
+
+![Position RMSE heatmap across the full controller matrix](generated/agents_matrix_20260401/plots/position_rmse_heatmap.png)
+
+![Compute-time heatmap across the full controller matrix](generated/agents_matrix_20260401/plots/comp_time_heatmap.png)
+
+![NR workshop delta relative to baseline](generated/agents_matrix_20260401/plots/nr_workshop_delta_pct.png)
+
+![Feedforward effect relative to no-feedforward runs](generated/agents_matrix_20260401/plots/feedforward_effect_delta_pct.png)
+
+![FBL tuning profile comparison](generated/agents_matrix_20260401/plots/fbl_tuning_profiles.png)
+
+![C++ acceptance comparison on `fig8_contraction`](generated/agents_matrix_20260401/plots/cpp_acceptance_rmse.png)
+
 ## Best-by-Trajectory Snapshot
 
 Across the full comparison set, the best position-tracking result on each

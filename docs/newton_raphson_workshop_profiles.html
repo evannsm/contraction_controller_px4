@@ -590,6 +590,65 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul>
 <p>These tables are copied from the gitignored experiment directory so the workspace docs reference tracked artifacts instead of ephemeral run outputs.</p>
 </section>
+<section id="comparison-plots" class="level2">
+<h2 class="anchored" data-anchor-id="comparison-plots">Comparison Plots</h2>
+<p>The generated figures for the completed sweep live in:</p>
+<ul>
+<li><code>docs/generated/agents_matrix_20260401/plots/</code></li>
+</ul>
+<p>The most useful plot set is:</p>
+<ul>
+<li>best-per-trajectory snapshot</li>
+<li>full RMSE heatmap</li>
+<li>full compute-time heatmap</li>
+<li>NR workshop delta plot</li>
+<li>feedforward delta plot</li>
+<li>FBL tuning summary</li>
+<li>C++ acceptance summary</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/agents_matrix_20260401/plots/best_by_trajectory_rmse.png" class="img-fluid figure-img"></p>
+<figcaption>Best controller on each trajectory</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/agents_matrix_20260401/plots/position_rmse_heatmap.png" class="img-fluid figure-img"></p>
+<figcaption>Position RMSE heatmap across the full controller matrix</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/agents_matrix_20260401/plots/comp_time_heatmap.png" class="img-fluid figure-img"></p>
+<figcaption>Compute-time heatmap across the full controller matrix</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/agents_matrix_20260401/plots/nr_workshop_delta_pct.png" class="img-fluid figure-img"></p>
+<figcaption>NR workshop delta relative to baseline</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/agents_matrix_20260401/plots/feedforward_effect_delta_pct.png" class="img-fluid figure-img"></p>
+<figcaption>Feedforward effect relative to no-feedforward runs</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/agents_matrix_20260401/plots/fbl_tuning_profiles.png" class="img-fluid figure-img"></p>
+<figcaption>FBL tuning profile comparison</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/agents_matrix_20260401/plots/cpp_acceptance_rmse.png" class="img-fluid figure-img"></p>
+<figcaption>C++ acceptance comparison on <code>fig8_contraction</code></figcaption>
+</figure>
+</div>
+</section>
 <section id="best-by-trajectory-snapshot" class="level2">
 <h2 class="anchored" data-anchor-id="best-by-trajectory-snapshot">Best-by-Trajectory Snapshot</h2>
 <p>Across the full comparison set, the best position-tracking result on each trajectory was:</p>
