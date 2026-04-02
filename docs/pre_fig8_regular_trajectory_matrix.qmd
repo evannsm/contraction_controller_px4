@@ -180,9 +180,39 @@ path for every controller/configuration in the matrix.
 
 This pass did not land a new `NR Enhanced` tune.
 
-On April 2, 2026, exploratory higher-alpha and shorter-lookahead variants were
-tested first on `circle_horz` before widening the sweep. Those variants did not
-beat the current Python workshop profile, so no additional `NR Enhanced`
-controller change was committed from that tuning thread. The regular-trajectory
-matrix in this document therefore reflects the existing validated
-`baseline/workshop` split, not an unvalidated retune.
+After the regular-trajectory matrix was complete, two Python-only exploratory
+profiles were evaluated against the current `workshop+noff` profile on the same
+six regular trajectories:
+
+- `alpha_high`: keep the current workshop structure, but raise
+  `alpha = [36, 48, 48, 48]`
+- `alpha_high_dense`: the same higher-alpha variant plus a denser prediction
+  integration step (`LOOKAHEAD_STATE_DT = 0.025`)
+
+Tracked aggregate artifacts for that sweep live in:
+
+- `docs/generated/pre_fig8_matrix_20260402/nr_enhanced_retune_candidates.csv`
+- `docs/generated/pre_fig8_matrix_20260402/nr_enhanced_retune_summary.csv`
+
+```{python}
+load_csv("nr_enhanced_retune_candidates.csv")
+```
+
+```{python}
+load_csv("nr_enhanced_retune_summary.csv")
+```
+
+Interpretation:
+
+- `alpha_high` only improved `hover` and `circle_vert`, and it regressed the
+  stronger existing workshop wins such as `yaw_only`.
+- `alpha_high_dense` improved `circle_vert` and `fig8_horz`, but it still
+  regressed `hover`, `yaw_only`, `circle_horz`, and `fig8_vert`, while also
+  increasing compute time materially.
+- On average, both candidates were worse than the current workshop profile
+  across the six regular trajectories, so neither profile was promoted into the
+  checked-in controller implementation.
+
+The result is that the regular-trajectory matrix in this document still reflects
+the existing validated `baseline/workshop` split for `NR Enhanced`, not an
+unvalidated alpha retune.

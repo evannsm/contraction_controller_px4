@@ -139,7 +139,7 @@ ul.task-list li input[type="checkbox"] {
 <li><code>docs/generated/pre_fig8_matrix_20260402/executive_summary.csv</code></li>
 <li><code>docs/generated/pre_fig8_matrix_20260402/executive_summary.md</code></li>
 </ul>
-<div id="6c4d4484" class="cell" data-execution_count="2">
+<div id="d3a9c198" class="cell" data-execution_count="2">
 <div class="cell-output cell-output-display" data-execution_count="2">
 <div>
 
@@ -283,7 +283,7 @@ ul.task-list li input[type="checkbox"] {
 <h1 data-number="4"><span class="header-section-number">4</span> Aggregate Tables</h1>
 <section id="position-rmse" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="position-rmse"><span class="header-section-number">4.1</span> Position RMSE</h2>
-<div id="45d34572" class="cell" data-execution_count="3">
+<div id="b05e442e" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display" data-execution_count="3">
 <div>
 
@@ -427,7 +427,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="compute-time" class="level2" data-number="4.2">
 <h2 data-number="4.2" class="anchored" data-anchor-id="compute-time"><span class="header-section-number">4.2</span> Compute Time</h2>
-<div id="8c007f81" class="cell" data-execution_count="4">
+<div id="0e5b47b4" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display" data-execution_count="4">
 <div>
 
@@ -571,7 +571,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="nr-workshop-deltas" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="nr-workshop-deltas"><span class="header-section-number">4.3</span> NR Workshop Deltas</h2>
-<div id="457eab27" class="cell" data-execution_count="5">
+<div id="c41fd418" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-display" data-execution_count="5">
 <div>
 
@@ -996,7 +996,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="feedforward-deltas" class="level2" data-number="4.4">
 <h2 data-number="4.4" class="anchored" data-anchor-id="feedforward-deltas"><span class="header-section-number">4.4</span> Feedforward Deltas</h2>
-<div id="eedb8bb2" class="cell" data-execution_count="6">
+<div id="be1c7c84" class="cell" data-execution_count="6">
 <div class="cell-output cell-output-display" data-execution_count="6">
 <div>
 
@@ -1487,7 +1487,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="best-by-trajectory-snapshot" class="level2" data-number="4.5">
 <h2 data-number="4.5" class="anchored" data-anchor-id="best-by-trajectory-snapshot"><span class="header-section-number">4.5</span> Best-by-Trajectory Snapshot</h2>
-<div id="1371488c" class="cell" data-execution_count="7">
+<div id="2b2869bc" class="cell" data-execution_count="7">
 <div class="cell-output cell-output-display" data-execution_count="7">
 <div>
 
@@ -1658,7 +1658,152 @@ ul.task-list li input[type="checkbox"] {
 <section id="nr-enhanced-retuning-note" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> NR Enhanced Retuning Note</h1>
 <p>This pass did not land a new <code>NR Enhanced</code> tune.</p>
-<p>On April 2, 2026, exploratory higher-alpha and shorter-lookahead variants were tested first on <code>circle_horz</code> before widening the sweep. Those variants did not beat the current Python workshop profile, so no additional <code>NR Enhanced</code> controller change was committed from that tuning thread. The regular-trajectory matrix in this document therefore reflects the existing validated <code>baseline/workshop</code> split, not an unvalidated retune.</p>
+<p>After the regular-trajectory matrix was complete, two Python-only exploratory profiles were evaluated against the current <code>workshop+noff</code> profile on the same six regular trajectories:</p>
+<ul>
+<li><code>alpha_high</code>: keep the current workshop structure, but raise <code>alpha = [36, 48, 48, 48]</code></li>
+<li><code>alpha_high_dense</code>: the same higher-alpha variant plus a denser prediction integration step (<code>LOOKAHEAD_STATE_DT = 0.025</code>)</li>
+</ul>
+<p>Tracked aggregate artifacts for that sweep live in:</p>
+<ul>
+<li><code>docs/generated/pre_fig8_matrix_20260402/nr_enhanced_retune_candidates.csv</code></li>
+<li><code>docs/generated/pre_fig8_matrix_20260402/nr_enhanced_retune_summary.csv</code></li>
+</ul>
+<div id="3f04865d" class="cell" data-execution_count="8">
+<div class="cell-output cell-output-display" data-execution_count="8">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">trajectory_display</th>
+<th data-quarto-table-cell-role="th">workshop_rmse_m</th>
+<th data-quarto-table-cell-role="th">workshop_comp_ms</th>
+<th data-quarto-table-cell-role="th">alpha_high_rmse_m</th>
+<th data-quarto-table-cell-role="th">alpha_high_comp_time_ms</th>
+<th data-quarto-table-cell-role="th">alpha_high_delta_pct</th>
+<th data-quarto-table-cell-role="th">alpha_high_dense_rmse_m</th>
+<th data-quarto-table-cell-role="th">alpha_high_dense_comp_time_ms</th>
+<th data-quarto-table-cell-role="th">alpha_high_dense_delta_pct</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>Circle Horizontal</td>
+<td>0.260071</td>
+<td>0.638979</td>
+<td>0.272537</td>
+<td>0.660810</td>
+<td>4.793548</td>
+<td>0.269703</td>
+<td>0.908429</td>
+<td>3.703671</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>Circle Vertical</td>
+<td>0.178182</td>
+<td>0.665787</td>
+<td>0.170021</td>
+<td>0.657706</td>
+<td>-4.580197</td>
+<td>0.170521</td>
+<td>0.819721</td>
+<td>-4.299560</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>Fig8 Horizontal</td>
+<td>0.234617</td>
+<td>0.692012</td>
+<td>0.240842</td>
+<td>0.634819</td>
+<td>2.653193</td>
+<td>0.228189</td>
+<td>0.868181</td>
+<td>-2.739833</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>Fig8 Vertical</td>
+<td>0.232275</td>
+<td>0.685904</td>
+<td>0.247377</td>
+<td>0.640113</td>
+<td>6.501795</td>
+<td>0.247905</td>
+<td>0.873422</td>
+<td>6.728967</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>Hover</td>
+<td>0.495054</td>
+<td>0.661452</td>
+<td>0.481909</td>
+<td>0.676891</td>
+<td>-2.655191</td>
+<td>0.501020</td>
+<td>0.845416</td>
+<td>1.205138</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>Yaw Only</td>
+<td>0.048304</td>
+<td>0.683106</td>
+<td>0.056552</td>
+<td>0.666512</td>
+<td>17.073149</td>
+<td>0.051548</td>
+<td>0.894817</td>
+<td>6.714571</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="980f5bfe" class="cell" data-execution_count="9">
+<div class="cell-output cell-output-display" data-execution_count="9">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">profile</th>
+<th data-quarto-table-cell-role="th">mean_delta_pct_vs_workshop</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>alpha_high</td>
+<td>3.964383</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>alpha_high_dense</td>
+<td>1.885492</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Interpretation:</p>
+<ul>
+<li><code>alpha_high</code> only improved <code>hover</code> and <code>circle_vert</code>, and it regressed the stronger existing workshop wins such as <code>yaw_only</code>.</li>
+<li><code>alpha_high_dense</code> improved <code>circle_vert</code> and <code>fig8_horz</code>, but it still regressed <code>hover</code>, <code>yaw_only</code>, <code>circle_horz</code>, and <code>fig8_vert</code>, while also increasing compute time materially.</li>
+<li>On average, both candidates were worse than the current workshop profile across the six regular trajectories, so neither profile was promoted into the checked-in controller implementation.</li>
+</ul>
+<p>The result is that the regular-trajectory matrix in this document still reflects the existing validated <code>baseline/workshop</code> split for <code>NR Enhanced</code>, not an unvalidated alpha retune.</p>
 </section>
 
 </main>
