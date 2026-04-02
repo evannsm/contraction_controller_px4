@@ -572,25 +572,259 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>On the current <code>fig8_contraction</code> run, FBL remains a fixed reference rather than a replacement for the workshop NR profiles.</li>
 </ul>
 </section>
-<section id="recommended-next-step" class="level2">
-<h2 class="anchored" data-anchor-id="recommended-next-step">Recommended Next Step</h2>
-<p>Run the widened contraction-family sweep requested in <code>Agents.md</code>:</p>
+<section id="full-agents.md-sweep" class="level2">
+<h2 class="anchored" data-anchor-id="full-agents.md-sweep">Full Agents.md Sweep</h2>
+<p>The widened contraction-family sweep requested in <code>src/Agents.md</code> is now complete. The run tag used for the final matrix is:</p>
 <ul>
-<li><code>newton_raphson</code> baseline and workshop</li>
-<li><code>newton_raphson_enhanced</code> baseline and workshop</li>
-<li><code>nr_diff_flat</code> baseline and workshop</li>
-<li>fixed references: <code>contraction</code>, <code>nmpc</code>, and <code>fbl</code></li>
+<li><code>agents_matrix_20260401</code></li>
 </ul>
-<p>That sweep should now use the same five contraction trajectories:</p>
+<p>Tracked copies of the generated aggregate artifacts live in:</p>
 <ul>
-<li><p><code>hover_contraction</code></p></li>
-<li><p><code>fig8_contraction</code></p></li>
-<li><p><code>fig8_heading_contraction</code></p></li>
-<li><p><code>spiral_contraction</code></p></li>
-<li><p><code>trefoil_contraction</code></p></li>
-<li><p>with and without feedforward terms where the controller supports that option</p></li>
+<li><code>docs/generated/agents_matrix_20260401/agents_main_matrix.csv</code></li>
+<li><code>docs/generated/agents_matrix_20260401/position_rmse_table.md</code></li>
+<li><code>docs/generated/agents_matrix_20260401/comp_time_table.md</code></li>
+<li><code>docs/generated/agents_matrix_20260401/fbl_tuning_summary.md</code></li>
+<li><code>docs/generated/agents_matrix_20260401/nr_workshop_improvements.md</code></li>
+<li><code>docs/generated/agents_matrix_20260401/feedforward_effects.md</code></li>
+<li><code>docs/generated/agents_matrix_20260401/cpp_acceptance_summary.md</code></li>
 </ul>
-<p>Once that fixed comparison matrix exists, the next workshop item is the feedback-enabled <code>fbl</code> controller itself: tune the current light-feedback gains against the new generalized baseline and see whether it becomes a stronger reference.</p>
+<p>These tables are copied from the gitignored experiment directory so the workspace docs reference tracked artifacts instead of ephemeral run outputs.</p>
+</section>
+<section id="best-by-trajectory-snapshot" class="level2">
+<h2 class="anchored" data-anchor-id="best-by-trajectory-snapshot">Best-by-Trajectory Snapshot</h2>
+<p>Across the full comparison set, the best position-tracking result on each trajectory was:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 28%">
+<col style="width: 28%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Trajectory</th>
+<th>Best result</th>
+<th style="text-align: right;">Position RMSE (m)</th>
+<th style="text-align: right;">Compute time (ms)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>hover_contraction</code></td>
+<td><code>NR Enhanced workshop ff</code></td>
+<td style="text-align: right;"><code>0.039213</code></td>
+<td style="text-align: right;"><code>0.952705</code></td>
+</tr>
+<tr class="even">
+<td><code>fig8_contraction</code></td>
+<td><code>NMPC noff</code></td>
+<td style="text-align: right;"><code>0.133517</code></td>
+<td style="text-align: right;"><code>1.566523</code></td>
+</tr>
+<tr class="odd">
+<td><code>fig8_heading_contraction</code></td>
+<td><code>NMPC ff</code></td>
+<td style="text-align: right;"><code>0.077771</code></td>
+<td style="text-align: right;"><code>1.823588</code></td>
+</tr>
+<tr class="even">
+<td><code>spiral_contraction</code></td>
+<td><code>NMPC noff</code></td>
+<td style="text-align: right;"><code>0.302704</code></td>
+<td style="text-align: right;"><code>1.562733</code></td>
+</tr>
+<tr class="odd">
+<td><code>trefoil_contraction</code></td>
+<td><code>NMPC ff</code></td>
+<td style="text-align: right;"><code>0.131785</code></td>
+<td style="text-align: right;"><code>1.570208</code></td>
+</tr>
+</tbody>
+</table>
+<p>Interpretation:</p>
+<ul>
+<li>NMPC was the strongest fixed reference on all five trajectories.</li>
+<li>The only trajectory where an NR-family controller beat NMPC outright was <code>hover_contraction</code>, where <code>NR Enhanced workshop ff</code> reached the best overall RMSE.</li>
+<li>The full per-trajectory matrix is in <code>docs/generated/agents_matrix_20260401/position_rmse_table.md</code>.</li>
+</ul>
+</section>
+<section id="nr-workshop-conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="nr-workshop-conclusions">NR Workshop Conclusions</h2>
+<p>The workshop profile did not generalize uniformly across the NR family.</p>
+<section id="standard-nr" class="level3">
+<h3 class="anchored" data-anchor-id="standard-nr">Standard NR</h3>
+<p>Standard NR is the most robust positive result of the workshop pass:</p>
+<ul>
+<li>It improved relative to baseline on all five trajectories in <code>noff</code> mode.</li>
+<li>It also improved relative to baseline on all five trajectories in <code>ff</code> mode.</li>
+<li>It never became the best overall controller on the contraction-family sweep, but it did materially close the gap to the fixed references.</li>
+</ul>
+<p>Examples from <code>docs/generated/agents_matrix_20260401/nr_workshop_improvements.md</code>:</p>
+<ul>
+<li><code>hover_contraction</code>, <code>noff</code>: <code>0.164176 -&gt; 0.106311</code> (<code>-35.25%</code>)</li>
+<li><code>fig8_contraction</code>, <code>noff</code>: <code>0.994069 -&gt; 0.724469</code> (<code>-27.12%</code>)</li>
+<li><code>spiral_contraction</code>, <code>noff</code>: <code>1.270721 -&gt; 0.964700</code> (<code>-24.08%</code>)</li>
+</ul>
+</section>
+<section id="nr-enhanced" class="level3">
+<h3 class="anchored" data-anchor-id="nr-enhanced">NR Enhanced</h3>
+<p>NR Enhanced responded well on some trajectories and failed badly on others:</p>
+<ul>
+<li>strong improvement on <code>hover_contraction</code></li>
+<li>good improvement on <code>fig8_heading_contraction</code></li>
+<li>good improvement on <code>trefoil_contraction</code> in <code>noff</code></li>
+<li>catastrophic degradation on <code>fig8_contraction</code></li>
+<li>catastrophic degradation on <code>spiral_contraction</code></li>
+<li>catastrophic degradation on <code>trefoil_contraction</code> when combined with <code>ff</code></li>
+</ul>
+<p>This means the current enhanced workshop profile is a trajectory-dependent tune, not a generally safe upgrade.</p>
+</section>
+<section id="nr-diff-flat" class="level3">
+<h3 class="anchored" data-anchor-id="nr-diff-flat">NR Diff-Flat</h3>
+<p>NR Diff-Flat also showed a split outcome:</p>
+<ul>
+<li>strong workshop improvement on <code>hover_contraction</code></li>
+<li>strong workshop improvement on <code>fig8_contraction</code></li>
+<li>strong workshop improvement on <code>fig8_heading_contraction</code></li>
+<li>strong workshop improvement on <code>trefoil_contraction</code></li>
+<li>catastrophic failure on <code>spiral_contraction</code></li>
+</ul>
+<p>The spiral results are not subtle. In <code>docs/generated/agents_matrix_20260401/nr_workshop_improvements.md</code>, <code>NR Diff-Flat</code> goes from <code>2.127361</code> to <code>109.765922</code> in <code>noff</code>, and from <code>2.330099</code> to <code>293.196207</code> in <code>ff</code>.</p>
+<p>Interpretation:</p>
+<ul>
+<li>Standard NR has the most defensible workshop profile today.</li>
+<li>Enhanced and Diff-Flat still need trajectory-aware retuning or a more robust profile split before they can claim the same level of generalization.</li>
+</ul>
+</section>
+</section>
+<section id="feedforward-findings" class="level2">
+<h2 class="anchored" data-anchor-id="feedforward-findings">Feedforward Findings</h2>
+<p>The full per-controller deltas are in <code>docs/generated/agents_matrix_20260401/feedforward_effects.md</code>.</p>
+<p>The short version is:</p>
+<ul>
+<li>feedforward usually hurt the fixed references <code>contraction</code> and <code>NMPC</code> or only helped by a negligible amount</li>
+<li>pure flatness feedforward remained unusable as a standalone controller on all five trajectories (<code>36-43 m</code> RMSE)</li>
+<li>feedforward interacted with the NR family in a controller-specific and trajectory-specific way rather than showing any clean global benefit</li>
+</ul>
+<p>Representative cases:</p>
+<ul>
+<li><code>spiral_contraction</code>, <code>contraction</code>: <code>ff</code> helped (<code>0.421255 -&gt; 0.373273</code>)</li>
+<li><code>trefoil_contraction</code>, <code>NMPC</code>: <code>ff</code> helped slightly (<code>0.134975 -&gt; 0.131785</code>)</li>
+<li><code>hover_contraction</code>, <code>Standard NR workshop</code>: <code>ff</code> helped (<code>0.106311 -&gt; 0.066798</code>)</li>
+<li><code>fig8_contraction</code>, <code>NR family</code>: <code>ff</code> hurt across the board</li>
+<li><code>spiral_contraction</code>, <code>NR Diff-Flat workshop</code>: <code>ff</code> made an already bad workshop result much worse (<code>109.77 -&gt; 293.20</code>)</li>
+</ul>
+<p>Interpretation:</p>
+<ul>
+<li><code>ff</code> should be treated as a narrow experimental modifier, not enabled by default across controllers.</li>
+<li>The current evidence does not support a general “feedforward helps” claim for this workspace.</li>
+</ul>
+</section>
+<section id="fbl-gain-tuning" class="level2">
+<h2 class="anchored" data-anchor-id="fbl-gain-tuning">FBL Gain Tuning</h2>
+<p>The FBL package documentation remains in <code>src/ff_f8_px4/docs/ff_f8_controller.qmd</code>, and the completed tuning sweep is summarized in <code>docs/generated/agents_matrix_20260401/fbl_tuning_summary.md</code>.</p>
+<p>Three gain profiles were compared across the five contraction trajectories:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 26%">
+<col style="width: 26%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Profile</th>
+<th style="text-align: right;">Mean RMSE (m)</th>
+<th style="text-align: right;">Mean comp time (ms)</th>
+<th style="text-align: right;">Best single-run RMSE (m)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>default</code></td>
+<td style="text-align: right;"><code>27.832292</code></td>
+<td style="text-align: right;"><code>0.863431</code></td>
+<td style="text-align: right;"><code>0.700842</code></td>
+</tr>
+<tr class="even">
+<td><code>balanced</code></td>
+<td style="text-align: right;"><code>26.905735</code></td>
+<td style="text-align: right;"><code>0.848224</code></td>
+<td style="text-align: right;"><code>0.586903</code></td>
+</tr>
+<tr class="odd">
+<td><code>aggressive</code></td>
+<td style="text-align: right;"><code>22.890449</code></td>
+<td style="text-align: right;"><code>0.834896</code></td>
+<td style="text-align: right;"><code>0.475773</code></td>
+</tr>
+</tbody>
+</table>
+<p>Outcome:</p>
+<ul>
+<li><code>aggressive</code> is the best available FBL comparison profile in this workspace.</li>
+<li>It improved the mean RMSE by about <code>17.76%</code> relative to <code>default</code>.</li>
+<li>Even after tuning, FBL remains far behind NMPC and the contraction controller on the common five-trajectory set.</li>
+<li><code>fig8_heading_contraction</code> is still the clear failure case for FBL.</li>
+</ul>
+</section>
+<section id="c-acceptance" class="level2">
+<h2 class="anchored" data-anchor-id="c-acceptance">C++ Acceptance</h2>
+<p>The Python workshop changes are now mirrored in the C++ NR family and were flight-validated on <code>fig8_contraction</code>.</p>
+<p>Tracked table:</p>
+<ul>
+<li><code>docs/generated/agents_matrix_20260401/cpp_acceptance_summary.md</code></li>
+</ul>
+<p>Measured C++ deltas:</p>
+<ul>
+<li><code>Standard NR C++</code>: <code>1.336766 -&gt; 1.009320</code> (<code>-24.50%</code>)</li>
+<li><code>NR Enhanced C++</code>: <code>1.342013 -&gt; 13.413800</code> (<code>+899.53%</code>)</li>
+<li><code>NR Diff-Flat C++</code>: <code>1.788206 -&gt; 0.671921</code> (<code>-62.42%</code>)</li>
+</ul>
+<p>Interpretation:</p>
+<ul>
+<li>The C++ workshop behavior matches the Python qualitative story on <code>fig8_contraction</code>.</li>
+<li>Standard and Diff-Flat improve.</li>
+<li>Enhanced workshop is still not a safe general-purpose profile.</li>
+</ul>
+</section>
+<section id="nmpc-metadata-fix" class="level2">
+<h2 class="anchored" data-anchor-id="nmpc-metadata-fix">NMPC Metadata Fix</h2>
+<p>The earlier <code>Controller = Unknown</code> issue was traced to a real NMPC logging bug, not to the analysis notebook.</p>
+<p>Root cause in the Python package:</p>
+<ul>
+<li>the controller logger was not writing a <code>controller</code> field at all</li>
+<li><code>z_ref</code> and <code>yaw_ref</code> were also sharing the same log index</li>
+</ul>
+<p>Fixes applied:</p>
+<ul>
+<li><code>src/nmpc_acados_px4/nmpc_acados_px4/ros2px4_node.py</code> now logs <code>controller = NMPC</code> explicitly and uses distinct reference indices</li>
+<li><code>src/nmpc_acados_px4_cpp/src/offboard_control_node.cpp</code> now also logs <code>controller = NMPC</code></li>
+<li><code>src/data_analysis/utilities.py</code> now normalizes <code>NMPC</code>, <code>nmpc</code>, <code>nmpc_acados_px4</code>, and <code>nmpc_acados_px4_cpp</code> to the same controller label</li>
+<li><code>src/data_analysis/run_analysis.py</code> now fails fast if a summary contains unresolved metadata</li>
+<li><code>src/workspace_tools/run_agents_matrix.py</code> now validates summary controller labels against the requested controller set</li>
+</ul>
+<p>Validation:</p>
+<ul>
+<li>Python NMPC matrix summaries now report <code>Controller = NMPC</code></li>
+<li>a post-fix C++ smoke run at <code>docs/generated/agents_matrix_20260401/nmpc_cpp_controller_field_smoke_summary.csv</code> also reports <code>Controller = NMPC</code> with <code>Position_RMSE_m = 0.048902</code> on <code>hover_contraction</code></li>
+</ul>
+<p>Interpretation:</p>
+<ul>
+<li>the original <code>Unknown</code> failure mode is fixed at the package boundary</li>
+<li>the shared analysis path will now fail loudly if the metadata regresses again</li>
+</ul>
+</section>
+<section id="status-against-agents.md" class="level2">
+<h2 class="anchored" data-anchor-id="status-against-agents.md">Status Against Agents.md</h2>
+<p>The requested items are now addressed as follows:</p>
+<ol type="1">
+<li>The full five-trajectory comparison matrix is complete, including baseline/workshop for the NR-family controllers and fixed references for <code>nmpc</code>, <code>contraction</code>, and <code>fbl</code>.</li>
+<li>The workspace now has a full <code>.qmd</code> write-up for the workshop and comparison pass, with the FBL technical note kept separately in <code>src/ff_f8_px4/docs/ff_f8_controller.qmd</code>.</li>
+<li>The contraction controller params integration remains complete and is documented in <code>docs/contraction_controller.qmd</code>.</li>
+<li>The Python NR-style changes are mirrored into the C++ NR family and acceptance-tested.</li>
+<li>FBL PID gain tuning is complete, with <code>aggressive</code> selected as the current comparison profile.</li>
+</ol>
 </section>
 </section>
 

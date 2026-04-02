@@ -1,0 +1,7 @@
+trajectory_key,trajectory_display,comparison_label,Position_RMSE_m,Comp_Time_ms,results_dir
+fig8_contraction,Fig8 Contraction,NR Diff-Flat C++ baseline,1.788206,0.001542,/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/cpp_acceptance/fig8_contraction/cpp_nr_family_baseline
+fig8_contraction,Fig8 Contraction,NR Diff-Flat C++ workshop,0.671921,0.002053,/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/cpp_acceptance/fig8_contraction/cpp_nr_family_workshop
+fig8_contraction,Fig8 Contraction,NR Enhanced C++ baseline,1.342013,0.108479,/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/cpp_acceptance/fig8_contraction/cpp_nr_family_baseline
+fig8_contraction,Fig8 Contraction,NR Enhanced C++ workshop,13.4138,0.134599,/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/cpp_acceptance/fig8_contraction/cpp_nr_family_workshop
+fig8_contraction,Fig8 Contraction,Standard NR C++ baseline,1.336766,0.039671,/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/cpp_acceptance/fig8_contraction/cpp_nr_family_baseline
+fig8_contraction,Fig8 Contraction,Standard NR C++ workshop,1.00932,0.069209,/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/cpp_acceptance/fig8_contraction/cpp_nr_family_workshop

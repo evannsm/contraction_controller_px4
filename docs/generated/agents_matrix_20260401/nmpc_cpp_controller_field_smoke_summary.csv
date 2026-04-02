@@ -1,0 +1,2 @@
+Platform,Controller,Trajectory,Modifiers,Position_RMSE_m,Comp_Time_ms
+Simulation,NMPC,Hover Contraction,noff,0.04890237244684531,1.4841799

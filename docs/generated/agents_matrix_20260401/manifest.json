@@ -1,0 +1,26 @@
+{
+  "aggregate_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/aggregate",
+  "artifacts": {
+    "comp_time_table": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/aggregate/comp_time_table.csv",
+    "cpp_acceptance_summary": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/aggregate/cpp_acceptance_summary.csv",
+    "fbl_tuning_summary": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/aggregate/fbl_tuning_summary.csv",
+    "feedforward_effects": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/aggregate/feedforward_effects.csv",
+    "main_matrix": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/aggregate/agents_main_matrix.csv",
+    "nr_workshop_improvements": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/aggregate/nr_workshop_improvements.csv",
+    "position_rmse_table": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/aggregate/position_rmse_table.csv",
+    "raw_summary_rows": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/aggregate/raw_summary_rows.csv",
+    "run_records": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401/aggregate/run_records.json"
+  },
+  "best_fbl_gains": {
+    "kd_body_rates": 0.24,
+    "kp_att": 1.65,
+    "kp_xy": 0.2,
+    "kp_yaw": 2.0,
+    "kp_z": 0.52,
+    "kv_xy": 0.28,
+    "kv_z": 0.38,
+    "max_tilt_cmd": 0.45
+  },
+  "best_fbl_profile": "aggressive",
+  "results_root": "/home/egmc/ws_contraction_px4/src/data_analysis/results/agents_matrix_20260401"
+}

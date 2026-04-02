@@ -1,0 +1,4 @@
+fbl_gain_profile,trajectories_completed,mean_position_rmse_m,mean_comp_time_ms,best_single_run_rmse_m,complete_profile
+aggressive,5,22.890449,0.834896,0.475773,True
+balanced,5,26.905735,0.848224,0.586903,True
+default,5,27.832292,0.863431,0.700842,True

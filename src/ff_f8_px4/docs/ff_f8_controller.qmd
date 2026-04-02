@@ -198,6 +198,35 @@ $$
 
 Then it adds attitude-rate corrections and measured-rate damping before publishing.
 
+# Tuned Gain Profiles
+
+The April 1, 2026 workspace sweep tested three FBL gain profiles across the
+five contraction trajectories used in `src/Agents.md`:
+
+| Profile | `kp_xy` | `kv_xy` | `kp_z` | `kv_z` | `kp_att` | `kp_yaw` | `kd_body_rates` | `max_tilt_cmd` |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `default` | package defaults | package defaults | package defaults | package defaults | package defaults | package defaults | package defaults | package defaults |
+| `balanced` | `0.16` | `0.22` | `0.42` | `0.32` | `1.45` | `1.75` | `0.22` | `0.40` |
+| `aggressive` | `0.20` | `0.28` | `0.52` | `0.38` | `1.65` | `2.00` | `0.24` | `0.45` |
+
+Measured sweep summary:
+
+| Profile | Mean RMSE (m) | Mean comp time (ms) |
+| --- | ---: | ---: |
+| `default` | `27.832292` | `0.863431` |
+| `balanced` | `26.905735` | `0.848224` |
+| `aggressive` | `22.890449` | `0.834896` |
+
+Outcome:
+
+- `aggressive` is the current best FBL comparison profile in this workspace.
+- The tuned profile improved the mean RMSE by about `17.76%` relative to
+  `default`.
+- Even after tuning, FBL remains a fixed reference rather than a leading
+  controller in the full five-trajectory comparison.
+- `fig8_heading_contraction` is still the main failure case for this controller
+  family.
+
 # Hover and Return Reference
 
 The package no longer hovers at a generic hardcoded point. Instead, the hover

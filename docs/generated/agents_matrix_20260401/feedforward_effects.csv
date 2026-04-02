@@ -1,0 +1,41 @@
+trajectory_key,trajectory_display,controller,nr_profile,noff,ff,delta_ff_minus_noff_m,delta_ff_minus_noff_pct
+fig8_contraction,Fig8 Contraction,Contraction,-,0.153137,0.179653,0.026515,17.314745
+fig8_contraction,Fig8 Contraction,NMPC,-,0.133517,0.142965,0.009448,7.076579
+fig8_contraction,Fig8 Contraction,NR Diff-Flat,baseline,1.310223,1.382494,0.072272,5.515981
+fig8_contraction,Fig8 Contraction,NR Diff-Flat,workshop,0.512137,0.564521,0.052385,10.228636
+fig8_contraction,Fig8 Contraction,NR Enhanced,baseline,1.00933,1.013462,0.004132,0.409381
+fig8_contraction,Fig8 Contraction,NR Enhanced,workshop,12.539564,13.563184,1.02362,8.163125
+fig8_contraction,Fig8 Contraction,Standard NR,baseline,0.994069,0.994875,0.000806,0.081032
+fig8_contraction,Fig8 Contraction,Standard NR,workshop,0.724469,0.734944,0.010475,1.445902
+fig8_heading_contraction,Fig8 Heading Contraction,Contraction,-,0.151768,0.158229,0.006461,4.256929
+fig8_heading_contraction,Fig8 Heading Contraction,NMPC,-,0.078444,0.077771,-0.000674,-0.858873
+fig8_heading_contraction,Fig8 Heading Contraction,NR Diff-Flat,baseline,0.834944,0.84579,0.010845,1.298894
+fig8_heading_contraction,Fig8 Heading Contraction,NR Diff-Flat,workshop,0.311261,0.339109,0.027848,8.946763
+fig8_heading_contraction,Fig8 Heading Contraction,NR Enhanced,baseline,0.627364,0.641775,0.014411,2.297021
+fig8_heading_contraction,Fig8 Heading Contraction,NR Enhanced,workshop,0.442781,0.44461,0.001829,0.412981
+fig8_heading_contraction,Fig8 Heading Contraction,Standard NR,baseline,0.623074,0.625962,0.002887,0.463409
+fig8_heading_contraction,Fig8 Heading Contraction,Standard NR,workshop,0.483734,0.457475,-0.026258,-5.42828
+hover_contraction,Hover Contraction,Contraction,-,0.059275,0.066615,0.00734,12.383515
+hover_contraction,Hover Contraction,NMPC,-,0.047794,0.048137,0.000343,0.71743
+hover_contraction,Hover Contraction,NR Diff-Flat,baseline,0.086159,0.08947,0.003311,3.842878
+hover_contraction,Hover Contraction,NR Diff-Flat,workshop,0.054968,0.039667,-0.015301,-27.8355
+hover_contraction,Hover Contraction,NR Enhanced,baseline,0.169213,0.170039,0.000827,0.488463
+hover_contraction,Hover Contraction,NR Enhanced,workshop,0.050656,0.039213,-0.011443,-22.589003
+hover_contraction,Hover Contraction,Standard NR,baseline,0.164176,0.163633,-0.000543,-0.330661
+hover_contraction,Hover Contraction,Standard NR,workshop,0.106311,0.066798,-0.039514,-37.167853
+spiral_contraction,Spiral Contraction,Contraction,-,0.421255,0.373273,-0.047981,-11.390059
+spiral_contraction,Spiral Contraction,NMPC,-,0.302704,0.319111,0.016407,5.420084
+spiral_contraction,Spiral Contraction,NR Diff-Flat,baseline,2.127361,2.330099,0.202737,9.529995
+spiral_contraction,Spiral Contraction,NR Diff-Flat,workshop,109.765922,293.196207,183.430285,167.110412
+spiral_contraction,Spiral Contraction,NR Enhanced,baseline,1.298151,1.312634,0.014483,1.115685
+spiral_contraction,Spiral Contraction,NR Enhanced,workshop,7.636792,3.138548,-4.498244,-58.902266
+spiral_contraction,Spiral Contraction,Standard NR,baseline,1.270721,1.278532,0.007811,0.614662
+spiral_contraction,Spiral Contraction,Standard NR,workshop,0.9647,0.956093,-0.008607,-0.892238
+trefoil_contraction,Trefoil Contraction,Contraction,-,0.152311,0.155592,0.003282,2.154482
+trefoil_contraction,Trefoil Contraction,NMPC,-,0.134975,0.131785,-0.00319,-2.363243
+trefoil_contraction,Trefoil Contraction,NR Diff-Flat,baseline,1.091492,1.179597,0.088105,8.071945
+trefoil_contraction,Trefoil Contraction,NR Diff-Flat,workshop,0.484797,0.476742,-0.008055,-1.661431
+trefoil_contraction,Trefoil Contraction,NR Enhanced,baseline,0.939891,0.921956,-0.017935,-1.908247
+trefoil_contraction,Trefoil Contraction,NR Enhanced,workshop,0.61742,10.403099,9.785679,1584.929769
+trefoil_contraction,Trefoil Contraction,Standard NR,baseline,0.924883,0.921425,-0.003457,-0.373814
+trefoil_contraction,Trefoil Contraction,Standard NR,workshop,0.618411,0.601379,-0.017032,-2.754126

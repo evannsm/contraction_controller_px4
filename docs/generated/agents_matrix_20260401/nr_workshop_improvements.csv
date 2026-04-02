@@ -1,0 +1,31 @@
+trajectory_key,trajectory_display,controller,ff_mode,baseline,workshop,delta_m,delta_pct
+fig8_contraction,Fig8 Contraction,NR Diff-Flat,ff,1.382494,0.564521,-0.817973,-59.166472
+fig8_contraction,Fig8 Contraction,NR Diff-Flat,noff,1.310223,0.512137,-0.798086,-60.912247
+fig8_contraction,Fig8 Contraction,NR Enhanced,ff,1.013462,13.563184,12.549722,1238.301675
+fig8_contraction,Fig8 Contraction,NR Enhanced,noff,1.00933,12.539564,11.530234,1142.364656
+fig8_contraction,Fig8 Contraction,Standard NR,ff,0.994875,0.734944,-0.259931,-26.126982
+fig8_contraction,Fig8 Contraction,Standard NR,noff,0.994069,0.724469,-0.2696,-27.120882
+fig8_heading_contraction,Fig8 Heading Contraction,NR Diff-Flat,ff,0.84579,0.339109,-0.506681,-59.906273
+fig8_heading_contraction,Fig8 Heading Contraction,NR Diff-Flat,noff,0.834944,0.311261,-0.523684,-62.720782
+fig8_heading_contraction,Fig8 Heading Contraction,NR Enhanced,ff,0.641775,0.44461,-0.197165,-30.7218
+fig8_heading_contraction,Fig8 Heading Contraction,NR Enhanced,noff,0.627364,0.442781,-0.184583,-29.421939
+fig8_heading_contraction,Fig8 Heading Contraction,Standard NR,ff,0.625962,0.457475,-0.168486,-26.916391
+fig8_heading_contraction,Fig8 Heading Contraction,Standard NR,noff,0.623074,0.483734,-0.13934,-22.363382
+hover_contraction,Hover Contraction,NR Diff-Flat,ff,0.08947,0.039667,-0.049803,-55.664197
+hover_contraction,Hover Contraction,NR Diff-Flat,noff,0.086159,0.054968,-0.031191,-36.201909
+hover_contraction,Hover Contraction,NR Enhanced,ff,0.170039,0.039213,-0.130826,-76.938876
+hover_contraction,Hover Contraction,NR Enhanced,noff,0.169213,0.050656,-0.118557,-70.063983
+hover_contraction,Hover Contraction,Standard NR,ff,0.163633,0.066798,-0.096835,-59.178376
+hover_contraction,Hover Contraction,Standard NR,noff,0.164176,0.106311,-0.057865,-35.2455
+spiral_contraction,Spiral Contraction,NR Diff-Flat,ff,2.330099,293.196207,290.866108,12482.995655
+spiral_contraction,Spiral Contraction,NR Diff-Flat,noff,2.127361,109.765922,107.638561,5059.721919
+spiral_contraction,Spiral Contraction,NR Enhanced,ff,1.312634,3.138548,1.825915,139.1031
+spiral_contraction,Spiral Contraction,NR Enhanced,noff,1.298151,7.636792,6.338641,488.282401
+spiral_contraction,Spiral Contraction,Standard NR,ff,1.278532,0.956093,-0.322439,-25.219499
+spiral_contraction,Spiral Contraction,Standard NR,noff,1.270721,0.9647,-0.306021,-24.082487
+trefoil_contraction,Trefoil Contraction,NR Diff-Flat,ff,1.179597,0.476742,-0.702854,-59.584303
+trefoil_contraction,Trefoil Contraction,NR Diff-Flat,noff,1.091492,0.484797,-0.606695,-55.584029
+trefoil_contraction,Trefoil Contraction,NR Enhanced,ff,0.921956,10.403099,9.481143,1028.372761
+trefoil_contraction,Trefoil Contraction,NR Enhanced,noff,0.939891,0.61742,-0.322471,-34.309391
+trefoil_contraction,Trefoil Contraction,Standard NR,ff,0.921425,0.601379,-0.320047,-34.733852
+trefoil_contraction,Trefoil Contraction,Standard NR,noff,0.924883,0.618411,-0.306472,-33.136316
