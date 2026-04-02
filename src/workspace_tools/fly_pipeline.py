@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import argparse
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import signal
@@ -22,6 +24,7 @@ IMAGE_NAME = "px4_controllers_jazzy"
 CONTAINER_NAME = "px4_controllers"
 PX4_MODEL = "gz_x500"
 ROS_DOMAIN_ID = "31"
+ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 
 COMMON_TRAJECTORIES = {
     "hover",
@@ -711,10 +714,39 @@ def stop_process(process: ManagedProcess | None) -> None:
             os.killpg(process.process.pid, signal.SIGTERM)
             process.process.wait(timeout=10)
     except subprocess.TimeoutExpired:
-        os.killpg(process.process.pid, signal.SIGKILL)
-        process.process.wait(timeout=10)
+            os.killpg(process.process.pid, signal.SIGKILL)
+            process.process.wait(timeout=10)
     finally:
         process.log_handle.close()
+        if process.name == "sitl":
+            compact_sitl_log(process.log_path)
+
+
+def compact_sitl_log(log_path: Path, *, max_lines: int = 2000) -> None:
+    """Keep a readable SITL tail without the gigabytes of repeated ``pxh>`` prompts."""
+    if not log_path.exists():
+        return
+
+    original_size = log_path.stat().st_size
+    keep = deque(maxlen=max_lines)
+
+    with log_path.open("r", errors="replace") as handle:
+        for raw_line in handle:
+            cleaned = ANSI_ESCAPE_RE.sub("", raw_line).replace("\r", "").rstrip("\n")
+            if cleaned.strip() == "pxh>":
+                continue
+            keep.append(cleaned)
+
+    if not keep:
+        keep.append("[fly] PX4 SITL log was empty after prompt filtering.")
+
+    header = [
+        "[fly] PX4 SITL log was compacted after the run to avoid multi-GB prompt spam.",
+        f"[fly] Original size: {original_size} bytes",
+        f"[fly] Stored tail: last {len(keep)} filtered lines",
+        "",
+    ]
+    log_path.write_text("\n".join(header + list(keep)) + "\n")
 
 
 def run_checked(

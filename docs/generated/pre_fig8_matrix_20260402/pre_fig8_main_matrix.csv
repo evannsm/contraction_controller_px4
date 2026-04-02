@@ -1,0 +1,85 @@
+trajectory_key,trajectory_display,comparison_label_final,Position_RMSE_m,Comp_Time_ms,results_dir
+circle_horz,Circle Horizontal,NMPC ff,0.102671,1.776955,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nmpc_ff
+circle_horz,Circle Horizontal,NMPC noff,0.10544,1.836516,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nmpc_noff
+circle_horz,Circle Horizontal,NR Diff-Flat baseline ff,0.634744,0.751201,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_ff
+circle_horz,Circle Horizontal,NR Diff-Flat baseline noff,0.595158,0.747424,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_noff
+circle_horz,Circle Horizontal,NR Diff-Flat workshop ff,0.314431,0.750743,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_ff
+circle_horz,Circle Horizontal,NR Diff-Flat workshop noff,0.302692,0.737606,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_noff
+circle_horz,Circle Horizontal,NR Enhanced baseline ff,0.39677,0.856372,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_ff
+circle_horz,Circle Horizontal,NR Enhanced baseline noff,0.379733,0.58651,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_noff
+circle_horz,Circle Horizontal,NR Enhanced workshop ff,0.281686,0.938448,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_ff
+circle_horz,Circle Horizontal,NR Enhanced workshop noff,0.260071,0.638979,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_noff
+circle_horz,Circle Horizontal,Standard NR baseline ff,0.385546,0.712708,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_ff
+circle_horz,Circle Horizontal,Standard NR baseline noff,0.385689,0.262471,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_noff
+circle_horz,Circle Horizontal,Standard NR workshop ff,0.280785,0.718134,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_ff
+circle_horz,Circle Horizontal,Standard NR workshop noff,0.263959,0.324246,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_noff
+circle_vert,Circle Vertical,NMPC ff,0.074012,1.861415,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nmpc_ff
+circle_vert,Circle Vertical,NMPC noff,0.066442,1.853472,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nmpc_noff
+circle_vert,Circle Vertical,NR Diff-Flat baseline ff,0.341491,0.74769,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_ff
+circle_vert,Circle Vertical,NR Diff-Flat baseline noff,0.310903,0.75959,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_noff
+circle_vert,Circle Vertical,NR Diff-Flat workshop ff,0.119975,0.756404,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_ff
+circle_vert,Circle Vertical,NR Diff-Flat workshop noff,0.104739,0.757111,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_noff
+circle_vert,Circle Vertical,NR Enhanced baseline ff,0.270275,0.859805,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_ff
+circle_vert,Circle Vertical,NR Enhanced baseline noff,0.271803,0.595012,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_noff
+circle_vert,Circle Vertical,NR Enhanced workshop ff,0.172549,0.889194,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_ff
+circle_vert,Circle Vertical,NR Enhanced workshop noff,0.178182,0.665787,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_noff
+circle_vert,Circle Vertical,Standard NR baseline ff,0.260658,0.716771,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_ff
+circle_vert,Circle Vertical,Standard NR baseline noff,0.261516,0.264846,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_noff
+circle_vert,Circle Vertical,Standard NR workshop ff,0.166853,0.753457,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_ff
+circle_vert,Circle Vertical,Standard NR workshop noff,0.192265,0.318838,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_noff
+fig8_horz,Fig8 Horizontal,NMPC ff,0.067953,1.802991,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nmpc_ff
+fig8_horz,Fig8 Horizontal,NMPC noff,0.068624,1.779799,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nmpc_noff
+fig8_horz,Fig8 Horizontal,NR Diff-Flat baseline ff,0.449533,0.763959,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_ff
+fig8_horz,Fig8 Horizontal,NR Diff-Flat baseline noff,0.260177,0.755195,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_noff
+fig8_horz,Fig8 Horizontal,NR Diff-Flat workshop ff,0.147615,0.741387,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_ff
+fig8_horz,Fig8 Horizontal,NR Diff-Flat workshop noff,0.144321,0.777659,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_noff
+fig8_horz,Fig8 Horizontal,NR Enhanced baseline ff,0.368289,0.866944,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_ff
+fig8_horz,Fig8 Horizontal,NR Enhanced baseline noff,0.358827,0.593433,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_noff
+fig8_horz,Fig8 Horizontal,NR Enhanced workshop ff,0.237652,0.979675,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_ff
+fig8_horz,Fig8 Horizontal,NR Enhanced workshop noff,0.234617,0.692012,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_noff
+fig8_horz,Fig8 Horizontal,Standard NR baseline ff,0.346801,0.723131,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_ff
+fig8_horz,Fig8 Horizontal,Standard NR baseline noff,0.352456,0.323131,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_noff
+fig8_horz,Fig8 Horizontal,Standard NR workshop ff,0.234825,0.727563,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_ff
+fig8_horz,Fig8 Horizontal,Standard NR workshop noff,0.21479,0.266565,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_noff
+fig8_vert,Fig8 Vertical,NMPC ff,0.075764,1.770831,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nmpc_ff
+fig8_vert,Fig8 Vertical,NMPC noff,0.075779,1.80029,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nmpc_noff
+fig8_vert,Fig8 Vertical,NR Diff-Flat baseline ff,0.403856,0.76027,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_ff
+fig8_vert,Fig8 Vertical,NR Diff-Flat baseline noff,0.362788,0.785866,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_noff
+fig8_vert,Fig8 Vertical,NR Diff-Flat workshop ff,0.158878,0.750529,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_ff
+fig8_vert,Fig8 Vertical,NR Diff-Flat workshop noff,0.142565,0.764515,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_noff
+fig8_vert,Fig8 Vertical,NR Enhanced baseline ff,0.37521,0.813119,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_ff
+fig8_vert,Fig8 Vertical,NR Enhanced baseline noff,0.351542,0.588669,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_noff
+fig8_vert,Fig8 Vertical,NR Enhanced workshop ff,0.241454,0.912513,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_ff
+fig8_vert,Fig8 Vertical,NR Enhanced workshop noff,0.232275,0.685904,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_noff
+fig8_vert,Fig8 Vertical,Standard NR baseline ff,0.358293,0.742049,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_ff
+fig8_vert,Fig8 Vertical,Standard NR baseline noff,0.354864,0.25978,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_noff
+fig8_vert,Fig8 Vertical,Standard NR workshop ff,0.233461,0.745171,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_ff
+fig8_vert,Fig8 Vertical,Standard NR workshop noff,0.260021,0.272992,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_noff
+hover,Hover,NMPC ff,0.258713,1.761421,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nmpc_ff
+hover,Hover,NMPC noff,0.271912,1.736146,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nmpc_noff
+hover,Hover,NR Diff-Flat baseline ff,0.398795,0.772025,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_baseline_ff
+hover,Hover,NR Diff-Flat baseline noff,0.382799,0.751869,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_baseline_noff
+hover,Hover,NR Diff-Flat workshop ff,357.14206,0.743103,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_workshop_ff
+hover,Hover,NR Diff-Flat workshop noff,0.447791,0.738881,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_workshop_noff
+hover,Hover,NR Enhanced baseline ff,0.538222,0.847877,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_baseline_ff
+hover,Hover,NR Enhanced baseline noff,0.546792,0.597763,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_baseline_noff
+hover,Hover,NR Enhanced workshop ff,0.495781,0.939283,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_workshop_ff
+hover,Hover,NR Enhanced workshop noff,0.495054,0.661452,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_workshop_noff
+hover,Hover,Standard NR baseline ff,0.475174,0.960531,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_baseline_ff
+hover,Hover,Standard NR baseline noff,0.476653,0.25572,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_baseline_noff
+hover,Hover,Standard NR workshop ff,0.428878,0.754161,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_workshop_ff
+hover,Hover,Standard NR workshop noff,0.432116,0.302206,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_workshop_noff
+yaw_only,Yaw Only,NMPC ff,0.04921,1.93052,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nmpc_ff
+yaw_only,Yaw Only,NMPC noff,0.053021,1.810753,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nmpc_noff
+yaw_only,Yaw Only,NR Diff-Flat baseline ff,0.091643,0.751115,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_baseline_ff
+yaw_only,Yaw Only,NR Diff-Flat baseline noff,0.091451,0.729631,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_baseline_noff
+yaw_only,Yaw Only,NR Diff-Flat workshop ff,0.088704,0.895774,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_workshop_ff
+yaw_only,Yaw Only,NR Diff-Flat workshop noff,0.054466,0.742011,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_workshop_noff
+yaw_only,Yaw Only,NR Enhanced baseline ff,0.174216,0.869236,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_baseline_ff
+yaw_only,Yaw Only,NR Enhanced baseline noff,0.170079,0.595016,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_baseline_noff
+yaw_only,Yaw Only,NR Enhanced workshop ff,0.05077,1.005705,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_workshop_ff
+yaw_only,Yaw Only,NR Enhanced workshop noff,0.048304,0.683106,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_workshop_noff
+yaw_only,Yaw Only,Standard NR baseline ff,0.166314,0.650369,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_baseline_ff
+yaw_only,Yaw Only,Standard NR baseline noff,0.159581,0.256111,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_baseline_noff
+yaw_only,Yaw Only,Standard NR workshop ff,0.175308,0.763903,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_workshop_ff
+yaw_only,Yaw Only,Standard NR workshop noff,0.101653,0.267677,/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_workshop_noff

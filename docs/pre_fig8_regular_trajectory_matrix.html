@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.34">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="egmc">
+<meta name="dcterms.date" content="2026-04-02">
+
+<title>Regular Trajectory Controller Matrix Above fig8_contraction</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="pre_fig8_regular_trajectory_matrix_files/libs/clipboard/clipboard.min.js"></script>
+<script src="pre_fig8_regular_trajectory_matrix_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="pre_fig8_regular_trajectory_matrix_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="pre_fig8_regular_trajectory_matrix_files/libs/quarto-html/popper.min.js"></script>
+<script src="pre_fig8_regular_trajectory_matrix_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="pre_fig8_regular_trajectory_matrix_files/libs/quarto-html/anchor.min.js"></script>
+<link href="pre_fig8_regular_trajectory_matrix_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="pre_fig8_regular_trajectory_matrix_files/libs/quarto-html/quarto-syntax-highlighting-c8ad9e5dbd60b7b70b38521ab19b7da4.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="pre_fig8_regular_trajectory_matrix_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="pre_fig8_regular_trajectory_matrix_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="pre_fig8_regular_trajectory_matrix_files/libs/bootstrap/bootstrap-ace3da6e6576e997efc094d4ad7cd687.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#scope" id="toc-scope" class="nav-link active" data-scroll-target="#scope"><span class="header-section-number">1</span> Scope</a></li>
+  <li><a href="#executive-summary" id="toc-executive-summary" class="nav-link" data-scroll-target="#executive-summary"><span class="header-section-number">2</span> Executive Summary</a></li>
+  <li><a href="#key-findings" id="toc-key-findings" class="nav-link" data-scroll-target="#key-findings"><span class="header-section-number">3</span> Key Findings</a></li>
+  <li><a href="#aggregate-tables" id="toc-aggregate-tables" class="nav-link" data-scroll-target="#aggregate-tables"><span class="header-section-number">4</span> Aggregate Tables</a>
+  <ul class="collapse">
+  <li><a href="#position-rmse" id="toc-position-rmse" class="nav-link" data-scroll-target="#position-rmse"><span class="header-section-number">4.1</span> Position RMSE</a></li>
+  <li><a href="#compute-time" id="toc-compute-time" class="nav-link" data-scroll-target="#compute-time"><span class="header-section-number">4.2</span> Compute Time</a></li>
+  <li><a href="#nr-workshop-deltas" id="toc-nr-workshop-deltas" class="nav-link" data-scroll-target="#nr-workshop-deltas"><span class="header-section-number">4.3</span> NR Workshop Deltas</a></li>
+  <li><a href="#feedforward-deltas" id="toc-feedforward-deltas" class="nav-link" data-scroll-target="#feedforward-deltas"><span class="header-section-number">4.4</span> Feedforward Deltas</a></li>
+  <li><a href="#best-by-trajectory-snapshot" id="toc-best-by-trajectory-snapshot" class="nav-link" data-scroll-target="#best-by-trajectory-snapshot"><span class="header-section-number">4.5</span> Best-by-Trajectory Snapshot</a></li>
+  </ul></li>
+  <li><a href="#plots" id="toc-plots" class="nav-link" data-scroll-target="#plots"><span class="header-section-number">5</span> Plots</a></li>
+  <li><a href="#reference-vs-actual-galleries" id="toc-reference-vs-actual-galleries" class="nav-link" data-scroll-target="#reference-vs-actual-galleries"><span class="header-section-number">6</span> Reference vs Actual Galleries</a>
+  <ul class="collapse">
+  <li><a href="#hover" id="toc-hover" class="nav-link" data-scroll-target="#hover"><span class="header-section-number">6.1</span> Hover</a></li>
+  <li><a href="#yaw-only" id="toc-yaw-only" class="nav-link" data-scroll-target="#yaw-only"><span class="header-section-number">6.2</span> Yaw Only</a></li>
+  <li><a href="#circle-horizontal" id="toc-circle-horizontal" class="nav-link" data-scroll-target="#circle-horizontal"><span class="header-section-number">6.3</span> Circle Horizontal</a></li>
+  <li><a href="#circle-vertical" id="toc-circle-vertical" class="nav-link" data-scroll-target="#circle-vertical"><span class="header-section-number">6.4</span> Circle Vertical</a></li>
+  <li><a href="#fig8-horizontal" id="toc-fig8-horizontal" class="nav-link" data-scroll-target="#fig8-horizontal"><span class="header-section-number">6.5</span> Fig8 Horizontal</a></li>
+  <li><a href="#fig8-vertical" id="toc-fig8-vertical" class="nav-link" data-scroll-target="#fig8-vertical"><span class="header-section-number">6.6</span> Fig8 Vertical</a></li>
+  </ul></li>
+  <li><a href="#nr-enhanced-retuning-note" id="toc-nr-enhanced-retuning-note" class="nav-link" data-scroll-target="#nr-enhanced-retuning-note"><span class="header-section-number">7</span> NR Enhanced Retuning Note</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="../pre_fig8_regular_trajectory_matrix.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Regular Trajectory Controller Matrix Above fig8_contraction</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>egmc </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 2, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="scope" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Scope</h1>
+<p>This report repeats the controller comparison workflow used for the contraction-family sweep, but on the regular trajectories that appear above <code>fig8_contraction</code> in the workspace trajectory list:</p>
+<ul>
+<li><code>hover</code></li>
+<li><code>yaw_only</code></li>
+<li><code>circle_horz</code></li>
+<li><code>circle_vert</code></li>
+<li><code>fig8_horz</code></li>
+<li><code>fig8_vert</code></li>
+</ul>
+<p>The comparison set is:</p>
+<ul>
+<li><code>Standard NR</code>: <code>baseline/noff</code>, <code>baseline/ff</code>, <code>workshop/noff</code>, <code>workshop/ff</code></li>
+<li><code>NR Enhanced</code>: <code>baseline/noff</code>, <code>baseline/ff</code>, <code>workshop/noff</code>, <code>workshop/ff</code></li>
+<li><code>NR Diff-Flat</code>: <code>baseline/noff</code>, <code>baseline/ff</code>, <code>workshop/noff</code>, <code>workshop/ff</code></li>
+<li><code>NMPC</code>: <code>noff</code>, <code>ff</code></li>
+</ul>
+<p>Tracked aggregate artifacts for this pass live in:</p>
+<ul>
+<li><code>docs/generated/pre_fig8_matrix_20260402/</code></li>
+</ul>
+</section>
+<section id="executive-summary" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Executive Summary</h1>
+<p>The main one-page summary table is:</p>
+<ul>
+<li><code>docs/generated/pre_fig8_matrix_20260402/executive_summary.csv</code></li>
+<li><code>docs/generated/pre_fig8_matrix_20260402/executive_summary.md</code></li>
+</ul>
+<div id="6c4d4484" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display" data-execution_count="2">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">trajectory_key</th>
+<th data-quarto-table-cell-role="th">trajectory_display</th>
+<th data-quarto-table-cell-role="th">best_overall</th>
+<th data-quarto-table-cell-role="th">best_overall_rmse_m</th>
+<th data-quarto-table-cell-role="th">best_overall_comp_time_ms</th>
+<th data-quarto-table-cell-role="th">best_nr_family</th>
+<th data-quarto-table-cell-role="th">best_nr_rmse_m</th>
+<th data-quarto-table-cell-role="th">best_nmpc</th>
+<th data-quarto-table-cell-role="th">best_nmpc_rmse_m</th>
+<th data-quarto-table-cell-role="th">best_nr_minus_nmpc_m</th>
+<th data-quarto-table-cell-role="th">best_nr_minus_nmpc_pct</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NMPC ff</td>
+<td>0.102671</td>
+<td>1.776955</td>
+<td>NR Enhanced workshop noff</td>
+<td>0.260071</td>
+<td>NMPC ff</td>
+<td>0.102671</td>
+<td>0.157400</td>
+<td>153.305451</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NMPC noff</td>
+<td>0.066442</td>
+<td>1.853472</td>
+<td>NR Diff-Flat workshop noff</td>
+<td>0.104739</td>
+<td>NMPC noff</td>
+<td>0.066442</td>
+<td>0.038297</td>
+<td>57.640238</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NMPC ff</td>
+<td>0.067953</td>
+<td>1.802991</td>
+<td>NR Diff-Flat workshop noff</td>
+<td>0.144321</td>
+<td>NMPC ff</td>
+<td>0.067953</td>
+<td>0.076368</td>
+<td>112.382592</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NMPC ff</td>
+<td>0.075764</td>
+<td>1.770831</td>
+<td>NR Diff-Flat workshop noff</td>
+<td>0.142565</td>
+<td>NMPC ff</td>
+<td>0.075764</td>
+<td>0.066801</td>
+<td>88.170843</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NMPC ff</td>
+<td>0.258713</td>
+<td>1.761421</td>
+<td>NR Diff-Flat baseline noff</td>
+<td>0.382799</td>
+<td>NMPC ff</td>
+<td>0.258713</td>
+<td>0.124086</td>
+<td>47.962894</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NR Enhanced workshop noff</td>
+<td>0.048304</td>
+<td>0.683106</td>
+<td>NR Enhanced workshop noff</td>
+<td>0.048304</td>
+<td>NMPC ff</td>
+<td>0.049210</td>
+<td>-0.000905</td>
+<td>-1.839828</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Interpretation:</p>
+<ul>
+<li><code>best_overall</code> is the best measured configuration on each regular trajectory.</li>
+<li><code>best_nr_family</code> is the best result among the three Newton-Raphson families.</li>
+<li><code>best_nr_minus_nmpc_*</code> shows how far the best NR-family result still is from the best NMPC result on that same trajectory.</li>
+</ul>
+</section>
+<section id="key-findings" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Key Findings</h1>
+<ul>
+<li><code>NMPC</code> is still the strongest controller on the regular-trajectory set overall. It wins <code>hover</code>, <code>circle_horz</code>, <code>circle_vert</code>, <code>fig8_horz</code>, and <code>fig8_vert</code>, with <code>ff</code> usually helping slightly on the horizontal/figure-eight cases.</li>
+<li><code>NR Enhanced workshop noff</code> is the one clear non-NMPC win in this sweep. On <code>yaw_only</code> it edges out <code>NMPC ff</code>, so the enhanced Newton-Raphson law is not uniformly dominated on the simpler regular trajectories.</li>
+<li>Within the Newton-Raphson family, the best variant depends on trajectory class:
+<ul>
+<li><code>NR Enhanced workshop noff</code> is the strongest NR-family result on <code>yaw_only</code> and <code>circle_horz</code>.</li>
+<li><code>NR Diff-Flat workshop noff</code> is the strongest NR-family result on <code>circle_vert</code>, <code>fig8_horz</code>, and <code>fig8_vert</code>.</li>
+<li><code>NR Diff-Flat baseline noff</code> is the best NR-family result on <code>hover</code>.</li>
+</ul></li>
+<li>Feedforward is not a universal improvement on these regular trajectories. <code>NMPC ff</code> is beneficial on most of the non-hover regular paths, but the Newton-Raphson families often regress with <code>ff</code>, especially in the workshop cases. The most extreme failure in this sweep is <code>NR Diff-Flat workshop ff</code> on <code>hover</code>, which diverges catastrophically and is therefore easy to spot in both the RMSE table and the trajectory gallery.</li>
+<li>The regular-trajectory results therefore sharpen the earlier contraction-path conclusions:
+<ul>
+<li><code>Standard NR workshop</code> remains the most reliable general-purpose structural improvement for the standard controller.</li>
+<li><code>NR Enhanced workshop</code> is genuinely strong on some paths, but still does not dominate the other NR variants across the board.</li>
+<li><code>NR Diff-Flat workshop</code> is highly competitive on the vertical and figure-eight regular paths, but not uniformly safer or better than the other families.</li>
+</ul></li>
+</ul>
+</section>
+<section id="aggregate-tables" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Aggregate Tables</h1>
+<section id="position-rmse" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="position-rmse"><span class="header-section-number">4.1</span> Position RMSE</h2>
+<div id="45d34572" class="cell" data-execution_count="3">
+<div class="cell-output cell-output-display" data-execution_count="3">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">trajectory_display</th>
+<th data-quarto-table-cell-role="th">Standard NR baseline noff</th>
+<th data-quarto-table-cell-role="th">Standard NR baseline ff</th>
+<th data-quarto-table-cell-role="th">Standard NR workshop noff</th>
+<th data-quarto-table-cell-role="th">Standard NR workshop ff</th>
+<th data-quarto-table-cell-role="th">NR Enhanced baseline noff</th>
+<th data-quarto-table-cell-role="th">NR Enhanced baseline ff</th>
+<th data-quarto-table-cell-role="th">NR Enhanced workshop noff</th>
+<th data-quarto-table-cell-role="th">NR Enhanced workshop ff</th>
+<th data-quarto-table-cell-role="th">NR Diff-Flat baseline noff</th>
+<th data-quarto-table-cell-role="th">NR Diff-Flat baseline ff</th>
+<th data-quarto-table-cell-role="th">NR Diff-Flat workshop noff</th>
+<th data-quarto-table-cell-role="th">NR Diff-Flat workshop ff</th>
+<th data-quarto-table-cell-role="th">NMPC noff</th>
+<th data-quarto-table-cell-role="th">NMPC ff</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>Hover</td>
+<td>0.476653</td>
+<td>0.475174</td>
+<td>0.432116</td>
+<td>0.428878</td>
+<td>0.546792</td>
+<td>0.538222</td>
+<td>0.495054</td>
+<td>0.495781</td>
+<td>0.382799</td>
+<td>0.398795</td>
+<td>0.447791</td>
+<td>357.142060</td>
+<td>0.271912</td>
+<td>0.258713</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>Yaw Only</td>
+<td>0.159581</td>
+<td>0.166314</td>
+<td>0.101653</td>
+<td>0.175308</td>
+<td>0.170079</td>
+<td>0.174216</td>
+<td>0.048304</td>
+<td>0.050770</td>
+<td>0.091451</td>
+<td>0.091643</td>
+<td>0.054466</td>
+<td>0.088704</td>
+<td>0.053021</td>
+<td>0.049210</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>Circle Horizontal</td>
+<td>0.385689</td>
+<td>0.385546</td>
+<td>0.263959</td>
+<td>0.280785</td>
+<td>0.379733</td>
+<td>0.396770</td>
+<td>0.260071</td>
+<td>0.281686</td>
+<td>0.595158</td>
+<td>0.634744</td>
+<td>0.302692</td>
+<td>0.314431</td>
+<td>0.105440</td>
+<td>0.102671</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>Circle Vertical</td>
+<td>0.261516</td>
+<td>0.260658</td>
+<td>0.192265</td>
+<td>0.166853</td>
+<td>0.271803</td>
+<td>0.270275</td>
+<td>0.178182</td>
+<td>0.172549</td>
+<td>0.310903</td>
+<td>0.341491</td>
+<td>0.104739</td>
+<td>0.119975</td>
+<td>0.066442</td>
+<td>0.074012</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>Fig8 Horizontal</td>
+<td>0.352456</td>
+<td>0.346801</td>
+<td>0.214790</td>
+<td>0.234825</td>
+<td>0.358827</td>
+<td>0.368289</td>
+<td>0.234617</td>
+<td>0.237652</td>
+<td>0.260177</td>
+<td>0.449533</td>
+<td>0.144321</td>
+<td>0.147615</td>
+<td>0.068624</td>
+<td>0.067953</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>Fig8 Vertical</td>
+<td>0.354864</td>
+<td>0.358293</td>
+<td>0.260021</td>
+<td>0.233461</td>
+<td>0.351542</td>
+<td>0.375210</td>
+<td>0.232275</td>
+<td>0.241454</td>
+<td>0.362788</td>
+<td>0.403856</td>
+<td>0.142565</td>
+<td>0.158878</td>
+<td>0.075779</td>
+<td>0.075764</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="compute-time" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="compute-time"><span class="header-section-number">4.2</span> Compute Time</h2>
+<div id="8c007f81" class="cell" data-execution_count="4">
+<div class="cell-output cell-output-display" data-execution_count="4">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">trajectory_display</th>
+<th data-quarto-table-cell-role="th">Standard NR baseline noff</th>
+<th data-quarto-table-cell-role="th">Standard NR baseline ff</th>
+<th data-quarto-table-cell-role="th">Standard NR workshop noff</th>
+<th data-quarto-table-cell-role="th">Standard NR workshop ff</th>
+<th data-quarto-table-cell-role="th">NR Enhanced baseline noff</th>
+<th data-quarto-table-cell-role="th">NR Enhanced baseline ff</th>
+<th data-quarto-table-cell-role="th">NR Enhanced workshop noff</th>
+<th data-quarto-table-cell-role="th">NR Enhanced workshop ff</th>
+<th data-quarto-table-cell-role="th">NR Diff-Flat baseline noff</th>
+<th data-quarto-table-cell-role="th">NR Diff-Flat baseline ff</th>
+<th data-quarto-table-cell-role="th">NR Diff-Flat workshop noff</th>
+<th data-quarto-table-cell-role="th">NR Diff-Flat workshop ff</th>
+<th data-quarto-table-cell-role="th">NMPC noff</th>
+<th data-quarto-table-cell-role="th">NMPC ff</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>Hover</td>
+<td>0.255720</td>
+<td>0.960531</td>
+<td>0.302206</td>
+<td>0.754161</td>
+<td>0.597763</td>
+<td>0.847877</td>
+<td>0.661452</td>
+<td>0.939283</td>
+<td>0.751869</td>
+<td>0.772025</td>
+<td>0.738881</td>
+<td>0.743103</td>
+<td>1.736146</td>
+<td>1.761421</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>Yaw Only</td>
+<td>0.256111</td>
+<td>0.650369</td>
+<td>0.267677</td>
+<td>0.763903</td>
+<td>0.595016</td>
+<td>0.869236</td>
+<td>0.683106</td>
+<td>1.005705</td>
+<td>0.729631</td>
+<td>0.751115</td>
+<td>0.742011</td>
+<td>0.895774</td>
+<td>1.810753</td>
+<td>1.930520</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>Circle Horizontal</td>
+<td>0.262471</td>
+<td>0.712708</td>
+<td>0.324246</td>
+<td>0.718134</td>
+<td>0.586510</td>
+<td>0.856372</td>
+<td>0.638979</td>
+<td>0.938448</td>
+<td>0.747424</td>
+<td>0.751201</td>
+<td>0.737606</td>
+<td>0.750743</td>
+<td>1.836516</td>
+<td>1.776955</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>Circle Vertical</td>
+<td>0.264846</td>
+<td>0.716771</td>
+<td>0.318838</td>
+<td>0.753457</td>
+<td>0.595012</td>
+<td>0.859805</td>
+<td>0.665787</td>
+<td>0.889194</td>
+<td>0.759590</td>
+<td>0.747690</td>
+<td>0.757111</td>
+<td>0.756404</td>
+<td>1.853472</td>
+<td>1.861415</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>Fig8 Horizontal</td>
+<td>0.323131</td>
+<td>0.723131</td>
+<td>0.266565</td>
+<td>0.727563</td>
+<td>0.593433</td>
+<td>0.866944</td>
+<td>0.692012</td>
+<td>0.979675</td>
+<td>0.755195</td>
+<td>0.763959</td>
+<td>0.777659</td>
+<td>0.741387</td>
+<td>1.779799</td>
+<td>1.802991</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>Fig8 Vertical</td>
+<td>0.259780</td>
+<td>0.742049</td>
+<td>0.272992</td>
+<td>0.745171</td>
+<td>0.588669</td>
+<td>0.813119</td>
+<td>0.685904</td>
+<td>0.912513</td>
+<td>0.785866</td>
+<td>0.760270</td>
+<td>0.764515</td>
+<td>0.750529</td>
+<td>1.800290</td>
+<td>1.770831</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="nr-workshop-deltas" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="nr-workshop-deltas"><span class="header-section-number">4.3</span> NR Workshop Deltas</h2>
+<div id="457eab27" class="cell" data-execution_count="5">
+<div class="cell-output cell-output-display" data-execution_count="5">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">trajectory_key</th>
+<th data-quarto-table-cell-role="th">trajectory_display</th>
+<th data-quarto-table-cell-role="th">controller</th>
+<th data-quarto-table-cell-role="th">ff_mode</th>
+<th data-quarto-table-cell-role="th">baseline</th>
+<th data-quarto-table-cell-role="th">workshop</th>
+<th data-quarto-table-cell-role="th">delta_m</th>
+<th data-quarto-table-cell-role="th">delta_pct</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NR Diff-Flat</td>
+<td>ff</td>
+<td>0.634744</td>
+<td>0.314431</td>
+<td>-0.320313</td>
+<td>-50.463396</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NR Diff-Flat</td>
+<td>noff</td>
+<td>0.595158</td>
+<td>0.302692</td>
+<td>-0.292466</td>
+<td>-49.140834</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NR Enhanced</td>
+<td>ff</td>
+<td>0.396770</td>
+<td>0.281686</td>
+<td>-0.115083</td>
+<td>-29.005093</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NR Enhanced</td>
+<td>noff</td>
+<td>0.379733</td>
+<td>0.260071</td>
+<td>-0.119662</td>
+<td>-31.512192</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>Standard NR</td>
+<td>ff</td>
+<td>0.385546</td>
+<td>0.280785</td>
+<td>-0.104760</td>
+<td>-27.171989</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>Standard NR</td>
+<td>noff</td>
+<td>0.385689</td>
+<td>0.263959</td>
+<td>-0.121730</td>
+<td>-31.561692</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NR Diff-Flat</td>
+<td>ff</td>
+<td>0.341491</td>
+<td>0.119975</td>
+<td>-0.221515</td>
+<td>-64.867158</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">7</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NR Diff-Flat</td>
+<td>noff</td>
+<td>0.310903</td>
+<td>0.104739</td>
+<td>-0.206164</td>
+<td>-66.311270</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">8</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NR Enhanced</td>
+<td>ff</td>
+<td>0.270275</td>
+<td>0.172549</td>
+<td>-0.097727</td>
+<td>-36.158150</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NR Enhanced</td>
+<td>noff</td>
+<td>0.271803</td>
+<td>0.178182</td>
+<td>-0.093620</td>
+<td>-34.444224</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">10</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>Standard NR</td>
+<td>ff</td>
+<td>0.260658</td>
+<td>0.166853</td>
+<td>-0.093805</td>
+<td>-35.987598</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">11</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>Standard NR</td>
+<td>noff</td>
+<td>0.261516</td>
+<td>0.192265</td>
+<td>-0.069251</td>
+<td>-26.480442</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">12</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NR Diff-Flat</td>
+<td>ff</td>
+<td>0.449533</td>
+<td>0.147615</td>
+<td>-0.301918</td>
+<td>-67.162695</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">13</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NR Diff-Flat</td>
+<td>noff</td>
+<td>0.260177</td>
+<td>0.144321</td>
+<td>-0.115856</td>
+<td>-44.529576</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">14</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NR Enhanced</td>
+<td>ff</td>
+<td>0.368289</td>
+<td>0.237652</td>
+<td>-0.130637</td>
+<td>-35.471302</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">15</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NR Enhanced</td>
+<td>noff</td>
+<td>0.358827</td>
+<td>0.234617</td>
+<td>-0.124210</td>
+<td>-34.615449</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">16</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>Standard NR</td>
+<td>ff</td>
+<td>0.346801</td>
+<td>0.234825</td>
+<td>-0.111976</td>
+<td>-32.288339</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">17</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>Standard NR</td>
+<td>noff</td>
+<td>0.352456</td>
+<td>0.214790</td>
+<td>-0.137666</td>
+<td>-39.059034</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">18</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NR Diff-Flat</td>
+<td>ff</td>
+<td>0.403856</td>
+<td>0.158878</td>
+<td>-0.244978</td>
+<td>-60.659812</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">19</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NR Diff-Flat</td>
+<td>noff</td>
+<td>0.362788</td>
+<td>0.142565</td>
+<td>-0.220224</td>
+<td>-60.703032</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">20</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NR Enhanced</td>
+<td>ff</td>
+<td>0.375210</td>
+<td>0.241454</td>
+<td>-0.133756</td>
+<td>-35.648313</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">21</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NR Enhanced</td>
+<td>noff</td>
+<td>0.351542</td>
+<td>0.232275</td>
+<td>-0.119267</td>
+<td>-33.926774</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">22</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>Standard NR</td>
+<td>ff</td>
+<td>0.358293</td>
+<td>0.233461</td>
+<td>-0.124832</td>
+<td>-34.840844</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">23</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>Standard NR</td>
+<td>noff</td>
+<td>0.354864</td>
+<td>0.260021</td>
+<td>-0.094843</td>
+<td>-26.726639</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">24</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NR Diff-Flat</td>
+<td>ff</td>
+<td>0.398795</td>
+<td>357.142060</td>
+<td>356.743265</td>
+<td>89455.188446</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">25</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NR Diff-Flat</td>
+<td>noff</td>
+<td>0.382799</td>
+<td>0.447791</td>
+<td>0.064992</td>
+<td>16.978168</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">26</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NR Enhanced</td>
+<td>ff</td>
+<td>0.538222</td>
+<td>0.495781</td>
+<td>-0.042440</td>
+<td>-7.885295</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">27</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NR Enhanced</td>
+<td>noff</td>
+<td>0.546792</td>
+<td>0.495054</td>
+<td>-0.051738</td>
+<td>-9.462103</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">28</td>
+<td>hover</td>
+<td>Hover</td>
+<td>Standard NR</td>
+<td>ff</td>
+<td>0.475174</td>
+<td>0.428878</td>
+<td>-0.046296</td>
+<td>-9.743016</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">29</td>
+<td>hover</td>
+<td>Hover</td>
+<td>Standard NR</td>
+<td>noff</td>
+<td>0.476653</td>
+<td>0.432116</td>
+<td>-0.044537</td>
+<td>-9.343782</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">30</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NR Diff-Flat</td>
+<td>ff</td>
+<td>0.091643</td>
+<td>0.088704</td>
+<td>-0.002939</td>
+<td>-3.207315</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">31</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NR Diff-Flat</td>
+<td>noff</td>
+<td>0.091451</td>
+<td>0.054466</td>
+<td>-0.036985</td>
+<td>-40.442790</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">32</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NR Enhanced</td>
+<td>ff</td>
+<td>0.174216</td>
+<td>0.050770</td>
+<td>-0.123446</td>
+<td>-70.858012</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">33</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NR Enhanced</td>
+<td>noff</td>
+<td>0.170079</td>
+<td>0.048304</td>
+<td>-0.121774</td>
+<td>-71.598804</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">34</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>Standard NR</td>
+<td>ff</td>
+<td>0.166314</td>
+<td>0.175308</td>
+<td>0.008995</td>
+<td>5.408264</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">35</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>Standard NR</td>
+<td>noff</td>
+<td>0.159581</td>
+<td>0.101653</td>
+<td>-0.057928</td>
+<td>-36.300192</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="feedforward-deltas" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="feedforward-deltas"><span class="header-section-number">4.4</span> Feedforward Deltas</h2>
+<div id="eedb8bb2" class="cell" data-execution_count="6">
+<div class="cell-output cell-output-display" data-execution_count="6">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">trajectory_key</th>
+<th data-quarto-table-cell-role="th">trajectory_display</th>
+<th data-quarto-table-cell-role="th">controller</th>
+<th data-quarto-table-cell-role="th">nr_profile</th>
+<th data-quarto-table-cell-role="th">noff</th>
+<th data-quarto-table-cell-role="th">ff</th>
+<th data-quarto-table-cell-role="th">delta_ff_minus_noff_m</th>
+<th data-quarto-table-cell-role="th">delta_ff_minus_noff_pct</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NMPC</td>
+<td>-</td>
+<td>0.105440</td>
+<td>0.102671</td>
+<td>-0.002769</td>
+<td>-2.626211</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NR Diff-Flat</td>
+<td>baseline</td>
+<td>0.595158</td>
+<td>0.634744</td>
+<td>0.039586</td>
+<td>6.651317</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NR Diff-Flat</td>
+<td>workshop</td>
+<td>0.302692</td>
+<td>0.314431</td>
+<td>0.011738</td>
+<td>3.877913</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NR Enhanced</td>
+<td>baseline</td>
+<td>0.379733</td>
+<td>0.396770</td>
+<td>0.017037</td>
+<td>4.486537</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NR Enhanced</td>
+<td>workshop</td>
+<td>0.260071</td>
+<td>0.281686</td>
+<td>0.021616</td>
+<td>8.311424</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>Standard NR</td>
+<td>baseline</td>
+<td>0.385689</td>
+<td>0.385546</td>
+<td>-0.000143</td>
+<td>-0.037101</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>Standard NR</td>
+<td>workshop</td>
+<td>0.263959</td>
+<td>0.280785</td>
+<td>0.016826</td>
+<td>6.374622</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">7</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NMPC</td>
+<td>-</td>
+<td>0.066442</td>
+<td>0.074012</td>
+<td>0.007570</td>
+<td>11.392976</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">8</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NR Diff-Flat</td>
+<td>baseline</td>
+<td>0.310903</td>
+<td>0.341491</td>
+<td>0.030587</td>
+<td>9.838231</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">9</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NR Diff-Flat</td>
+<td>workshop</td>
+<td>0.104739</td>
+<td>0.119975</td>
+<td>0.015236</td>
+<td>14.546595</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">10</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NR Enhanced</td>
+<td>baseline</td>
+<td>0.271803</td>
+<td>0.270275</td>
+<td>-0.001527</td>
+<td>-0.561947</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">11</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NR Enhanced</td>
+<td>workshop</td>
+<td>0.178182</td>
+<td>0.172549</td>
+<td>-0.005634</td>
+<td>-3.161710</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">12</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>Standard NR</td>
+<td>baseline</td>
+<td>0.261516</td>
+<td>0.260658</td>
+<td>-0.000858</td>
+<td>-0.328100</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">13</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>Standard NR</td>
+<td>workshop</td>
+<td>0.192265</td>
+<td>0.166853</td>
+<td>-0.025412</td>
+<td>-13.217136</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">14</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NMPC</td>
+<td>-</td>
+<td>0.068624</td>
+<td>0.067953</td>
+<td>-0.000671</td>
+<td>-0.977269</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">15</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NR Diff-Flat</td>
+<td>baseline</td>
+<td>0.260177</td>
+<td>0.449533</td>
+<td>0.189356</td>
+<td>72.779812</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">16</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NR Diff-Flat</td>
+<td>workshop</td>
+<td>0.144321</td>
+<td>0.147615</td>
+<td>0.003293</td>
+<td>2.281955</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">17</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NR Enhanced</td>
+<td>baseline</td>
+<td>0.358827</td>
+<td>0.368289</td>
+<td>0.009462</td>
+<td>2.636823</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">18</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NR Enhanced</td>
+<td>workshop</td>
+<td>0.234617</td>
+<td>0.237652</td>
+<td>0.003034</td>
+<td>1.293356</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">19</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>Standard NR</td>
+<td>baseline</td>
+<td>0.352456</td>
+<td>0.346801</td>
+<td>-0.005655</td>
+<td>-1.604462</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">20</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>Standard NR</td>
+<td>workshop</td>
+<td>0.214790</td>
+<td>0.234825</td>
+<td>0.020035</td>
+<td>9.327530</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">21</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NMPC</td>
+<td>-</td>
+<td>0.075779</td>
+<td>0.075764</td>
+<td>-0.000016</td>
+<td>-0.020884</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">22</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NR Diff-Flat</td>
+<td>baseline</td>
+<td>0.362788</td>
+<td>0.403856</td>
+<td>0.041067</td>
+<td>11.319861</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">23</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NR Diff-Flat</td>
+<td>workshop</td>
+<td>0.142565</td>
+<td>0.158878</td>
+<td>0.016313</td>
+<td>11.442294</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">24</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NR Enhanced</td>
+<td>baseline</td>
+<td>0.351542</td>
+<td>0.375210</td>
+<td>0.023667</td>
+<td>6.732418</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">25</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NR Enhanced</td>
+<td>workshop</td>
+<td>0.232275</td>
+<td>0.241454</td>
+<td>0.009178</td>
+<td>3.951502</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">26</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>Standard NR</td>
+<td>baseline</td>
+<td>0.354864</td>
+<td>0.358293</td>
+<td>0.003429</td>
+<td>0.966367</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">27</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>Standard NR</td>
+<td>workshop</td>
+<td>0.260021</td>
+<td>0.233461</td>
+<td>-0.026560</td>
+<td>-10.214529</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">28</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NMPC</td>
+<td>-</td>
+<td>0.271912</td>
+<td>0.258713</td>
+<td>-0.013199</td>
+<td>-4.854191</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">29</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NR Diff-Flat</td>
+<td>baseline</td>
+<td>0.382799</td>
+<td>0.398795</td>
+<td>0.015996</td>
+<td>4.178817</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">30</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NR Diff-Flat</td>
+<td>workshop</td>
+<td>0.447791</td>
+<td>357.142060</td>
+<td>356.694269</td>
+<td>79656.366421</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">31</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NR Enhanced</td>
+<td>baseline</td>
+<td>0.546792</td>
+<td>0.538222</td>
+<td>-0.008570</td>
+<td>-1.567389</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">32</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NR Enhanced</td>
+<td>workshop</td>
+<td>0.495054</td>
+<td>0.495781</td>
+<td>0.000727</td>
+<td>0.146912</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">33</td>
+<td>hover</td>
+<td>Hover</td>
+<td>Standard NR</td>
+<td>baseline</td>
+<td>0.476653</td>
+<td>0.475174</td>
+<td>-0.001479</td>
+<td>-0.310328</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">34</td>
+<td>hover</td>
+<td>Hover</td>
+<td>Standard NR</td>
+<td>workshop</td>
+<td>0.432116</td>
+<td>0.428878</td>
+<td>-0.003238</td>
+<td>-0.749343</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">35</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NMPC</td>
+<td>-</td>
+<td>0.053021</td>
+<td>0.049210</td>
+<td>-0.003811</td>
+<td>-7.188375</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">36</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NR Diff-Flat</td>
+<td>baseline</td>
+<td>0.091451</td>
+<td>0.091643</td>
+<td>0.000192</td>
+<td>0.210462</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">37</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NR Diff-Flat</td>
+<td>workshop</td>
+<td>0.054466</td>
+<td>0.088704</td>
+<td>0.034238</td>
+<td>62.862559</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">38</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NR Enhanced</td>
+<td>baseline</td>
+<td>0.170079</td>
+<td>0.174216</td>
+<td>0.004138</td>
+<td>2.432715</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">39</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NR Enhanced</td>
+<td>workshop</td>
+<td>0.048304</td>
+<td>0.050770</td>
+<td>0.002466</td>
+<td>5.104481</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">40</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>Standard NR</td>
+<td>baseline</td>
+<td>0.159581</td>
+<td>0.166314</td>
+<td>0.006733</td>
+<td>4.218980</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">41</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>Standard NR</td>
+<td>workshop</td>
+<td>0.101653</td>
+<td>0.175308</td>
+<td>0.073656</td>
+<td>72.458004</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+<section id="best-by-trajectory-snapshot" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="best-by-trajectory-snapshot"><span class="header-section-number">4.5</span> Best-by-Trajectory Snapshot</h2>
+<div id="1371488c" class="cell" data-execution_count="7">
+<div class="cell-output cell-output-display" data-execution_count="7">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">trajectory_key</th>
+<th data-quarto-table-cell-role="th">trajectory_display</th>
+<th data-quarto-table-cell-role="th">best_result</th>
+<th data-quarto-table-cell-role="th">Position_RMSE_m</th>
+<th data-quarto-table-cell-role="th">Comp_Time_ms</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>circle_horz</td>
+<td>Circle Horizontal</td>
+<td>NMPC ff</td>
+<td>0.102671</td>
+<td>1.776955</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>circle_vert</td>
+<td>Circle Vertical</td>
+<td>NMPC noff</td>
+<td>0.066442</td>
+<td>1.853472</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>fig8_horz</td>
+<td>Fig8 Horizontal</td>
+<td>NMPC ff</td>
+<td>0.067953</td>
+<td>1.802991</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>fig8_vert</td>
+<td>Fig8 Vertical</td>
+<td>NMPC ff</td>
+<td>0.075764</td>
+<td>1.770831</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>hover</td>
+<td>Hover</td>
+<td>NMPC ff</td>
+<td>0.258713</td>
+<td>1.761421</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>yaw_only</td>
+<td>Yaw Only</td>
+<td>NR Enhanced workshop noff</td>
+<td>0.048304</td>
+<td>0.683106</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="plots" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Plots</h1>
+<p>Generated plots live in:</p>
+<ul>
+<li><code>docs/generated/pre_fig8_matrix_20260402/plots/</code></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/best_by_trajectory_rmse.png" class="img-fluid figure-img"></p>
+<figcaption>Best controller on each regular trajectory</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/position_rmse_heatmap.png" class="img-fluid figure-img"></p>
+<figcaption>Position RMSE heatmap across the regular-trajectory matrix</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/comp_time_heatmap.png" class="img-fluid figure-img"></p>
+<figcaption>Compute-time heatmap across the regular-trajectory matrix</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/nr_workshop_delta_pct.png" class="img-fluid figure-img"></p>
+<figcaption>NR workshop delta relative to baseline on regular trajectories</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/feedforward_effect_delta_pct.png" class="img-fluid figure-img"></p>
+<figcaption>Feedforward effect relative to no-feedforward runs on regular trajectories</figcaption>
+</figure>
+</div>
+</section>
+<section id="reference-vs-actual-galleries" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Reference vs Actual Galleries</h1>
+<p>These per-trajectory grids compare the flown path against the aligned reference path for every controller/configuration in the matrix.</p>
+<section id="hover" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="hover"><span class="header-section-number">6.1</span> Hover</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/reference_vs_actual/hover_reference_vs_actual.png" class="img-fluid figure-img"></p>
+<figcaption>Hover reference vs actual gallery</figcaption>
+</figure>
+</div>
+</section>
+<section id="yaw-only" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="yaw-only"><span class="header-section-number">6.2</span> Yaw Only</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/reference_vs_actual/yaw_only_reference_vs_actual.png" class="img-fluid figure-img"></p>
+<figcaption>Yaw-only reference vs actual gallery</figcaption>
+</figure>
+</div>
+</section>
+<section id="circle-horizontal" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="circle-horizontal"><span class="header-section-number">6.3</span> Circle Horizontal</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/reference_vs_actual/circle_horizontal_reference_vs_actual.png" class="img-fluid figure-img"></p>
+<figcaption>Circle horizontal reference vs actual gallery</figcaption>
+</figure>
+</div>
+</section>
+<section id="circle-vertical" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="circle-vertical"><span class="header-section-number">6.4</span> Circle Vertical</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/reference_vs_actual/circle_vertical_reference_vs_actual.png" class="img-fluid figure-img"></p>
+<figcaption>Circle vertical reference vs actual gallery</figcaption>
+</figure>
+</div>
+</section>
+<section id="fig8-horizontal" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="fig8-horizontal"><span class="header-section-number">6.5</span> Fig8 Horizontal</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/reference_vs_actual/fig8_horizontal_reference_vs_actual.png" class="img-fluid figure-img"></p>
+<figcaption>Fig8 horizontal reference vs actual gallery</figcaption>
+</figure>
+</div>
+</section>
+<section id="fig8-vertical" class="level2" data-number="6.6">
+<h2 data-number="6.6" class="anchored" data-anchor-id="fig8-vertical"><span class="header-section-number">6.6</span> Fig8 Vertical</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="generated/pre_fig8_matrix_20260402/plots/reference_vs_actual/fig8_vertical_reference_vs_actual.png" class="img-fluid figure-img"></p>
+<figcaption>Fig8 vertical reference vs actual gallery</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="nr-enhanced-retuning-note" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> NR Enhanced Retuning Note</h1>
+<p>This pass did not land a new <code>NR Enhanced</code> tune.</p>
+<p>On April 2, 2026, exploratory higher-alpha and shorter-lookahead variants were tested first on <code>circle_horz</code> before widening the sweep. Those variants did not beat the current Python workshop profile, so no additional <code>NR Enhanced</code> controller change was committed from that tuning thread. The regular-trajectory matrix in this document therefore reflects the existing validated <code>baseline/workshop</code> split, not an unvalidated retune.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

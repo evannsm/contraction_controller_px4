@@ -1,0 +1,23 @@
+{
+  "aggregate_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/aggregate",
+  "artifacts": {
+    "best_by_trajectory": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/aggregate/best_by_trajectory.csv",
+    "comp_time_table": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/aggregate/comp_time_table.csv",
+    "executive_summary": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/aggregate/executive_summary.csv",
+    "feedforward_effects": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/aggregate/feedforward_effects.csv",
+    "main_matrix": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/aggregate/pre_fig8_main_matrix.csv",
+    "nr_workshop_improvements": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/aggregate/nr_workshop_improvements.csv",
+    "position_rmse_table": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/aggregate/position_rmse_table.csv",
+    "raw_summary_rows": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/aggregate/raw_summary_rows.csv",
+    "run_records": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/aggregate/run_records.json"
+  },
+  "results_root": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402",
+  "trajectories": [
+    "hover",
+    "yaw_only",
+    "circle_horz",
+    "circle_vert",
+    "fig8_horz",
+    "fig8_vert"
+  ]
+}

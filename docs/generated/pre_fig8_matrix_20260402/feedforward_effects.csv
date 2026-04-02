@@ -1,0 +1,43 @@
+trajectory_key,trajectory_display,controller,nr_profile,noff,ff,delta_ff_minus_noff_m,delta_ff_minus_noff_pct
+circle_horz,Circle Horizontal,NMPC,-,0.10544,0.102671,-0.002769,-2.626211
+circle_horz,Circle Horizontal,NR Diff-Flat,baseline,0.595158,0.634744,0.039586,6.651317
+circle_horz,Circle Horizontal,NR Diff-Flat,workshop,0.302692,0.314431,0.011738,3.877913
+circle_horz,Circle Horizontal,NR Enhanced,baseline,0.379733,0.39677,0.017037,4.486537
+circle_horz,Circle Horizontal,NR Enhanced,workshop,0.260071,0.281686,0.021616,8.311424
+circle_horz,Circle Horizontal,Standard NR,baseline,0.385689,0.385546,-0.000143,-0.037101
+circle_horz,Circle Horizontal,Standard NR,workshop,0.263959,0.280785,0.016826,6.374622
+circle_vert,Circle Vertical,NMPC,-,0.066442,0.074012,0.00757,11.392976
+circle_vert,Circle Vertical,NR Diff-Flat,baseline,0.310903,0.341491,0.030587,9.838231
+circle_vert,Circle Vertical,NR Diff-Flat,workshop,0.104739,0.119975,0.015236,14.546595
+circle_vert,Circle Vertical,NR Enhanced,baseline,0.271803,0.270275,-0.001527,-0.561947
+circle_vert,Circle Vertical,NR Enhanced,workshop,0.178182,0.172549,-0.005634,-3.16171
+circle_vert,Circle Vertical,Standard NR,baseline,0.261516,0.260658,-0.000858,-0.3281
+circle_vert,Circle Vertical,Standard NR,workshop,0.192265,0.166853,-0.025412,-13.217136
+fig8_horz,Fig8 Horizontal,NMPC,-,0.068624,0.067953,-0.000671,-0.977269
+fig8_horz,Fig8 Horizontal,NR Diff-Flat,baseline,0.260177,0.449533,0.189356,72.779812
+fig8_horz,Fig8 Horizontal,NR Diff-Flat,workshop,0.144321,0.147615,0.003293,2.281955
+fig8_horz,Fig8 Horizontal,NR Enhanced,baseline,0.358827,0.368289,0.009462,2.636823
+fig8_horz,Fig8 Horizontal,NR Enhanced,workshop,0.234617,0.237652,0.003034,1.293356
+fig8_horz,Fig8 Horizontal,Standard NR,baseline,0.352456,0.346801,-0.005655,-1.604462
+fig8_horz,Fig8 Horizontal,Standard NR,workshop,0.21479,0.234825,0.020035,9.32753
+fig8_vert,Fig8 Vertical,NMPC,-,0.075779,0.075764,-1.6e-05,-0.020884
+fig8_vert,Fig8 Vertical,NR Diff-Flat,baseline,0.362788,0.403856,0.041067,11.319861
+fig8_vert,Fig8 Vertical,NR Diff-Flat,workshop,0.142565,0.158878,0.016313,11.442294
+fig8_vert,Fig8 Vertical,NR Enhanced,baseline,0.351542,0.37521,0.023667,6.732418
+fig8_vert,Fig8 Vertical,NR Enhanced,workshop,0.232275,0.241454,0.009178,3.951502
+fig8_vert,Fig8 Vertical,Standard NR,baseline,0.354864,0.358293,0.003429,0.966367
+fig8_vert,Fig8 Vertical,Standard NR,workshop,0.260021,0.233461,-0.02656,-10.214529
+hover,Hover,NMPC,-,0.271912,0.258713,-0.013199,-4.854191
+hover,Hover,NR Diff-Flat,baseline,0.382799,0.398795,0.015996,4.178817
+hover,Hover,NR Diff-Flat,workshop,0.447791,357.14206,356.694269,79656.366421
+hover,Hover,NR Enhanced,baseline,0.546792,0.538222,-0.00857,-1.567389
+hover,Hover,NR Enhanced,workshop,0.495054,0.495781,0.000727,0.146912
+hover,Hover,Standard NR,baseline,0.476653,0.475174,-0.001479,-0.310328
+hover,Hover,Standard NR,workshop,0.432116,0.428878,-0.003238,-0.749343
+yaw_only,Yaw Only,NMPC,-,0.053021,0.04921,-0.003811,-7.188375
+yaw_only,Yaw Only,NR Diff-Flat,baseline,0.091451,0.091643,0.000192,0.210462
+yaw_only,Yaw Only,NR Diff-Flat,workshop,0.054466,0.088704,0.034238,62.862559
+yaw_only,Yaw Only,NR Enhanced,baseline,0.170079,0.174216,0.004138,2.432715
+yaw_only,Yaw Only,NR Enhanced,workshop,0.048304,0.05077,0.002466,5.104481
+yaw_only,Yaw Only,Standard NR,baseline,0.159581,0.166314,0.006733,4.21898
+yaw_only,Yaw Only,Standard NR,workshop,0.101653,0.175308,0.073656,72.458004

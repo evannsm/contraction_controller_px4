@@ -1,0 +1,518 @@
+[
+  {
+    "case_name": "nr_baseline_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_baseline_noff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_baseline_noff/analysis/summary.csv",
+    "trajectory_key": "hover",
+    "trajectory_label": "Hover"
+  },
+  {
+    "case_name": "nr_baseline_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_baseline_ff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_baseline_ff/analysis/summary.csv",
+    "trajectory_key": "hover",
+    "trajectory_label": "Hover"
+  },
+  {
+    "case_name": "nr_workshop_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_workshop_noff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_workshop_noff/analysis/summary.csv",
+    "trajectory_key": "hover",
+    "trajectory_label": "Hover"
+  },
+  {
+    "case_name": "nr_workshop_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_workshop_ff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nr_workshop_ff/analysis/summary.csv",
+    "trajectory_key": "hover",
+    "trajectory_label": "Hover"
+  },
+  {
+    "case_name": "nmpc_noff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nmpc_noff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nmpc_noff/analysis/summary.csv",
+    "trajectory_key": "hover",
+    "trajectory_label": "Hover"
+  },
+  {
+    "case_name": "nmpc_ff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nmpc_ff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/hover/nmpc_ff/analysis/summary.csv",
+    "trajectory_key": "hover",
+    "trajectory_label": "Hover"
+  },
+  {
+    "case_name": "nr_baseline_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_baseline_noff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_baseline_noff/analysis/summary.csv",
+    "trajectory_key": "yaw_only",
+    "trajectory_label": "Yaw Only"
+  },
+  {
+    "case_name": "nr_baseline_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_baseline_ff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_baseline_ff/analysis/summary.csv",
+    "trajectory_key": "yaw_only",
+    "trajectory_label": "Yaw Only"
+  },
+  {
+    "case_name": "nr_workshop_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_workshop_noff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_workshop_noff/analysis/summary.csv",
+    "trajectory_key": "yaw_only",
+    "trajectory_label": "Yaw Only"
+  },
+  {
+    "case_name": "nr_workshop_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_workshop_ff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nr_workshop_ff/analysis/summary.csv",
+    "trajectory_key": "yaw_only",
+    "trajectory_label": "Yaw Only"
+  },
+  {
+    "case_name": "nmpc_noff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nmpc_noff",
+    "status": "reused",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nmpc_noff/analysis/summary.csv",
+    "trajectory_key": "yaw_only",
+    "trajectory_label": "Yaw Only"
+  },
+  {
+    "case_name": "nmpc_ff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nmpc_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/yaw_only/nmpc_ff/analysis/summary.csv",
+    "trajectory_key": "yaw_only",
+    "trajectory_label": "Yaw Only"
+  },
+  {
+    "case_name": "nr_baseline_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_noff/analysis/summary.csv",
+    "trajectory_key": "circle_horz",
+    "trajectory_label": "Circle Horizontal"
+  },
+  {
+    "case_name": "nr_baseline_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_baseline_ff/analysis/summary.csv",
+    "trajectory_key": "circle_horz",
+    "trajectory_label": "Circle Horizontal"
+  },
+  {
+    "case_name": "nr_workshop_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_noff/analysis/summary.csv",
+    "trajectory_key": "circle_horz",
+    "trajectory_label": "Circle Horizontal"
+  },
+  {
+    "case_name": "nr_workshop_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nr_workshop_ff/analysis/summary.csv",
+    "trajectory_key": "circle_horz",
+    "trajectory_label": "Circle Horizontal"
+  },
+  {
+    "case_name": "nmpc_noff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nmpc_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nmpc_noff/analysis/summary.csv",
+    "trajectory_key": "circle_horz",
+    "trajectory_label": "Circle Horizontal"
+  },
+  {
+    "case_name": "nmpc_ff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nmpc_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_horz/nmpc_ff/analysis/summary.csv",
+    "trajectory_key": "circle_horz",
+    "trajectory_label": "Circle Horizontal"
+  },
+  {
+    "case_name": "nr_baseline_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_noff/analysis/summary.csv",
+    "trajectory_key": "circle_vert",
+    "trajectory_label": "Circle Vertical"
+  },
+  {
+    "case_name": "nr_baseline_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_baseline_ff/analysis/summary.csv",
+    "trajectory_key": "circle_vert",
+    "trajectory_label": "Circle Vertical"
+  },
+  {
+    "case_name": "nr_workshop_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_noff/analysis/summary.csv",
+    "trajectory_key": "circle_vert",
+    "trajectory_label": "Circle Vertical"
+  },
+  {
+    "case_name": "nr_workshop_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nr_workshop_ff/analysis/summary.csv",
+    "trajectory_key": "circle_vert",
+    "trajectory_label": "Circle Vertical"
+  },
+  {
+    "case_name": "nmpc_noff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nmpc_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nmpc_noff/analysis/summary.csv",
+    "trajectory_key": "circle_vert",
+    "trajectory_label": "Circle Vertical"
+  },
+  {
+    "case_name": "nmpc_ff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nmpc_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/circle_vert/nmpc_ff/analysis/summary.csv",
+    "trajectory_key": "circle_vert",
+    "trajectory_label": "Circle Vertical"
+  },
+  {
+    "case_name": "nr_baseline_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_noff/analysis/summary.csv",
+    "trajectory_key": "fig8_horz",
+    "trajectory_label": "Fig8 Horizontal"
+  },
+  {
+    "case_name": "nr_baseline_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_baseline_ff/analysis/summary.csv",
+    "trajectory_key": "fig8_horz",
+    "trajectory_label": "Fig8 Horizontal"
+  },
+  {
+    "case_name": "nr_workshop_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_noff/analysis/summary.csv",
+    "trajectory_key": "fig8_horz",
+    "trajectory_label": "Fig8 Horizontal"
+  },
+  {
+    "case_name": "nr_workshop_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nr_workshop_ff/analysis/summary.csv",
+    "trajectory_key": "fig8_horz",
+    "trajectory_label": "Fig8 Horizontal"
+  },
+  {
+    "case_name": "nmpc_noff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nmpc_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nmpc_noff/analysis/summary.csv",
+    "trajectory_key": "fig8_horz",
+    "trajectory_label": "Fig8 Horizontal"
+  },
+  {
+    "case_name": "nmpc_ff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nmpc_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_horz/nmpc_ff/analysis/summary.csv",
+    "trajectory_key": "fig8_horz",
+    "trajectory_label": "Fig8 Horizontal"
+  },
+  {
+    "case_name": "nr_baseline_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_noff/analysis/summary.csv",
+    "trajectory_key": "fig8_vert",
+    "trajectory_label": "Fig8 Vertical"
+  },
+  {
+    "case_name": "nr_baseline_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_baseline_ff/analysis/summary.csv",
+    "trajectory_key": "fig8_vert",
+    "trajectory_label": "Fig8 Vertical"
+  },
+  {
+    "case_name": "nr_workshop_noff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_noff/analysis/summary.csv",
+    "trajectory_key": "fig8_vert",
+    "trajectory_label": "Fig8 Vertical"
+  },
+  {
+    "case_name": "nr_workshop_ff",
+    "controllers": [
+      "newton_raphson",
+      "newton_raphson_enhanced",
+      "nr_diff_flat"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "workshop",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nr_workshop_ff/analysis/summary.csv",
+    "trajectory_key": "fig8_vert",
+    "trajectory_label": "Fig8 Vertical"
+  },
+  {
+    "case_name": "nmpc_noff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": false,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nmpc_noff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nmpc_noff/analysis/summary.csv",
+    "trajectory_key": "fig8_vert",
+    "trajectory_label": "Fig8 Vertical"
+  },
+  {
+    "case_name": "nmpc_ff",
+    "controllers": [
+      "nmpc"
+    ],
+    "ff_requested": true,
+    "nr_profile_requested": "baseline",
+    "results_dir": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nmpc_ff",
+    "status": "completed",
+    "summary_csv": "/home/egmc/ws_contraction_px4/src/data_analysis/results/pre_fig8_matrix_20260402/main_matrix/fig8_vert/nmpc_ff/analysis/summary.csv",
+    "trajectory_key": "fig8_vert",
+    "trajectory_label": "Fig8 Vertical"
+  }
+]

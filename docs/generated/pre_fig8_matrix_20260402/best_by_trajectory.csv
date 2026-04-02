@@ -1,0 +1,7 @@
+trajectory_key,trajectory_display,best_result,Position_RMSE_m,Comp_Time_ms
+circle_horz,Circle Horizontal,NMPC ff,0.102671,1.776955
+circle_vert,Circle Vertical,NMPC noff,0.066442,1.853472
+fig8_horz,Fig8 Horizontal,NMPC ff,0.067953,1.802991
+fig8_vert,Fig8 Vertical,NMPC ff,0.075764,1.770831
+hover,Hover,NMPC ff,0.258713,1.761421
+yaw_only,Yaw Only,NR Enhanced workshop noff,0.048304,0.683106
