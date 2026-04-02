@@ -242,7 +242,7 @@ OffboardControlNode::OffboardControlNode(
 
         // Constant metadata strings
         csv_logger_->set_const_string(COL_PLATFORM,    sim_ ? "SIM" : "HW");
-        csv_logger_->set_const_string(COL_CONTROLLER,  "nr_enhanced");
+        csv_logger_->set_const_string(COL_CONTROLLER,  "nr_enhanced_cpp");
         csv_logger_->set_const_string(COL_TRAJECTORY,  qt::trajectory_type_name(trajectory_type_));
         csv_logger_->set_const_string(COL_TRAJ_DOUBLE, double_speed_ ? "DblSpd" : "NormSpd");
         csv_logger_->set_const_string(COL_TRAJ_SHORT,  short_variant_ ? "Short" : "Not Short");

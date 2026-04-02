@@ -46,6 +46,9 @@ SUMMARY_CONTROLLER_TO_KEY = {
     "NR Diff-Flat": "nr_diff_flat",
     "NR Diff-Flat (JAX)": "nr_diff_flat",
     "NR Diff-Flat (NumPy)": "nr_diff_flat",
+    "NR Standard C++": "newton_raphson_cpp",
+    "NR Enhanced C++": "newton_raphson_enhanced_cpp",
+    "NR Diff-Flat C++": "nr_diff_flat_cpp",
     "NMPC": "nmpc",
     "MPC": "nmpc",
     "Contraction": "contraction",
@@ -62,9 +65,9 @@ REQUESTED_CONTROLLER_TO_LABEL = {
     "newton_raphson": "NR Standard",
     "newton_raphson_enhanced": "NR Enhanced",
     "nr_diff_flat": "NR Diff-Flat",
-    "newton_raphson_cpp": "NR Standard",
-    "newton_raphson_enhanced_cpp": "NR Enhanced",
-    "nr_diff_flat_cpp": "NR Diff-Flat",
+    "newton_raphson_cpp": "NR Standard C++",
+    "newton_raphson_enhanced_cpp": "NR Enhanced C++",
+    "nr_diff_flat_cpp": "NR Diff-Flat C++",
 }
 
 FBL_PROFILES = {
@@ -200,6 +203,7 @@ def run_case(
     if reuse_existing and summary_path.is_file():
         record["status"] = "reused"
         df = pd.read_csv(summary_path)
+        validate_summary_metadata(df, record)
         return df, record
 
     cmd = [
@@ -251,6 +255,7 @@ def run_case(
 
     record["status"] = "completed"
     df = pd.read_csv(summary_path)
+    validate_summary_metadata(df, record)
     return df, record
 
 
@@ -262,6 +267,42 @@ def modifiers_set(modifier_text: str) -> set[str]:
 
 def normalize_controller_key(controller_label: str) -> str:
     return SUMMARY_CONTROLLER_TO_KEY.get(controller_label, controller_label.lower().replace(" ", "_"))
+
+
+def validate_summary_metadata(df: pd.DataFrame, record: dict[str, Any]) -> None:
+    if df.empty:
+        raise RuntimeError(
+            f"Summary is empty for {record['phase']}/{record['trajectory_key']}/{record['case_name']}"
+        )
+
+    if "Controller" not in df.columns:
+        raise RuntimeError(
+            f"Summary is missing Controller column for {record['phase']}/{record['trajectory_key']}/{record['case_name']}"
+        )
+
+    controller_labels = {
+        str(value).strip()
+        for value in df["Controller"].dropna().unique()
+        if str(value).strip()
+    }
+    unresolved = controller_labels.intersection({"Unknown", "Controller 2"})
+    if unresolved:
+        raise RuntimeError(
+            "Summary contains unresolved controller metadata "
+            f"for {record['phase']}/{record['trajectory_key']}/{record['case_name']}: "
+            f"{sorted(unresolved)}"
+        )
+
+    normalized_keys = {normalize_controller_key(label) for label in controller_labels}
+    requested_keys = set(record["controllers"])
+    missing = requested_keys - normalized_keys
+    unexpected = normalized_keys - requested_keys
+    if missing or unexpected:
+        raise RuntimeError(
+            "Summary controller labels do not match the requested controller set "
+            f"for {record['phase']}/{record['trajectory_key']}/{record['case_name']}: "
+            f"requested={sorted(requested_keys)} actual={sorted(normalized_keys)}"
+        )
 
 
 def comparison_label(row: pd.Series) -> str:

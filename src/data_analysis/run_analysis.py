@@ -164,6 +164,22 @@ def save_overlay_plot(data_dict: dict[str, object], output_dir: Path) -> Path | 
     return output_path
 
 
+def validate_summary_metadata(results_df):
+    invalid_rows = results_df[
+        (results_df["Platform"] == "Unknown")
+        | (results_df["Controller"].isin(["Unknown", "Controller 2"]))
+        | (results_df["Trajectory"] == "Unknown")
+    ]
+    if invalid_rows.empty:
+        return
+
+    bad_rows = invalid_rows[["Platform", "Controller", "Trajectory", "Modifiers"]].drop_duplicates()
+    raise RuntimeError(
+        "Analysis produced unresolved metadata rows:\n"
+        f"{bad_rows.to_string(index=False)}"
+    )
+
+
 def plane_columns(plane: str) -> tuple[str, str, str, str, str, str, int]:
     if plane == "xy":
         return "x", "y", "x_ref", "y_ref", "x [m]", "y [m]", 1
@@ -182,6 +198,7 @@ def main() -> None:
 
     data_dict, path_map = load_data(logs)
     results_df = utilities.generate_results_table(data_dict)
+    validate_summary_metadata(results_df)
     save_summary_tables(results_df, output_dir)
 
     manifest = {

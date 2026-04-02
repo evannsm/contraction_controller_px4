@@ -19,7 +19,7 @@ PLATFORM_NAMES = {
 CONTROLLER_NAMES = {
     0: 'NR Standard',
     1: 'NR Enhanced',
-    2: 'MPC'
+    2: 'NMPC'
 }
 
 TRAJECTORY_NAMES = {
@@ -94,11 +94,17 @@ def extract_metadata_from_data(df: pd.DataFrame) -> Dict[str, str]:
         'nr_df': 'NR Diff-Flat',
         'nr_df_jax': 'NR Diff-Flat (JAX)',
         'nr_df_numpy': 'NR Diff-Flat (NumPy)',
+        'nr_cpp': 'NR Standard C++',
+        'nr_enhanced_cpp': 'NR Enhanced C++',
+        'nr_diff_flat_cpp': 'NR Diff-Flat C++',
         'fbl': 'FBL',
         'flat_ff': 'Flatness Feedforward',
         'ff_f8': 'Flatness Feedforward',
         'ff_f8_pfb': 'FBL',
-        'mpc': 'MPC',
+        'nmpc': 'NMPC',
+        'nmpc_acados_px4': 'NMPC',
+        'nmpc_acados_px4_cpp': 'NMPC',
+        'mpc': 'NMPC',
     }
     TRAJECTORY_STR_MAP = {
         'hover_contraction': 'Hover Contraction',
@@ -183,7 +189,8 @@ def infer_run_modifiers_from_filename(filename: str, controller: str) -> List[st
         or 'nr_df' in stem
         or controller.startswith('NR ')
     )
-    ff_capable = nr_family or 'nmpc' in stem or controller == 'MPC'
+    controller_upper = controller.upper() if isinstance(controller, str) else ''
+    ff_capable = nr_family or 'nmpc' in stem or controller_upper in {'MPC', 'NMPC'}
 
     modifiers: List[str] = []
 
