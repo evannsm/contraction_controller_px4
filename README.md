@@ -350,7 +350,8 @@ contraction_controller_px4/               ← repo root = ROS 2 workspace root
 │   ├── data_analysis/                    ← Log files, notebooks, and analysis CLI
 │   └── workspace_tools/                  ← host-side experiment automation scripts
 ├── docs/
-│   └── contraction_controller.qmd        ← Theory document (Quarto → PDF)
+│   ├── *.pdf                             ← Rendered PDF documents
+│   └── qmd/                              ← Quarto source documents
 ├── docker/
 │   ├── Dockerfile
 │   └── requirements.txt
@@ -377,10 +378,10 @@ contraction_controller_px4/               ← repo root = ROS 2 workspace root
 
 ## Theory document
 
-`docs/contraction_controller.qmd` contains the full derivation: system model,
+`docs/qmd/contraction_controller.qmd` contains the full derivation: system model,
 control law, differential flatness, feedforward construction, and trajectory
 definitions. Render to PDF with [Quarto](https://quarto.org/) >= 1.4:
 
 ```bash
-cd docs && quarto render contraction_controller.qmd
+./docs/qmd/render_pdfs.sh
 ```

@@ -1,0 +1,608 @@
+---
+title: "Newton-Raphson PX4 Math and Code Walkthrough"
+author: "egmc"
+date: today
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+    geometry: margin=0.9in
+execute:
+  echo: false
+---
+
+# Scope
+
+This note explains the checked-in Newton-Raphson controller implementations in
+the PX4 workspace at the level of:
+
+- the continuous-time model they use,
+- the predicted-output map they invert,
+- the discrete update law they apply each 100 Hz cycle,
+- the difference between `baseline` and `workshop`,
+- and why the method should work when its assumptions are approximately true.
+
+The focus is the Python implementations of:
+
+- `src/newton_raphson_px4/`
+- `src/newton_raphson_enhanced_px4/`
+
+with a short appendix for:
+
+- `src/nr_diff_flat_px4/`
+
+This is a code walkthrough, not a proof. The point is to make every term in the
+implemented update law easy to trace back to the source.
+
+# State, Input, and Output
+
+The standard and enhanced Newton-Raphson controllers use the same 9-state,
+4-input quadrotor model:
+
+$$
+x =
+\begin{bmatrix}
+p_x & p_y & p_z & v_x & v_y & v_z & \phi & \theta & \psi
+\end{bmatrix}^\top
+\in \mathbb{R}^9
+$$
+
+$$
+u =
+\begin{bmatrix}
+F & p & q & r
+\end{bmatrix}^\top
+\in \mathbb{R}^4
+$$
+
+where:
+
+- $F$ is total thrust in Newtons,
+- $p,q,r$ are body angular rates,
+- $\phi,\theta,\psi$ are roll, pitch, yaw.
+
+The controlled output is the 4-vector
+
+$$
+y = Cx =
+\begin{bmatrix}
+p_x & p_y & p_z & \psi
+\end{bmatrix}^\top
+$$
+
+The output-selection matrix `C` is defined directly in the controller utilities.
+
+Code locations:
+
+- `C` and the output definition:
+  `src/newton_raphson_px4/newton_raphson_px4_utils/controller/nr_utils.py`
+- same structure for the enhanced controller:
+  `src/newton_raphson_enhanced_px4/newton_raphson_enhanced_px4_utils/controller/nr_utils.py`
+
+# Continuous-Time Model Used by the Predictor
+
+The predictor integrates the translational dynamics together with Euler-angle
+kinematics.
+
+## Angular-rate kinematics
+
+The controller stores angular-rate commands as body rates $[p,q,r]^\top$, but
+the state uses Euler angles. The helper
+
+$$
+\dot{\eta} = T(\phi,\theta)\,\omega_b
+$$
+
+maps body rates $\omega_b = [p,q,r]^\top$ into world-frame Euler angle rates
+$\dot{\eta} = [\dot{\phi},\dot{\theta},\dot{\psi}]^\top$.
+
+In code, that is `body2world_angular_rates(...)`.
+
+## Translational dynamics
+
+The implemented dynamics are
+
+$$
+\dot{p} = v
+$$
+
+$$
+\dot{v}_x = -\frac{F}{m}\left(\sin\phi\sin\psi + \cos\phi\cos\psi\sin\theta\right)
+$$
+
+$$
+\dot{v}_y = -\frac{F}{m}\left(\cos\phi\sin\psi\sin\theta - \cos\psi\sin\phi\right)
+$$
+
+$$
+\dot{v}_z = g - \frac{F}{m}\cos\phi\cos\theta
+$$
+
+with $g = 9.8$ and the Euler-angle rates supplied by the $T(\phi,\theta)$ map.
+
+So the predictor model is simply
+
+$$
+\dot{x} = f(x,u)
+$$
+
+implemented in `f_quad(...)` and wrapped by `dynamics(...)`.
+
+Code locations:
+
+- standard NR model:
+  `src/newton_raphson_px4/newton_raphson_px4_utils/controller/nr_utils.py`
+- enhanced NR model:
+  `src/newton_raphson_enhanced_px4/newton_raphson_enhanced_px4_utils/controller/nr_utils.py`
+
+# The Predicted-Output Map
+
+At each control cycle, the Newton-Raphson controller does not invert the raw
+continuous dynamics directly. Instead it inverts a *predicted output map* over a
+finite lookahead horizon $T$.
+
+Define
+
+$$
+g_T(x_k, u_{\text{prev}}, u_{\text{cand}})
+=
+C\,\hat{x}(t_k + T)
+$$
+
+where $\hat{x}$ is the state produced by numerically integrating the model
+forward from the current state $x_k$.
+
+The code computes this with:
+
+1. `predict_state(...)`
+2. `predict_output(...)`
+3. `get_jac_pred_u(...)`
+4. `get_inv_jac_pred_u(...)`
+
+## RK4 integration
+
+The integration method is RK4, not Euler. That matters because the controller is
+using the predictor Jacobian inside the Newton step; a poor integrator would
+directly degrade that Jacobian.
+
+## ZOH versus FOH
+
+The key prediction-model difference between `baseline` and `workshop` is how the
+input is assumed to behave over the lookahead horizon:
+
+- `baseline`: zero-order hold (ZOH), meaning the candidate control is treated as
+  constant over the whole horizon.
+- `workshop`: first-order hold (FOH), meaning the input is interpolated from the
+  current input toward the candidate input over the horizon.
+
+Mathematically:
+
+### Baseline ZOH
+
+$$
+u(\tau) = u_{\text{cand}}
+$$
+
+### Workshop FOH
+
+$$
+u(\tau) =
+u_{\text{prev}} +
+\frac{\tau}{T}
+\left(u_{\text{cand}} - u_{\text{prev}}\right)
+$$
+
+The FOH version is closer to what actually happens on a real vehicle, because a
+new command does not instantaneously become the commanded operating point for the
+entire future horizon.
+
+This is implemented in `interpolate_input(...)`.
+
+# Standard Newton-Raphson Update Law
+
+The standard controller uses the predicted output error
+
+$$
+e_T = r_T - g_T(x_k, u_{\text{prev}}, u_{\text{cand}})
+$$
+
+where $r_T$ is the reference output evaluated at the lookahead time.
+
+## Jacobian inversion
+
+The controller computes
+
+$$
+J_u = \frac{\partial g_T}{\partial u_{\text{cand}}}
+$$
+
+and then uses the pseudoinverse
+
+$$
+J_u^\dagger
+$$
+
+instead of an exact matrix inverse. In practice this is a robustness choice:
+even though the map is 4-by-4, local conditioning can still get ugly.
+
+## Bounded integral action
+
+The workshop profile adds an integral state
+
+$$
+\eta_{k+1}
+=
+\operatorname{sat}\left(\eta_k + e_{\text{now}}\,\Delta t\right)
+$$
+
+where:
+
+- $e_{\text{now}}$ is the *current-time* tracking error,
+- $\Delta t$ is the 100 Hz controller period,
+- `sat(...)` clips each component to a configured bound.
+
+The clipped integral is then injected into the predicted-output error:
+
+$$
+\tilde{e}_T = e_T + K_I \eta_k
+$$
+
+This is not a full integral-state augmentation of the plant. It is a pragmatic
+bias-rejection term: accumulate steady offset, but clip it so it cannot wind up
+without bound.
+
+In code:
+
+- the node accumulates and clips `nr_error_integral`,
+- the controller adds `integral_gain * clipped_integral` to the predicted-output
+  error before the Newton step.
+
+## Single-step versus two-step update
+
+The raw Newton direction is
+
+$$
+n = J_u^\dagger \tilde{e}_T
+$$
+
+The control barrier function then adds a correction $v_{\text{cbf}}$ so the
+command stays within the allowed thrust and body-rate envelope.
+
+The implemented discrete update is:
+
+$$
+u^{(i+1)}
+=
+u^{(i)}
++ \beta
+\left[
+\alpha \odot \left(n + v_{\text{cbf}}\right)
+\right]\Delta t
+$$
+
+where:
+
+- $\alpha$ is the per-channel gain vector,
+- $\odot$ is elementwise multiplication,
+- $\beta$ is the iteration damping,
+- $i$ counts Newton refinements inside the same control cycle.
+
+Then:
+
+- `baseline` uses `num_iterations = 1`, `iteration_damping = 1.0`
+- `workshop` uses `num_iterations = 2`, `iteration_damping = 0.65`
+
+So the workshop version does *two smaller Newton corrections* per 100 Hz cycle
+instead of one undamped correction.
+
+## Code mapping for the standard controller
+
+The profile definition is in:
+
+- `src/newton_raphson_px4/newton_raphson_px4_utils/controller/newton_raphson_px4.py`
+
+The actual implemented structure is:
+
+$$
+\tilde{e}_T
+=
+\underbrace{r_T - g_T(\cdot)}_{\text{predicted output error}}
++
+\underbrace{K_I \eta_k}_{\text{bounded integral bias term}}
+$$
+
+$$
+n = J_u^\dagger \tilde{e}_T
+$$
+
+$$
+u^{(i+1)}
+=
+u^{(i)}
++ \beta
+\left[
+\alpha \odot \left(n + v_{\text{cbf}}\right)
+\right]\Delta t
+$$
+
+This corresponds directly to:
+
+- profile parameters in `build_nr_profile(...)`
+- clipped integral in `clipped_integral = jnp.clip(...)`
+- error injection in `error = get_tracking_error(...) + integral_gain * clipped_integral`
+- Newton direction in `nr_step = dgdu_inv @ error`
+- barrier correction in `get_integral_cbf(...)`
+- damped update in `updated_input = candidate_input + iteration_damping * delta_u`
+
+# Why the Standard Workshop Changes Should Help
+
+The standard workshop profile bundles four fixes that all point in the same
+direction.
+
+## 1. Shorter lookahead
+
+If the predictor horizon is too long, the controller is trying to invert a map
+that is increasingly sensitive to model mismatch. A shorter $T$ makes
+$g_T(\cdot)$ more local and therefore more believable.
+
+## 2. FOH instead of ZOH
+
+If the actual command will move gradually from the current input toward the next
+input, then FOH is a better approximation than pretending the future input is
+constant for the entire horizon.
+
+## 3. Bounded integral action
+
+If there is a persistent bias from mass error, unmodeled aerodynamics, or inner
+loop mismatch, a pure Newton step can keep solving the wrong model and sit at a
+steady offset. The bounded integral term pushes the equilibrium until that bias
+is canceled, but the clipping prevents runaway windup.
+
+## 4. Two damped Newton updates
+
+One undamped Newton step can be too aggressive when the map is nonlinear or the
+Jacobian is only locally accurate. Two damped steps are often a better trade:
+more local refinement, less overshoot.
+
+# Enhanced Newton-Raphson Update Law
+
+The enhanced controller keeps the same predicted-output framework but adds a
+reference-rate term and a state-Jacobian compensation term.
+
+The implemented idea is:
+
+1. still track the output error,
+2. but also try to impose a desired *output-rate* dynamics.
+
+## Desired output-rate dynamics
+
+The enhanced law can be read as targeting
+
+$$
+\dot{y}_{\text{des}} = \dot{r} + \alpha \odot \tilde{e}_T
+$$
+
+That is: follow the reference rate $\dot{r}$ while still correcting output error
+through the proportional term.
+
+## First-order output dynamics approximation
+
+Using the chain rule,
+
+$$
+\dot{y}
+\approx
+\frac{\partial g_T}{\partial x} f(x,u)
++
+\frac{\partial g_T}{\partial u}\,\dot{u}
+$$
+
+Define:
+
+$$
+J_x = \frac{\partial g_T}{\partial x}
+,\qquad
+J_u = \frac{\partial g_T}{\partial u}
+$$
+
+Then solve for $\dot{u}$:
+
+$$
+\dot{u}
+=
+J_u^\dagger
+\left(
+\dot{r}
+- J_x f(x,u)
++ \alpha \odot \tilde{e}_T
+\right)
+$$
+
+This is exactly the meaning of the enhanced correction term
+
+$$
+\dot{r} - J_x f(x,u)
+$$
+
+that appears in the implementation.
+
+## Implemented enhanced update
+
+The enhanced code computes:
+
+$$
+\text{regular\_term} = \alpha \odot \tilde{e}_T
+$$
+
+$$
+\text{enhanced\_term} = \dot{r} - J_x f(x,u)
+$$
+
+$$
+n = J_u^\dagger \left(\text{regular\_term} + \text{enhanced\_term}\right)
+$$
+
+and then uses the same barrier-corrected, damped discrete update:
+
+$$
+u^{(i+1)}
+=
+u^{(i)}
++ \beta (n + v_{\text{cbf}})\Delta t
+$$
+
+with `baseline` and `workshop` changing the same profile knobs as in standard NR:
+
+- lookahead,
+- integral term,
+- number of iterations,
+- damping,
+- FOH versus ZOH.
+
+Code locations:
+
+- `get_jac_pred_x_uinv(...)`
+- `get_enhanced_error(...)`
+- `newton_raphson_enhanced(...)`
+
+# Why the Enhanced Controller Is More Finicky
+
+This workspace’s results are consistent with the structure of the enhanced law:
+it can be better, but it is also easier to destabilize.
+
+Why:
+
+## 1. It needs more model accuracy
+
+Standard NR mostly asks the predictor to map command changes to future output
+changes. Enhanced NR also asks for a good estimate of
+
+$$
+J_x f(x,u)
+$$
+
+which increases sensitivity to model mismatch.
+
+## 2. It needs good reference-rate information
+
+The term $\dot{r}$ is not free. If the timing, interpolation, or trajectory
+derivative is noisy or inconsistent with the actual flown path, the enhanced law
+inherits that error directly.
+
+## 3. It is effectively more aggressive
+
+Even if `alpha` is numerically unchanged, the enhanced law is not “just the same
+controller plus a small tweak.” It adds another structured term inside the
+Jacobian inversion. That can help on some trajectories and hurt on others.
+
+So the enhanced controller *should* work best when:
+
+- the local predicted-output model is accurate,
+- the Jacobian is well-conditioned,
+- the reference derivatives are trustworthy,
+- and the trajectory is smooth enough that the extra first-order correction term
+  is actually informative.
+
+# How the Node Wires the Math Into a 100 Hz Loop
+
+In the runtime node, each control cycle does roughly this:
+
+1. Compute the lookahead reference time:
+
+   $$
+   t_{\text{ref}} = t_{\text{traj}} + T_{\text{lookahead}}
+   $$
+
+2. Evaluate:
+
+   - the future reference $r_T$,
+   - the future reference derivative $\dot{r}_T$ when needed,
+   - and the current-time reference $r_{\text{now}}$ for the integral term.
+
+3. Update the bounded integral state:
+
+   $$
+   \eta_{k+1}
+   =
+   \operatorname{sat}(\eta_k + e_{\text{now}}\Delta t)
+   $$
+
+4. Call the JAX controller with:
+
+   - current state,
+   - previous input,
+   - profile parameters,
+   - current integral state,
+   - and reference data.
+
+5. Convert the returned thrust force into a PX4 throttle-equivalent command and
+   publish rates setpoints.
+
+The standard node code is a good place to read the full path because it is the
+least complicated variant.
+
+# Profile Tables
+
+## Standard NR
+
+| Profile | Lookahead | Predictor | Iterations | `alpha` | Integral |
+| --- | --- | --- | --- | --- | --- |
+| `baseline` | `1.2 s` | ZOH | `1` | `[50, 60, 60, 60]` | disabled |
+| `workshop` | `0.8 s` | FOH | `2` | `[45, 55, 55, 45]` | bounded, enabled |
+
+## Enhanced NR
+
+| Profile | Lookahead | Predictor | Iterations | `alpha` | Integral |
+| --- | --- | --- | --- | --- | --- |
+| `baseline` | `1.2 s` | ZOH | `1` | `[30, 40, 40, 40]` | disabled |
+| `workshop` | `0.8 s` | FOH | `2` | `[30, 40, 40, 40]` | bounded, enabled |
+
+# Appendix: Diff-Flat NR Uses the Same Workshop Pattern
+
+The differential-flatness controller is not built from the same $g_T(x,u)$ map,
+but its `baseline` versus `workshop` split follows the same structural logic.
+
+Its checked-in profile changes are:
+
+- shorter lookahead (`0.8 s -> 0.5 s`)
+- bounded integral term
+- two damped iterations (`1 -> 2`, damping `1.0 -> 0.65`)
+- slightly higher `alpha`
+
+The diff-flat controller’s inner update is:
+
+$$
+z_{3}^{(i+1)}
+=
+z_{3}^{(i)}
++ \beta\,u_{\text{df,corrected}}\,\Delta t
+$$
+
+where the workshop variant again uses integral error injection and two damped
+iterations inside the same 100 Hz cycle.
+
+So conceptually, the whole workspace is using the same workshop idea in three
+different ways:
+
+- standard NR: better predicted-output inversion,
+- enhanced NR: same, plus output-rate compensation,
+- diff-flat NR: same, but in flat-output coordinates.
+
+# Practical Reading Order
+
+If you want to understand the implementation efficiently, read in this order:
+
+1. `docs/qmd/newton_raphson_workshop_profiles.qmd`
+2. `src/newton_raphson_px4/newton_raphson_px4_utils/controller/nr_utils.py`
+3. `src/newton_raphson_px4/newton_raphson_px4_utils/controller/newton_raphson_px4.py`
+4. `src/newton_raphson_px4/newton_raphson_px4/ros2px4_node.py`
+5. `src/newton_raphson_enhanced_px4/newton_raphson_enhanced_px4_utils/controller/nr_enhanced.py`
+
+That progression matches the logical order:
+
+- model,
+- predictor,
+- Newton update,
+- node wiring,
+- enhanced correction term.
