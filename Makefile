@@ -19,12 +19,15 @@
 # The container uses --net host, so it sees all ROS 2 topics from the host
 # PX4 sim and MicroXRCE bridge without any extra networking setup.
 #
+# Each run_* / build_ros target auto-starts the container if it isn't
+# already running and auto-stops it when the command finishes (or on
+# Ctrl+C).  You no longer need to manually `make run` / `make stop`.
+#
 # TYPICAL WORKFLOW
 # ────────────────
 #   make build                   # build the image once
-#   make run                     # start the container
-#   make build_ros               # build all ROS 2 packages
-#   make run_contraction ...     # run a controller
+#   make build_ros               # build all ROS 2 packages (auto-starts container)
+#   make run_contraction ...     # run a controller (auto-starts/stops container)
 #
 # NMPC C++ WORKFLOW
 # ─────────────────
@@ -35,6 +38,12 @@
 # ────────────────────────
 #   make fly CONTROLLER=nmpc_cpp TRAJECTORY=fig8_contraction HEADLESS=1
 #   make fly_all TRAJECTORY=fig8_contraction HEADLESS=1
+#
+# MANUAL CONTAINER MANAGEMENT (for interactive debugging)
+# ───────────────────────────
+#   make run                     # start container in background (stays running)
+#   make attach                  # open a shell inside the container
+#   make stop                    # stop the container
 # =============================================================================
 
 IMAGE_NAME     = px4_controllers_jazzy
