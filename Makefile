@@ -77,33 +77,45 @@ kill:
 attach:
 	docker exec -it $(CONTAINER_NAME) bash
 
+# ── Helpers: auto-start / auto-stop container around a command ────────────────
+# _ensure_running: start the container only if it isn't already up.
+_ensure_running:
+	@docker inspect -f '{{.State.Running}}' $(CONTAINER_NAME) 2>/dev/null | grep -q true \
+		|| $(MAKE) run
+
+# Usage: $(call _exec_and_stop,<command>)
+# Runs the command inside the container, then stops the container regardless of
+# whether the command succeeded (Ctrl+C, error, or clean exit).
+define _exec_and_stop
+	trap 'docker stop $(CONTAINER_NAME) 2>/dev/null || true' EXIT; \
+	docker exec -it $(CONTAINER_NAME) bash -lc $(1)
+endef
+
 # ── Build ROS 2 workspace ─────────────────────────────────────────────────────
 # Optional: PACKAGES="pkg1 pkg2" to build only specific packages.
 PACKAGES ?=
 UP_TO    ?=
 
-build_ros:
-	docker exec $(CONTAINER_NAME) bash -lc \
-		"cd /workspace && colcon build \
-			   --symlink-install \
-			   --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-			   $(if $(UP_TO),--packages-up-to $(UP_TO),$(if $(PACKAGES),--packages-select $(PACKAGES),))"
+build_ros: _ensure_running
+	$(call _exec_and_stop,"cd /workspace && colcon build \
+		   --symlink-install \
+		   --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+		   $(if $(UP_TO),--packages-up-to $(UP_TO),$(if $(PACKAGES),--packages-select $(PACKAGES),))")
 
 # Wipe build/install/log then rebuild from scratch.
-clean_build_ros:
+clean_build_ros: _ensure_running
 	docker exec $(CONTAINER_NAME) bash -lc \
 		"rm -rf /workspace/build /workspace/install /workspace/log"
 	$(MAKE) build_ros PACKAGES="$(PACKAGES)"
 
 # ── Generate NMPC acados solver ──────────────────────────────────────────────
 # Regenerates only when the requested platform/mass or NMPC formulation changed.
-generate_nmpc_solver:
-	docker exec $(CONTAINER_NAME) bash -lc \
-		"cd /workspace && python3 src/nmpc_acados_px4/ensure_solver.py \
+generate_nmpc_solver: _ensure_running
+	$(call _exec_and_stop,"cd /workspace && python3 src/nmpc_acados_px4/ensure_solver.py \
 		   --platform $(PLATFORM) \
 		   --horizon $(NMPC_HORIZON) \
 		   --num-steps $(NMPC_NUM_STEPS) \
-		   $(if $(FORCE),--force,)"
+		   $(if $(FORCE),--force,)")
 
 # =============================================================================
 # Controller run targets
@@ -144,21 +156,19 @@ KD_BODY_RATES   ?=
 MAX_TILT_CMD    ?=
 
 # ── Contraction controller (Python) ──────────────────────────────────────────
-run_contraction:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"ros2 run contraction_controller_px4 run_node \
+run_contraction: _ensure_running
+	$(call _exec_and_stop,"ros2 run contraction_controller_px4 run_node \
 		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
 		   $(if $(filter hover_contraction,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
 		   $(if $(CONTROLLER_DIR),--controller-dir $(CONTROLLER_DIR),) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
-		   $(if $(filter 1,$(NO_FEEDFORWARD)),--no-feedforward,)"
+		   $(if $(filter 1,$(NO_FEEDFORWARD)),--no-feedforward,)")
 
 # ── Newton-Raphson (Python) ──────────────────────────────────────────────────
-run_newton_raphson:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"ros2 run newton_raphson_px4 run_node \
+run_newton_raphson: _ensure_running
+	$(call _exec_and_stop,"ros2 run newton_raphson_px4 run_node \
 		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
 		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
@@ -169,12 +179,11 @@ run_newton_raphson:
 		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
-		   $(if $(PYJOULES),--pyjoules,)"
+		   $(if $(PYJOULES),--pyjoules,)")
 
 # ── Newton-Raphson Diff-Flat (Python) ────────────────────────────────────────
-run_nr_diff_flat:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"ros2 run nr_diff_flat_px4 run_node \
+run_nr_diff_flat: _ensure_running
+	$(call _exec_and_stop,"ros2 run nr_diff_flat_px4 run_node \
 		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
 		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
@@ -185,12 +194,11 @@ run_nr_diff_flat:
 		   $(if $(SPIN),--spin,) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
-		   $(if $(PYJOULES),--pyjoules,)"
+		   $(if $(PYJOULES),--pyjoules,)")
 
 # ── Newton-Raphson Enhanced (Python) ─────────────────────────────────────────
-run_newton_raphson_enhanced:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"ros2 run newton_raphson_enhanced_px4 run_node \
+run_newton_raphson_enhanced: _ensure_running
+	$(call _exec_and_stop,"ros2 run newton_raphson_enhanced_px4 run_node \
 		   --platform $(PLATFORM) --trajectory $(TRAJECTORY) \
 		   $(if $(filter hover,$(TRAJECTORY)),--hover-mode $(HOVER_MODE),) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
@@ -201,12 +209,11 @@ run_newton_raphson_enhanced:
 		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
-		   $(if $(PYJOULES),--pyjoules,)"
+		   $(if $(PYJOULES),--pyjoules,)")
 
 # ── Newton-Raphson (C++) ─────────────────────────────────────────────────────
-run_newton_raphson_cpp:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"cd /workspace && colcon build \
+run_newton_raphson_cpp: _ensure_running
+	$(call _exec_and_stop,"cd /workspace && colcon build \
 		   --symlink-install \
 		   --packages-up-to newton_raphson_px4_cpp \
 		   --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
@@ -221,12 +228,11 @@ run_newton_raphson_cpp:
 		   $(if $(FF),--ff,) \
 		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		   $(if $(LOG),--log,) \
-		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)")
 
 # ── Newton-Raphson Enhanced (C++) ──────────────────────────────────────────
-run_newton_raphson_enhanced_cpp:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"cd /workspace && colcon build \
+run_newton_raphson_enhanced_cpp: _ensure_running
+	$(call _exec_and_stop,"cd /workspace && colcon build \
 		   --symlink-install \
 		   --packages-up-to newton_raphson_enhanced_px4_cpp \
 		   --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
@@ -241,12 +247,11 @@ run_newton_raphson_enhanced_cpp:
 		   $(if $(FF),--ff,) \
 		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		   $(if $(LOG),--log,) \
-		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)")
 
 # ── Newton-Raphson Diff-Flat (C++) ──────────────────────────────────────────
-run_nr_diff_flat_cpp:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"cd /workspace && colcon build \
+run_nr_diff_flat_cpp: _ensure_running
+	$(call _exec_and_stop,"cd /workspace && colcon build \
 		   --symlink-install \
 		   --packages-up-to nr_diff_flat_px4_cpp \
 		   --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
@@ -261,12 +266,11 @@ run_nr_diff_flat_cpp:
 		   $(if $(FF),--ff,) \
 		   $(if $(NR_PROFILE),--nr-profile $(NR_PROFILE),) \
 		   $(if $(LOG),--log,) \
-		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)")
 
 # ── NMPC Acados (Python) ─────────────────────────────────────────────────────
-run_nmpc:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"cd /workspace && python3 src/nmpc_acados_px4/ensure_solver.py \
+run_nmpc: _ensure_running
+	$(call _exec_and_stop,"cd /workspace && python3 src/nmpc_acados_px4/ensure_solver.py \
 		   --platform $(PLATFORM) \
 		   --horizon $(NMPC_HORIZON) \
 		   --num-steps $(NMPC_NUM_STEPS) && \
@@ -281,12 +285,11 @@ run_nmpc:
 		   $(if $(FF),--ff,) \
 		   $(if $(LOG),--log,) \
 		   $(if $(LOG_FILE),--log-file $(LOG_FILE),) \
-		   $(if $(PYJOULES),--pyjoules,)"
+		   $(if $(PYJOULES),--pyjoules,)")
 
 # ── NMPC Acados (C++) ────────────────────────────────────────────────────────
-run_nmpc_cpp:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-		"cd /workspace && python3 src/nmpc_acados_px4/ensure_solver.py \
+run_nmpc_cpp: _ensure_running
+	$(call _exec_and_stop,"cd /workspace && python3 src/nmpc_acados_px4/ensure_solver.py \
 		   --platform $(PLATFORM) \
 		   --horizon $(NMPC_HORIZON) \
 		   --num-steps $(NMPC_NUM_STEPS) && \
@@ -304,12 +307,11 @@ run_nmpc_cpp:
 		   $(if $(SPIN),--spin,) \
 		   $(if $(FF),--ff,) \
 		   $(if $(LOG),--log,) \
-		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+		   $(if $(LOG_FILE),--log-file $(LOG_FILE),)")
 
 # ── Flatness feedforward / FBL (Python) ──────────────────────────────────────
-run_ff_f8:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-	"ros2 run ff_f8_px4 run_node \
+run_ff_f8: _ensure_running
+	$(call _exec_and_stop,"ros2 run ff_f8_px4 run_node \
 			   --platform $(PLATFORM) \
 			   --trajectory $(TRAJECTORY) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
@@ -325,11 +327,10 @@ run_ff_f8:
 		   $(if $(KD_BODY_RATES),--kd-body-rates $(KD_BODY_RATES),) \
 		   $(if $(MAX_TILT_CMD),--max-tilt-cmd $(MAX_TILT_CMD),) \
 			   $(if $(LOG),--log,) \
-			   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+			   $(if $(LOG_FILE),--log-file $(LOG_FILE),)")
 
-run_fbl:
-	docker exec -it $(CONTAINER_NAME) bash -lc \
-	"ros2 run ff_f8_px4 run_node \
+run_fbl: _ensure_running
+	$(call _exec_and_stop,"ros2 run ff_f8_px4 run_node \
 			   --platform $(PLATFORM) \
 			   --trajectory $(TRAJECTORY) \
 		   $(if $(FLIGHT_PERIOD),--flight-period $(FLIGHT_PERIOD),) \
@@ -345,7 +346,7 @@ run_fbl:
 		   $(if $(KD_BODY_RATES),--kd-body-rates $(KD_BODY_RATES),) \
 		   $(if $(MAX_TILT_CMD),--max-tilt-cmd $(MAX_TILT_CMD),) \
 			   $(if $(LOG),--log,) \
-			   $(if $(LOG_FILE),--log-file $(LOG_FILE),)"
+			   $(if $(LOG_FILE),--log-file $(LOG_FILE),)")
 
 # ── Host SITL / bridge helpers ────────────────────────────────────────────────
 start_sitl:
@@ -440,7 +441,7 @@ fly_all:
 # Backward compat alias
 run_controller: run_contraction
 
-.PHONY: build run stop kill attach build_ros clean_build_ros \
+.PHONY: build run stop kill attach _ensure_running build_ros clean_build_ros \
 	        generate_nmpc_solver \
 	        run_controller run_contraction \
 	        run_newton_raphson run_newton_raphson_enhanced run_nr_diff_flat run_newton_raphson_cpp \
