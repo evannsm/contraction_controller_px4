@@ -1,0 +1,819 @@
+---
+title: "Docker Container Deep Dive: Every Layer, Every Choice"
+author: "Evan McIntosh"
+date: "2026-04-03"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    geometry:
+      - margin=1in
+---
+
+# Why Docker at All?
+
+The `ws_contraction_px4` workspace contains ROS 2 nodes (Python and C++) that talk to
+PX4 over DDS.  Building these nodes requires an exact stack:
+
+- **ROS 2 Jazzy** (specific Ubuntu 24.04 release)
+- **px4_msgs** compiled against the same RMW
+- **acados** built from source with qpOASES
+- **JAX**, immrax, linrax, casadi, equinox --- all at compatible versions
+
+Installing all of this natively on your host is fragile and hard to reproduce.
+Docker packages the entire build-and-run environment into a single image so that
+`make build && make run` gives you a working controller workspace on any Linux
+machine, every time.
+
+Critically, the Docker container **does not** run PX4 or Gazebo.  Those stay on
+the host.  The container only houses the ROS 2 controller nodes.  This split
+keeps the image small and avoids GPU passthrough complexity.
+
+
+# The Base Image
+
+```dockerfile
+FROM osrf/ros:jazzy-ros-base
+```
+
+This pulls the official Open Source Robotics Foundation image for ROS 2 Jazzy
+built on Ubuntu 24.04.  The `ros-base` variant (~700 MB) includes only:
+
+- `rclpy` / `rclcpp` (the Python and C++ ROS 2 client libraries)
+- Core ROS 2 middleware (rmw, rcl, rosidl)
+- `ament` / `colcon` build infrastructure
+
+It **excludes** rviz2, rqt, perception stacks, Gazebo plugins, and every other
+GUI or sensor package that `desktop-full` (~2.5 GB) would include.  Since the
+container never renders anything, those packages would be dead weight.
+
+### Shell configuration
+
+```dockerfile
+SHELL ["/bin/bash", "-c"]
+```
+
+Overrides the default `/bin/sh` so that every `RUN` instruction uses Bash.  This
+is necessary because `source` (used to load ROS 2 setup files) is a Bash
+built-in that does not exist in POSIX `sh`.
+
+### Non-interactive frontend
+
+```dockerfile
+ENV DEBIAN_FRONTEND=noninteractive
+```
+
+Tells `apt-get` to never prompt for user input (timezone, keyboard layout,
+etc.).  Without this, certain packages would block the build waiting for a TTY
+that does not exist.
+
+
+# Layer 1 --- System Dependencies
+
+```dockerfile
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-pip python3-dev python3-colcon-common-extensions \
+    git cmake build-essential \
+    libgmp-dev libcdd-dev libeigen3-dev liblapack-dev libopenblas-dev \
+    wget \
+    && apt-get remove -y python3-matplotlib 2>/dev/null || true \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+Breaking this down package by package:
+
+| Package | Why it is needed |
+|---------|------------------|
+| `python3-pip` | Installs Python packages not available as `.deb` (JAX, casadi, etc.) |
+| `python3-dev` | C headers for building Python extensions (required by immrax, acados_template) |
+| `python3-colcon-common-extensions` | `colcon build` --- the ROS 2 workspace build tool (not included in `ros-base`) |
+| `git` | Cloning px4_msgs, acados, immrax, linrax during the build |
+| `cmake`, `build-essential` | C/C++ compiler toolchain for acados and C++ ROS 2 packages |
+| `libgmp-dev` | GNU Multiple Precision library --- dependency of `libcdd` |
+| `libcdd-dev` | Convex hull / polytope library --- used by immrax for reachability |
+| `libeigen3-dev` | Eigen 3 linear algebra headers --- used by C++ controllers and acados |
+| `liblapack-dev`, `libopenblas-dev` | BLAS/LAPACK backends for scipy, acados QP solves |
+| `wget` | Downloads the acados tera_renderer binary |
+
+**matplotlib removal**: The base image ships `python3-matplotlib` as a system
+package.  It is explicitly removed because (a) the container is headless --- no
+display backend exists, and (b) pip later installs a newer matplotlib from
+PyPI via `requirements.txt`.  The `|| true` ensures the build does not fail if
+matplotlib was already absent.
+
+**`--no-install-recommends`**: Prevents apt from pulling in hundreds of MB of
+"recommended" packages (documentation, X11 libs, etc.) that are not needed.
+
+**`rm -rf /var/lib/apt/lists/*`**: Deletes the apt package index cache after
+installation.  This saves ~30 MB in the final image layer.  The cache would be
+stale anyway since no further `apt-get install` runs after this point.
+
+
+# Layer 2 --- px4_msgs (Pre-built ROS 2 Messages)
+
+```dockerfile
+RUN mkdir -p /opt/ws_px4_msgs/src && \
+    git clone --depth 1 --branch v1.16_minimal_msgs \
+        https://github.com/evannsmc/px4_msgs.git \
+        /opt/ws_px4_msgs/src/px4_msgs && \
+    source /opt/ros/jazzy/setup.bash && \
+    cd /opt/ws_px4_msgs && \
+    colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+    rm -rf /opt/ws_px4_msgs/build \
+           /opt/ws_px4_msgs/log \
+           /opt/ws_px4_msgs/src
+```
+
+### What this does
+
+PX4 communicates with ROS 2 via **uORB messages** bridged through MicroXRCE-DDS.
+On the ROS 2 side, these messages must be defined as ROS 2 `.msg` files and
+compiled into Python/C++ bindings.  The `px4_msgs` package provides those
+definitions.
+
+### Why `v1.16_minimal_msgs`
+
+This is your fork with only the messages actually used by the controllers
+(`VehicleOdometry`, `VehicleStatus`, `RcChannels`, `OffboardControlMode`,
+`TrajectorySetpoint`, `VehicleRatesSetpoint`, `VehicleCommand`).  The upstream
+`px4_msgs` repo contains hundreds of message types; building all of them takes
+minutes and wastes image space.
+
+### Why pre-built inside the image
+
+If px4_msgs were built inside `/workspace` (the bind-mounted host directory), it
+would need to be rebuilt every time the container was recreated.  By building it
+into `/opt/ws_px4_msgs/install/` during the Docker image build, it becomes a
+permanent layer that never needs rebuilding.
+
+### Why build artifacts are deleted
+
+```dockerfile
+rm -rf /opt/ws_px4_msgs/build /opt/ws_px4_msgs/log /opt/ws_px4_msgs/src
+```
+
+Only the `install/` directory is needed at runtime (it contains the compiled
+`.so` libraries and Python packages).  The `build/` directory (CMake intermediates),
+`log/` directory (build logs), and `src/` directory (source code) are no longer
+needed and would waste image space.
+
+
+# Layer 3 --- acados (Nonlinear MPC Solver)
+
+```dockerfile
+ENV ACADOS_ROOT=/opt/acados
+RUN git clone https://github.com/acados/acados.git ${ACADOS_ROOT} && \
+    cd ${ACADOS_ROOT} && \
+    git checkout v0.5.1 && \
+    git submodule update --recursive --init && \
+    mkdir -p build && cd build && \
+    cmake -DACADOS_WITH_QPOASES=ON \
+          -CMAKE_INSTALL_PREFIX=${ACADOS_ROOT} \
+          .. && \
+    make install -j$(nproc) && \
+    rm -rf ${ACADOS_ROOT}/build
+```
+
+### What is acados?
+
+acados is a high-performance solver for nonlinear optimal control problems.  The
+NMPC controller in this workspace formulates a quadrotor trajectory-tracking
+problem as an OCP (optimal control problem) and hands it to acados to solve at
+each control step (~100 Hz).
+
+### Build options explained
+
+- **`v0.5.1`**: Pinned version for reproducibility.
+- **`--recursive --init`**: acados vendors several submodules (BLASFEO, HPIPM,
+  qpOASES).  These must be initialized before building.
+- **`DACADOS_WITH_QPOASES=ON`**: Enables the qpOASES QP solver backend.  This
+  is a dense active-set QP solver suitable for the small problem sizes in
+  quadrotor NMPC (typically 12 states, 4 inputs, 50 shooting intervals).
+- **`-j$(nproc)`**: Parallel compilation using all available CPU cores.
+- **`rm -rf build`**: Removes CMake intermediates (object files, CMake cache)
+  to save image space.  The installed libraries and headers remain.
+
+### Environment variables
+
+```dockerfile
+ENV LD_LIBRARY_PATH="${ACADOS_ROOT}/lib:${LD_LIBRARY_PATH}"
+ENV ACADOS_SOURCE_DIR="${ACADOS_ROOT}"
+```
+
+- **`LD_LIBRARY_PATH`**: Tells the dynamic linker where to find `libacados.so`
+  at runtime.
+- **`ACADOS_SOURCE_DIR`**: Used by `acados_template` (the Python interface) to
+  locate the acados installation and its code-generation templates.
+
+
+# Layer 4 --- acados Python Interface + Tera Renderer
+
+```dockerfile
+RUN pip3 install --no-cache-dir --break-system-packages --ignore-installed \
+        -e ${ACADOS_ROOT}/interfaces/acados_template && \
+    mkdir -p ${ACADOS_ROOT}/bin && \
+    wget -q https://github.com/acados/tera_renderer/releases/download/v0.0.34/\
+t_renderer-v0.0.34-linux \
+         -O ${ACADOS_ROOT}/bin/t_renderer && \
+    chmod +x ${ACADOS_ROOT}/bin/t_renderer
+```
+
+### `acados_template`
+
+This is acados's Python code-generation frontend.  When you call
+`ensure_solver.py`, it:
+
+1. Defines the OCP (dynamics, cost, constraints) in Python
+2. Renders C code from Jinja2-like templates via `t_renderer`
+3. Compiles the generated C code into a shared library
+4. Wraps it with a Python interface for calling from ROS 2
+
+### `t_renderer` (Tera Renderer)
+
+A pre-built binary that renders Tera templates (Rust-based templating engine)
+into C source files.  acados ships template files (`.in.c`, `.in.h`) that
+contain the OCP structure; `t_renderer` fills in the specific dimensions, cost
+matrices, and constraint bounds for your problem.
+
+### pip flags
+
+- **`--no-cache-dir`**: Does not store downloaded wheels.  Saves image space.
+- **`--break-system-packages`**: Required on Ubuntu 24.04 (PEP 668) to install
+  into the system Python without a virtual environment.  Safe here because we
+  control the entire container.
+- **`--ignore-installed`**: Forces reinstallation even if a version exists.
+  Prevents conflicts with system-installed versions.
+- **`-e` (editable)**: Installs acados_template as a symlink to its source
+  directory so that any acados updates are immediately visible.
+
+
+# Layer 5 --- Python Dependencies
+
+```dockerfile
+COPY docker/requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages \
+        --ignore-installed -r /tmp/requirements.txt
+```
+
+The `requirements.txt` contains:
+
+| Package | Purpose |
+|---------|---------|
+| `numpy` | Fundamental array library --- used everywhere |
+| `scipy` | Integration (`solve_ivp`), optimization, linear algebra |
+| `pandas` | CSV log reading/writing and post-flight analysis |
+| `control` | Python Control Systems Library --- used for LQR design in contraction controller |
+| `matplotlib` | Plotting (only used in analysis scripts, not during flight) |
+| `jax[cpu]` | JAX with CPU backend --- automatic differentiation for immrax/linrax |
+| `equinox` | Neural-network-style modules on JAX --- used by immrax |
+| `jaxtyping` | Type annotations for JAX arrays |
+| `pyJoules` | Energy measurement --- optional profiling of controller computation cost |
+| `casadi` | Symbolic math + automatic differentiation --- used in NMPC formulation |
+
+### Why `jax[cpu]`?
+
+The `[cpu]` extra installs JAX without CUDA/GPU dependencies.  The immrax and
+linrax reachability libraries use JAX for interval arithmetic and automatic
+differentiation, but the computations are small enough that CPU is sufficient.
+This avoids pulling in ~2 GB of CUDA libraries.
+
+
+# Layer 6 --- immrax and linrax
+
+```dockerfile
+RUN git clone --depth 1 --branch jax-0.9-support \
+        https://github.com/Akash-Harapanahalli/immrax.git /tmp/immrax && \
+    sed -i 's|git@github.com:|https://github.com/|g' \
+        /tmp/immrax/.gitmodules 2>/dev/null || true && \
+    git -C /tmp/immrax submodule sync --recursive 2>/dev/null || true && \
+    git -C /tmp/immrax submodule update --init --recursive 2>/dev/null || true && \
+    pip3 install --no-cache-dir --break-system-packages /tmp/immrax && \
+    rm -rf /tmp/immrax
+```
+
+### What are these?
+
+- **immrax**: Interval-arithmetic reachability analysis library built on JAX.
+  Used by the contraction controller to compute reachable sets and contraction
+  metrics.
+- **linrax**: Linear relaxation library (also JAX-based).  Provides linear
+  bounds on nonlinear dynamics for the contraction analysis.
+
+### Why the `sed` on `.gitmodules`?
+
+immrax's `.gitmodules` file uses SSH URLs (`git@github.com:...`).  Inside a
+Docker build there are no SSH keys, so these would fail.  The `sed` command
+rewrites them to HTTPS URLs which work without authentication for public repos.
+
+### Why `jax-0.9-support` branch?
+
+The main branches of these libraries target older JAX versions.  This branch
+has compatibility patches for JAX 0.9.x which is what `requirements.txt`
+installs.
+
+### Cleanup
+
+```dockerfile
+rm -rf /tmp/immrax
+rm -rf /tmp/linrax
+```
+
+Source repos are deleted after pip-installing since only the installed Python
+packages are needed at runtime.
+
+
+# Layer 7 --- Shell Setup (Source Chain)
+
+```dockerfile
+RUN echo "source /opt/ros/jazzy/setup.bash" > /etc/profile.d/ros_setup.sh && \
+    echo "source /opt/ws_px4_msgs/install/setup.bash" \
+        >> /etc/profile.d/ros_setup.sh && \
+    echo 'if [ -f /workspace/install/setup.bash ]; then \
+        source /workspace/install/setup.bash; fi' \
+        >> /etc/profile.d/ros_setup.sh && \
+    echo "export ACADOS_SOURCE_DIR=${ACADOS_ROOT}" \
+        >> /etc/profile.d/ros_setup.sh && \
+    echo "export LD_LIBRARY_PATH=${ACADOS_ROOT}/lib:\${LD_LIBRARY_PATH}" \
+        >> /etc/profile.d/ros_setup.sh && \
+    echo "source /etc/profile.d/ros_setup.sh" >> /root/.bashrc
+```
+
+### The overlay chain
+
+ROS 2 uses an **overlay workspace** model.  Each `setup.bash` extends the
+environment from the previous one.  The chain here is:
+
+```
+/opt/ros/jazzy/setup.bash              # (1) Base ROS 2 install
+    └── /opt/ws_px4_msgs/install/setup.bash   # (2) px4_msgs overlay
+        └── /workspace/install/setup.bash     # (3) Your controller packages
+```
+
+Each overlay adds its packages to `AMENT_PREFIX_PATH`, `PYTHONPATH`,
+`LD_LIBRARY_PATH`, etc., so that `ros2 run` can discover all installed packages.
+
+### Why `/etc/profile.d/`?
+
+Files in `/etc/profile.d/` are sourced by **login shells** (`bash -l` or
+`bash -lc "..."`).  The Makefile runs all `docker exec` commands with
+`bash -lc`, which triggers this sourcing automatically.
+
+### Why also `.bashrc`?
+
+`.bashrc` is sourced by **interactive non-login shells** (what you get with
+`docker exec -it ... bash`).  Adding the source line there ensures the
+environment is correct when you `make attach` for debugging.
+
+### The conditional for `/workspace/install/`
+
+```bash
+if [ -f /workspace/install/setup.bash ]; then
+    source /workspace/install/setup.bash
+fi
+```
+
+When the container first starts (before `make build_ros`), `/workspace/install/`
+does not exist yet.  Without the `if` guard, every shell would print an error
+about the missing file.
+
+
+# Workdir and Entrypoint
+
+```dockerfile
+WORKDIR /workspace
+CMD ["bash"]
+```
+
+- **`WORKDIR /workspace`**: Sets the default directory for all subsequent
+  commands.  When you `make attach`, you land in `/workspace`.
+- **`CMD ["bash"]`**: The default process.  Combined with `docker run -itd`,
+  this starts a Bash shell that keeps the container alive in the background,
+  waiting for `docker exec` commands.
+
+
+# How the Container Runs
+
+```makefile
+run:
+    docker rm -f $(CONTAINER_NAME) 2>/dev/null || true
+    docker run -itd --rm \
+        --net host \
+        -e ROS_DOMAIN_ID=$(ROS_DOMAIN_ID) \
+        -v $(WS_ROOT):/workspace \
+        --name $(CONTAINER_NAME) \
+        $(IMAGE_NAME)
+```
+
+### Flag-by-flag breakdown
+
+| Flag | Meaning |
+|------|---------|
+| `docker rm -f ... \|\| true` | Kill any existing container with the same name (idempotent restart) |
+| `-i` | Keep STDIN open (needed for interactive `docker exec` later) |
+| `-t` | Allocate a pseudo-TTY (enables colored output, signal handling) |
+| `-d` | Detach --- run in background, return control to host shell |
+| `--rm` | Auto-remove the container when it stops (no stale containers) |
+| `--net host` | Share the host's network namespace --- see below |
+| `-e ROS_DOMAIN_ID=31` | Isolate DDS discovery to domain 31 |
+| `-v $(WS_ROOT):/workspace` | Bind-mount the repo root into the container |
+| `--name px4_controllers` | Fixed name so Makefile targets can reference it |
+
+### `--net host` explained
+
+Normally, Docker creates an isolated virtual network for each container.  ROS 2
+uses DDS (Data Distribution Service) for communication, which relies on
+multicast UDP for node discovery.  Multicast does not cross Docker's default
+bridge network without complex configuration.
+
+`--net host` eliminates the problem entirely: the container shares the host's
+network stack.  From a networking perspective, processes inside the container are
+indistinguishable from host processes.  This means:
+
+- The controller node's DDS participant sees the same multicast group as PX4's
+  MicroXRCE-DDS agent
+- No port mapping needed
+- No added latency from virtual bridges or NAT
+- `ROS_DOMAIN_ID` works exactly as it would on the host
+
+# Networking Deep Dive
+
+This section traces every byte of network traffic in the system, from Gazebo
+sensor data to actuator commands, explaining the protocols, ports, and kernel
+mechanisms involved.
+
+## The Three Network Hops
+
+During flight, a single control loop iteration involves three distinct network
+hops.  With `--net host`, all three happen over the loopback interface (`lo`) at
+kernel memory-copy speed --- no packets ever touch a physical NIC.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        HOST KERNEL (net namespace)                  │
+│                                                                     │
+│  Gazebo Server ←──── gz transport (shared memory) ────→ PX4 SITL   │
+│                                                           │         │
+│                                              uORB → XRCE-DDS       │
+│                                              (serialized uORB msgs) │
+│                                                           │         │
+│                                            UDP port 8888  │         │
+│                                                           ↓         │
+│                                        MicroXRCE-DDS Agent          │
+│                                              │                      │
+│                            ┌─── DDS (RTPS) ──┘                      │
+│                            │   multicast 239.255.0.1:7400           │
+│                            │   + unicast UDP ephemeral ports        │
+│                            ↓                                        │
+│                     Controller Node (inside Docker, same namespace)  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Hop 1: Gazebo $\leftrightarrow$ PX4 (gz transport / shared memory)
+
+PX4 SITL and the Gazebo server run as separate processes on the host.  They
+communicate via **Gazebo Transport**, which uses shared memory when both
+processes are on the same machine.  Messages exchanged:
+
+| Direction | gz Topic | Content |
+|-----------|----------|---------|
+| Gazebo → PX4 | `/world/default/model/x500/link/base_link/sensor/imu/imu` | IMU accelerometer + gyroscope |
+| Gazebo → PX4 | `/model/x500/odometry` | Ground-truth pose (for state estimator) |
+| PX4 → Gazebo | `/model/x500/command/motor_speed` | Four motor velocity commands |
+
+This hop has **zero network overhead** --- it is a memory copy between processes
+mediated by the Gazebo transport library.  No sockets, no serialization beyond
+protobuf encoding.
+
+### Hop 2: PX4 $\leftrightarrow$ MicroXRCE-DDS Agent (XRCE-DDS over UDP)
+
+PX4's internal message bus is **uORB** (micro Object Request Broker) --- a
+publish-subscribe system that runs inside the PX4 process.  To expose uORB
+topics to ROS 2, PX4 includes an **XRCE-DDS client** that:
+
+1. Serializes selected uORB messages into CDR (Common Data Representation) format
+2. Sends them over UDP to the **MicroXRCE-DDS Agent** on port 8888
+
+The agent is a separate process (`MicroXRCEAgent udp4 -p 8888`) that acts as a
+protocol translator:
+
+- **Upstream** (PX4 side): speaks XRCE-DDS (a lightweight, bandwidth-efficient
+  protocol designed for microcontrollers)
+- **Downstream** (ROS 2 side): speaks full RTPS (Real-Time Publish-Subscribe),
+  the wire protocol of DDS
+
+The UDP connection between PX4 and the agent is on `localhost:8888`.  The
+`MICROXRCE_PORT` variable in the Makefile controls this port number.
+
+### Hop 3: MicroXRCE-DDS Agent $\leftrightarrow$ Controller Node (DDS / RTPS)
+
+Once the agent translates a uORB message into a ROS 2 topic publication, it
+enters the standard DDS communication layer.  ROS 2 Jazzy uses **Fast DDS** as
+its default RMW (ROS Middleware) implementation.  The protocol works as follows:
+
+#### Discovery (SPDP --- Simple Participant Discovery Protocol)
+
+When a ROS 2 node starts, its DDS participant announces itself by sending a
+multicast UDP packet to:
+
+- **Address**: `239.255.0.1`
+- **Port**: `7400 + (250 × ROS_DOMAIN_ID)` = `7400 + (250 × 31)` = **15150**
+
+Every other DDS participant on the same domain listens on this multicast group.
+They exchange participant information (what topics they publish/subscribe, QoS
+settings, locators).
+
+With `--net host`, the container's DDS participant sends this multicast on the
+host's loopback interface, where the MicroXRCE-DDS agent (also on the host)
+receives it.  Discovery completes in milliseconds.
+
+#### Endpoint Matching (SEDP --- Simple Endpoint Discovery Protocol)
+
+After participants discover each other, they exchange endpoint information via
+unicast UDP.  A "match" occurs when:
+
+- A publisher and subscriber share the same topic name and type
+- Their QoS profiles are compatible (e.g., `BEST_EFFORT` publisher matches
+  `BEST_EFFORT` subscriber)
+
+For this workspace, the QoS is:
+
+```python
+QoSProfile(
+    reliability=BEST_EFFORT,     # no retransmission, lowest latency
+    durability=TRANSIENT_LOCAL,  # late joiners get last sample
+    history=KEEP_LAST,
+    depth=1                      # only latest message buffered
+)
+```
+
+**`BEST_EFFORT`** means dropped packets are not retransmitted.  For 100 Hz
+real-time control, retransmitting a stale state estimate is worse than skipping
+it --- the next one arrives 10 ms later with fresher data.
+
+**`TRANSIENT_LOCAL`** means the publisher keeps its last message and delivers it
+to any subscriber that joins after publication.  This is important for the
+`OffboardControlMode` topic: PX4 needs to see this message immediately when the
+controller starts, even if it was published a few milliseconds before PX4's
+subscriber came online.
+
+**`depth=1`** means only the most recent message is buffered.  There is no
+point keeping a queue of old state estimates --- the controller always wants the
+newest one.
+
+#### Data Exchange (User Data over RTPS)
+
+Once matched, actual topic data flows over **unicast UDP** between the agent and
+the controller node.  Each message is serialized as CDR (the same binary format
+used internally by DDS) and sent as a single UDP datagram.
+
+Typical message sizes:
+
+| Topic | Approximate Size |
+|-------|-----------------|
+| `VehicleOdometry` | ~200 bytes |
+| `VehicleRatesSetpoint` | ~80 bytes |
+| `OffboardControlMode` | ~40 bytes |
+| `TrajectorySetpoint` | ~120 bytes |
+
+At 100 Hz, the total bandwidth is roughly:
+
+$$
+(200 + 80 + 40 + 120) \times 100 \approx 44\text{ KB/s}
+$$
+
+This is negligible --- well within loopback throughput (typically 10+ GB/s).
+
+## `ROS_DOMAIN_ID` --- DDS Traffic Isolation
+
+```makefile
+-e ROS_DOMAIN_ID=31
+```
+
+DDS domain IDs partition the multicast discovery space.  Participants on
+domain 31 use multicast port 15150 (as computed above); participants on domain 0
+use port 7400.  They never see each other's discovery announcements.
+
+This is important if you have other ROS 2 systems running on the same machine
+(e.g., a second PX4 SITL instance, or a ROS 2 tutorial).  Domain 31 prevents
+cross-talk.
+
+The same `ROS_DOMAIN_ID` must be set for:
+
+1. The MicroXRCE-DDS Agent (inherits from the host shell environment)
+2. The controller container (`-e ROS_DOMAIN_ID=31`)
+
+PX4 itself does not use `ROS_DOMAIN_ID` --- it speaks XRCE-DDS to the agent,
+not full DDS.  The agent handles the domain ID mapping.
+
+## What Would Break Without `--net host`
+
+If you used Docker's default bridge network instead:
+
+| Problem | Why |
+|---------|-----|
+| **Multicast blocked** | Docker's bridge (`docker0`) does not forward multicast by default.  DDS discovery fails --- nodes cannot find each other. |
+| **Port mapping required** | You would need `-p 7400:7400/udp -p 15150:15150/udp` plus ranges of ephemeral ports for data exchange.  DDS uses dynamic port allocation, making this impractical. |
+| **NAT latency** | Each packet traverses Docker's `iptables` NAT rules.  For 100 Hz control, even 0.1 ms added latency matters. |
+| **Localhost mismatch** | The agent listens on `localhost:8888` from PX4's perspective.  With bridge networking, the container's `localhost` is different from the host's `localhost`. |
+
+The only alternatives to `--net host` for DDS are:
+
+- **Cyclone DDS with unicast-only config** (disable multicast, manually list peer
+  IPs) --- complex, fragile
+- **macvlan/ipvlan** network --- gives the container its own IP on the host LAN,
+  but adds unnecessary complexity for a single-machine setup
+- **Fast DDS Discovery Server** --- replaces multicast with a centralized
+  discovery server, but adds another process to manage
+
+`--net host` is the simplest and most performant choice for single-machine
+SITL simulation.
+
+## Latency Budget
+
+For a sense of scale, here is the approximate latency of one complete control
+cycle (state estimate → control command → actuator):
+
+| Segment | Latency |
+|---------|---------|
+| Gazebo → PX4 (shared memory) | < 0.01 ms |
+| PX4 state estimator processing | ~0.5 ms |
+| PX4 → Agent (XRCE-DDS, localhost UDP) | < 0.05 ms |
+| Agent → Controller (DDS, localhost UDP) | < 0.05 ms |
+| Controller computation (NR: 0.4 ms, NMPC: 2 ms) | 0.4--2.0 ms |
+| Controller → Agent → PX4 (return path) | < 0.1 ms |
+| PX4 rate controller + motor mixing | ~0.2 ms |
+| **Total round-trip** | **~1.3--3.0 ms** |
+
+At 100 Hz (10 ms period), even the NMPC controller has ~7 ms of headroom before
+the next cycle.  Networking overhead (`< 0.2 ms` total) is negligible compared
+to computation.
+
+
+### The bind mount
+
+```
+-v $(WS_ROOT):/workspace
+```
+
+Your entire repo directory appears at `/workspace` inside the container.  This
+is a **bind mount**, not a copy --- changes on either side are instantly visible
+to the other.  This means:
+
+- You edit source files on the host with your normal editor/IDE
+- `colcon build` inside the container compiles them
+- Build artifacts (`build/`, `install/`, `log/`) appear on the host filesystem
+- CSV logs written by controllers inside the container are immediately accessible
+  on the host for analysis
+
+
+# How Commands Execute Inside the Container
+
+Every Makefile target that runs inside the container uses the same pattern:
+
+```makefile
+docker exec $(CONTAINER_NAME) bash -lc "..."
+```
+
+Or for interactive targets:
+
+```makefile
+docker exec -it $(CONTAINER_NAME) bash -lc "..."
+```
+
+### Why `bash -lc`?
+
+- **`-l` (login shell)**: Triggers sourcing of `/etc/profile.d/ros_setup.sh`,
+  which sets up the full ROS 2 + px4_msgs + acados environment.
+- **`-c "..."`**: Executes the given command string, then exits.
+
+Without `-l`, none of the ROS 2 environment variables would be set, and
+`ros2 run` would fail with "package not found."
+
+### The `colcon build` pattern (C++ targets)
+
+C++ controller targets (e.g., `run_newton_raphson_cpp`) include an inline build
+step:
+
+```makefile
+docker exec -it $(CONTAINER_NAME) bash -lc \
+    "cd /workspace && colcon build \
+       --symlink-install \
+       --packages-up-to newton_raphson_px4_cpp \
+       --cmake-args -DCMAKE_BUILD_TYPE=Release \
+                    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
+     source /workspace/install/setup.bash && \
+     ros2 run newton_raphson_px4_cpp run_node ..."
+```
+
+This ensures:
+
+1. The C++ package is compiled with latest source changes
+2. The install overlay is re-sourced to pick up newly built packages
+3. The node runs with the freshly compiled binary
+
+Python targets skip the build step because `--symlink-install` creates symlinks
+from `install/` back to `src/`, so Python source edits take effect immediately.
+
+
+# The Full System Architecture
+
+Putting it all together, here is what happens when you run
+`make fly CONTROLLER=newton_raphson TRAJECTORY=fig8_horz HEADLESS=1`:
+
+```
+  HOST                                   CONTAINER
+  ────                                   ─────────
+  1. fly_pipeline.py starts
+
+  2. PX4 SITL launches (HEADLESS=1)
+     ├── Gazebo server (physics only)
+     └── PX4 firmware (lockstep)
+
+  3. MicroXRCE-DDS Agent starts
+     (UDP port 8888)
+
+  4. Docker container starts              ← make run
+     (--net host, bind mount)
+
+  5.                                      colcon build (if C++)
+                                          source install/setup.bash
+
+  6.                                      ros2 run <controller> run_node
+                                            │
+                                            ├── Subscribes to:
+                                            │   /fmu/out/vehicle_odometry
+                                            │   /fmu/out/vehicle_status_v1
+                                            │   /fmu/out/rc_channels
+                                            │
+                                            ├── Publishes to:
+                                            │   /fmu/in/offboard_control_mode
+                                            │   /fmu/in/trajectory_setpoint
+                                            │   /fmu/in/vehicle_rates_setpoint
+                                            │   /fmu/in/vehicle_command
+                                            │
+                                            └── Flight phases:
+                                                HOVER → CUSTOM → RETURN → LAND
+
+  7. Controller exits after landing
+
+  8. fly_pipeline.py collects logs
+     and computes RMSE analysis
+
+  9. SITL + bridge + container cleaned up
+```
+
+### Data flow during the CUSTOM phase (100 Hz loop)
+
+```
+Gazebo physics  →  PX4 state estimator  →  uORB VehicleOdometry
+    │                                           │
+    │                                     MicroXRCE-DDS Agent
+    │                                           │
+    │                                     DDS (localhost UDP)
+    │                                           │
+    │                                     Controller Node
+    │                                       ├── Read state (pos, vel, quat)
+    │                                       ├── Evaluate reference trajectory
+    │                                       ├── Compute control (NR/NMPC/etc.)
+    │                                       └── Publish thrust + body rates
+    │                                           │
+    │                                     DDS (localhost UDP)
+    │                                           │
+    │                                     MicroXRCE-DDS Agent
+    │                                           │
+    │                                     uORB VehicleRatesSetpoint
+    │                                           │
+    └───────────  PX4 rate controller  ←────────┘
+                       │
+                  Motor mixing → Gazebo actuator commands → physics step
+```
+
+
+# Image Size Breakdown
+
+| Layer | Approximate Size |
+|-------|-----------------|
+| `osrf/ros:jazzy-ros-base` | ~700 MB |
+| System apt packages | ~200 MB |
+| px4_msgs (install only) | ~15 MB |
+| acados (libs + headers + templates) | ~150 MB |
+| JAX + scipy + numpy + friends | ~600 MB |
+| immrax + linrax | ~50 MB |
+| **Total** | **~1.7 GB** |
+
+The previous `desktop-full` base added ~1.8 GB of unused GUI packages.
+
+
+# Key Design Decisions Summarized
+
+| Decision | Rationale |
+|----------|-----------|
+| Container runs controllers only, not PX4/Gazebo | Avoids GPU passthrough, keeps image small |
+| `--net host` instead of bridge networking | DDS multicast works transparently, zero latency overhead |
+| `ros-base` instead of `desktop-full` | 1.8 GB savings; no GUI tools needed |
+| px4_msgs baked into image | Avoids rebuild on every container restart |
+| acados built from source | PyPI wheel does not include qpOASES backend |
+| Bind mount for workspace | Edit on host, build in container; logs instantly accessible |
+| `bash -lc` for all exec commands | Guarantees ROS 2 overlay chain is sourced |
+| `--symlink-install` for colcon | Python edits take effect without rebuilding |
+| `CMD ["bash"]` with `-itd` | Container stays alive as a long-running shell, ready for exec |
