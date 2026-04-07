@@ -1,36 +1,36 @@
 [submodule "src/quad_platforms"]
 	path = src/quad_platforms
-	url = https://github.com/evannsm/quad_platforms.git
+	url = https://github.com/evannsmc/quad_platforms.git
 [submodule "src/quad_trajectories"]
 	path = src/quad_trajectories
-	url = https://github.com/evannsm/quad_trajectories.git
+	url = https://github.com/evannsmc/quad_trajectories.git
 [submodule "src/quad_platforms_cpp"]
 	path = src/quad_platforms_cpp
-	url = https://github.com/evannsm/quad_platforms_cpp.git
+	url = https://github.com/evannsmc/quad_platforms_cpp.git
 [submodule "src/quad_trajectories_cpp"]
 	path = src/quad_trajectories_cpp
-	url = https://github.com/evannsm/quad_trajectories_cpp.git
+	url = https://github.com/evannsmc/quad_trajectories_cpp.git
 [submodule "src/ros2_logger"]
 	path = src/ros2_logger
-	url = https://github.com/evannsm/ROS2Logger.git
+	url = https://github.com/evannsmc/ROS2Logger.git
 [submodule "src/ros2_logger_cpp"]
 	path = src/ros2_logger_cpp
-	url = https://github.com/evannsm/ROS2Logger_cpp.git
+	url = https://github.com/evannsmc/ROS2Logger_cpp.git
 [submodule "src/newton_raphson_px4"]
 	path = src/newton_raphson_px4
-	url = https://github.com/evannsm/newton_raphson_px4.git
+	url = https://github.com/evannsmc/newton_raphson_px4.git
 [submodule "src/newton_raphson_px4_cpp"]
 	path = src/newton_raphson_px4_cpp
-	url = https://github.com/evannsm/newton_raphson_px4_cpp.git
+	url = https://github.com/evannsmc/newton_raphson_px4_cpp.git
 [submodule "src/nmpc_acados_px4"]
 	path = src/nmpc_acados_px4
-	url = https://github.com/evannsm/nmpc_acados_px4.git
+	url = https://github.com/evannsmc/nmpc_acados_px4.git
 [submodule "src/nmpc_acados_px4_cpp"]
 	path = src/nmpc_acados_px4_cpp
-	url = https://github.com/evannsm/nmpc_acados_px4_cpp.git
+	url = https://github.com/evannsmc/nmpc_acados_px4_cpp.git
 [submodule "src/nr_diff_flat_px4"]
 	path = src/nr_diff_flat_px4
-	url = git@github.com:evannsm/nr_diff_flat_px4.git
+	url = git@github.com:evannsmc/nr_diff_flat_px4.git
 [submodule "src/newton_raphson_enhanced_px4"]
 	path = src/newton_raphson_enhanced_px4
-	url = git@github.com:evannsm/newton_raphson_enhanced_px4.git
+	url = git@github.com:evannsmc/newton_raphson_enhanced_px4.git

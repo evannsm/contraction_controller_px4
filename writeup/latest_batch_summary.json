@@ -60,7 +60,7 @@
   ],
   "commits_pushed": {
     "root_repo": {
-      "repo": "git@github.com:evannsm/contraction_controller_px4.git",
+      "repo": "git@github.com:evannsmc/contraction_controller_px4.git",
       "branch": "main",
       "commit": "595f8e2",
       "message": "Automate verified fly/fly_all sweeps with CLI analysis and recovery docs"
@@ -68,14 +68,14 @@
     "submodules": [
       {
         "path": "/home/egmc/ws_contraction_px4/src/nmpc_acados_px4",
-        "repo": "git@github.com:evannsm/nmpc_acados_px4.git",
+        "repo": "git@github.com:evannsmc/nmpc_acados_px4.git",
         "branch": "main",
         "commit": "42a4e58",
         "message": "Add platform-aware NMPC solver guard and Docker-safe source hashing"
       },
       {
         "path": "/home/egmc/ws_contraction_px4/src/nmpc_acados_px4_cpp",
-        "repo": "git@github.com:evannsm/nmpc_acados_px4_cpp.git",
+        "repo": "git@github.com:evannsmc/nmpc_acados_px4_cpp.git",
         "branch": "main",
         "commit": "ddd9e3f",
         "message": "Document ensure_solver workflow for C++ NMPC builds"
