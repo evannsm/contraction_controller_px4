@@ -60,11 +60,10 @@ src/contraction_controller_px4/contraction_controller_px4/params/
 ## Quickstart
 
 ```bash
-git clone --recurse-submodules git@github.com:evannsm/contraction_controller_px4.git
+git clone --recurse-submodules git@github.com:evannsmc/contraction_controller_px4.git
 cd contraction_controller_px4
 make build      # build Docker image (~15 min, once)
-make run        # start container
-make build_ros  # build ROS 2 workspace inside container
+make build_ros  # build ROS 2 workspace (auto-starts/stops container)
 ```
 
 ### NMPC C++ additional step
@@ -115,22 +114,16 @@ cd ~/PX4-Autopilot && make px4_sitl gz_x500
 MicroXRCEAgent udp4 -p 8888
 ```
 
-### Step 2 — Start the container
-
-```bash
-make run
-```
-
-Mounts the repo root → `/workspace` so `build/`, `install/`, and `log/` persist
-on the host. Uses `--net host` so the container sees all ROS 2 topics.
-
-### Step 3 — Build the ROS 2 workspace (first time only)
+### Step 2 — Build the ROS 2 workspace (first time only)
 
 ```bash
 make build_ros
 ```
 
-### Step 4 — Run a controller
+### Step 3 — Run a controller
+
+Each `run_*` target auto-starts the container if needed and stops it when the
+command finishes (or on Ctrl+C).
 
 ```bash
 make run_contraction PLATFORM=sim TRAJECTORY=hover_contraction HOVER_MODE=1
@@ -141,11 +134,12 @@ make run_nmpc_cpp PLATFORM=sim TRAJECTORY=circle_horz LOG=1
 make run_ff_f8 PLATFORM=sim LOG=1
 ```
 
-Or drop into the container and run directly:
+For interactive debugging, start the container manually and attach:
 
 ```bash
-make attach
-ros2 run newton_raphson_px4 run_node --platform sim --trajectory helix --double-speed --spin --log
+make run        # start container in background (stays running)
+make attach     # open a shell inside the container
+make stop       # stop the container when done
 ```
 
 ---
@@ -157,8 +151,8 @@ ros2 run newton_raphson_px4 run_node --platform sim --trajectory helix --double-
 | Command | What it does |
 |---|---|
 | `make build` | Build the Docker image (run once, or after `Dockerfile` changes) |
-| `make run` | Start the container (mounts repo root → `/workspace`) |
-| `make stop` | Gracefully stop the container |
+| `make run` | Start the container manually (for interactive debugging; `run_*` targets auto-start) |
+| `make stop` | Gracefully stop the container (`run_*` targets auto-stop) |
 | `make kill` | Force-kill the container |
 | `make attach` | Open an interactive shell inside the running container |
 | `make start_sitl` | Start PX4 SITL with Gazebo on the host |
